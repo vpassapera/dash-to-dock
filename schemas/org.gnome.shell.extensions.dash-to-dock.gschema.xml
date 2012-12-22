@@ -128,5 +128,9 @@
       <summary>Action when clicking on a running app</summary>
       <description>Set the action that is executed when clicking on the icon of a running application</description>
     </key>
+    <key type="b" name="apps-icon-on-top">
+      <default>false</default>
+      <summary>Move the appliction icon on top of the dash</summary>
+    </key>
   </schema>
 </schemalist>

@@ -211,6 +211,15 @@ dockedDash.prototype = {
         this._settings.connect('changed::show-running', Lang.bind(this, function(){
             this.dash.resetAppIcons();
         }));
+
+        this._settings.connect('changed::apps-icon-on-top', Lang.bind(this, function(){
+                /* Inspired by Apps on Top by obsidien */
+                let dash = this.dash.actor.get_children()[0];
+                let thingmoved = dash.get_children()[0];
+                dash.remove_actor(thingmoved);
+                dash.add_actor(thingmoved);
+        }));
+
         this._settings.connect('changed::dock-fixed', Lang.bind(this, function(){
             Main.layoutManager.untrackChrome(this.dash._box);
             Main.layoutManager.trackChrome(this.dash._box, {affectsStruts: this._settings.get_boolean('dock-fixed')});

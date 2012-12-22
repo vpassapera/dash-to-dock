@@ -246,7 +246,7 @@ const WorkspaceSettingsWidget = new GObject.Class({
     iconSizeMain.add(maximumIconSizeBox);
     dockSettings.add(iconSizeMain);
 
-    /* SHOW FAVORITES/RUNNING */
+    /* SHOW FAVORITES/RUNNING, APPS ICON ON TOP */
 
     let showIcons = new Gtk.Box({orientation: Gtk.Orientation.VERTICAL,
                                  margin_left:10, margin_top:5, margin_bottom:10, margin_right:10})
@@ -263,8 +263,15 @@ const WorkspaceSettingsWidget = new GObject.Class({
             this.settings.set_boolean('show-running', check.get_active());
         }));
 
+    let appsIconOnTop =  new Gtk.CheckButton({label: _("Move applications icon on top")});
+        appsIconOnTop.set_active(this.settings.get_boolean('apps-icon-on-top'));
+        appsIconOnTop.connect('toggled', Lang.bind(this, function(check){
+            this.settings.set_boolean('apps-icon-on-top', check.get_active());
+        }));
+
     showIcons.add(showFavorites);
     showIcons.add(showRunning);
+    showIcons.add(appsIconOnTop);
 
     dockSettings.add(showIcons);
 

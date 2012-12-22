@@ -31,6 +31,7 @@ let DASH_ANIMATION_TIME = Dash.DASH_ANIMATION_TIME;
  * - set a maximum icon size
  * - show running and/or favorite applications
  * - emit a custom signal when an app icon is added
+ * - customize appsIcon position (top or bottom)
  *
  */
 const myDash = new Lang.Class({
@@ -57,7 +58,6 @@ const myDash = new Lang.Class({
         this._box = new St.BoxLayout({ vertical: true,
                                        clip_to_allocation: true });
         this._box._delegate = this;
-        this._container.add_actor(this._box);
 
         this._showAppsIcon = new Dash.ShowAppsIcon();
         this._showAppsIcon.icon.setIconSize(this.iconSize);
@@ -65,7 +65,14 @@ const myDash = new Lang.Class({
 
         this.showAppsButton = this._showAppsIcon.toggleButton;
 
-        this._container.add_actor(this._showAppsIcon.actor);
+        /* Customize AppsIcon position */
+        if(this._settings.get_boolean('apps-icon-on-top')) {
+            this._container.add_actor(this._showAppsIcon.actor);
+            this._container.add_actor(this._box);
+        } else {
+            this._container.add_actor(this._box);
+            this._container.add_actor(this._showAppsIcon.actor);
+        }
 
         this.actor = new St.Bin({ child: this._container,
             y_align: St.Align.START });
