@@ -40,11 +40,6 @@ const dockedDash = new Lang.Class({
         // initialize animation status object
         this._animStatus = new animationStatus(true);
 
-        // initialize colors with generic values
-        this._defaultBackground = {red: 0, green:0, blue: 0, alpha:0};
-        this._defaultBackgroundColor = {red: 0, green:0, blue: 0, alpha:0};
-        this._customizedBackground = {red: 0, green:0, blue: 0, alpha:0};
-
         // Hide usual Dash
         // For some reason if I hide the actor object as I used to do before reshowing it when disabling
         // the extension leads to the dash being placed in the center of the overview.
@@ -107,12 +102,6 @@ const dockedDash = new Lang.Class({
                 global.screen,
                 'monitors-changed',
                 Lang.bind(this, this._resetPosition )
-            ],
-            // When theme changes re-obtain default background color
-            [
-                St.ThemeContext.get_for_stage (global.stage),
-                'changed',
-                Lang.bind(this, this._onThemeChanged)
             ],
             [
                 Main.overview,
@@ -190,11 +179,6 @@ const dockedDash = new Lang.Class({
         if(Main.overview.viewSelector._activePage == null)
                 Main.overview.viewSelector._activePage = Main.overview.viewSelector._workspacesPage;
 
-        // Now that the dash is on the stage and custom themes should be loaded
-        // retrieve its background color
-        this._getBackgroundColor();
-        this._updateBackgroundOpacity();
-
         // Show 
         this.actor.set_opacity(255); //this.actor.show();
 
@@ -218,10 +202,6 @@ const dockedDash = new Lang.Class({
     },
 
     _bindSettingsChanges: function() {
-
-        this._settings.connect('changed::opaque-background', Lang.bind(this,this._updateBackgroundOpacity));
-
-        this._settings.connect('changed::background-opacity', Lang.bind(this,this._updateBackgroundOpacity));
 
         this._settings.connect('changed::scroll-switch-workspace', Lang.bind(this, function(){
             this._optionalScrollWorkspaceSwitch(this._settings.get_boolean('scroll-switch-workspace'));
@@ -445,67 +425,6 @@ const dockedDash = new Lang.Class({
         // Apply the clip
         this.actor.set_clip(clip.x1, clip.y1, clip.x2-clip.x1, clip.y2 - clip.y1);
 
-    },
-
-    _fadeOutBackground:function (time, delay) {
-
-        this.dash._container.set_style('transition-duration: ' + time + 's;' +
-            'transition-delay: '+ delay +'s; ' +
-            'background-color:'+ this._defaultBackground);
-    }, 
-
-    _fadeInBackground:function (time, delay) {
-
-        this.dash._container.set_style('transition-duration: ' + time + 's;' +
-            'transition-delay: '+ delay +'s; ' +
-            'background-color:'+ this._customizedBackground);
-    },
-
-    _updateBackgroundOpacity: function() {
-
-        let newAlpha = this._settings.get_double('background-opacity');
-
-        this._defaultBackground = 'rgba('+
-            this._defaultBackgroundColor.red + ','+
-            this._defaultBackgroundColor.green + ','+
-            this._defaultBackgroundColor.blue + ','+
-            Math.round(this._defaultBackgroundColor.alpha/2.55)/100 + ')';
-
-        this._customizedBackground = 'rgba('+
-            this._defaultBackgroundColor.red + ','+
-            this._defaultBackgroundColor.green + ','+
-            this._defaultBackgroundColor.blue + ','+
-            newAlpha + ')';
-
-        if(this._settings.get_boolean('opaque-background') ){
-            this._fadeInBackground(this._settings.get_double('animation-time'), 0);
-        }
-        else {
-            this._fadeOutBackground(this._settings.get_double('animation-time'), 0);
-        }
-    },
-
-    _getBackgroundColor: function() {
-
-        // Remove custom style
-        let oldStyle = this.dash._container.get_style();
-        this.dash._container.set_style(null);
-
-        // Prevent shell crash if the actor is not on the stage.
-        // It happens enabling/disabling repeatedly the extension
-        if(!this.dash._container.get_stage())
-            return;
-
-        let themeNode = this.dash._container.get_theme_node();
-        this.dash._container.set_style(oldStyle);
-
-        this._defaultBackgroundColor = themeNode.get_background_color();
-    },
-
-    _onThemeChanged: function() {
-        this.dash._queueRedisplay();
-        this._getBackgroundColor();
-        this._updateBackgroundOpacity();
     },
 
     _isPrimaryMonitor: function() {
@@ -856,21 +775,14 @@ const dockedDash = new Lang.Class({
     // Enable autohide effect, hide dash
     enableAutoHide: function() {
         if(this._autohideStatus==false){
-
-            let delay=0; // immediately fadein background if hide is blocked by mouseover,
-                         // oterwise start fadein when dock is already hidden.
             this._autohideStatus = true;
             this._removeAnimations();
 
-            if(this._box.hover==true)
-                this._box.sync_hover();
-
             if( !this._box.hover || !this._settings.get_boolean('autohide')) {
                 this._animateOut(this._settings.get_double('animation-time'), 0);
-                delay = this._settings.get_double('animation-time');
-            } else {
-                delay = 0;
             }
+            if(this._box.hover==true)
+                this._box.sync_hover();
         }
     }
 });
