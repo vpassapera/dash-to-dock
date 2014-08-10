@@ -163,7 +163,6 @@ const LinksDB = new Lang.Class({
 			this.string_data = JSON.stringify(this.links_data);
 			fstream.write(this.string_data, null, this.string_data.length);
 		} else {
-			log("IT EXisto");
 			fstream = file.open_readwrite(null).get_input_stream();
 			let size = file.query_info("standard::size",
 				Gio.FileQueryInfoFlags.NONE, null).get_size();
@@ -282,8 +281,12 @@ const LinksDB = new Lang.Class({
 		for(let i = 0; i < this.links_data.folders.length ;i++) {
 			if (id == this.links_data.folders[i].collection_id) {
 				for(let k = 0; k < this.links_data.folders[i].links_array.length ;k++) {
-					delete this.links_data.folders[i].links_array[k];
-					this.save_db();
+					if(lid == this.links_data.folders[i].links_array[k].id) {
+						delete this.links_data.folders[i].links_array[k];
+						this.links_data.folders[i].links_array = this.links_data
+							.folders[i].links_array.filter(function(n){ return n != null });
+						this.save_db();
+					}
 				}
 			}
 		}

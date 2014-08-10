@@ -669,15 +669,15 @@ const myLinkTrayMenu = new Lang.Class({
     
 	populate: function() {
 		for(let i = 0; i < this.linksStorage.links_data.folders.length ;i++) {		
-			if (this.trayId == this.linksStorage.links_data.folders[i].collection_id) {
+			if (this.trayId == this.linksStorage.links_data.folders[i].collection_id) {				
 				this.make_menu(this.linksStorage.links_data.folders[i].links_array);
 			}
 		}
 	},
 
     make_menu: function(files) {
-//this.removeAll();
-this.box.remove_all_children();
+		this.box.remove_all_children();
+		
 		let icols;
 		if (files.length > this.settings.get_int('applet-links-tray-to-grid'))
 			icols = 3
@@ -715,16 +715,21 @@ this.box.remove_all_children();
             this.passEvents = false;
         }));
         
-		this.abox = new St.BoxLayout({ vertical: true, x_expand: true});
+		this.abox = new St.BoxLayout({ vertical: true, x_expand: true});		
 		this.abox.add(this._table);
+				
 		this._scrollView.add_actor(this.abox);
 		
-		this.box.add(this._scrollView);  
+		this.box.add(this._scrollView);
 		
-		// Calculating the (aesthetic) height for ScrollView
+		// This is the bin icon that allows link deletion
+		this.fileIconDeletion = new myFileIconBin(this.iconSize, this);
+		this.box.add(this.fileIconDeletion.actor);
+		this.fileIconDeletion.actor.hide();
+		
+		// Calculating the (aesthetic) height for ScrollView. 10 popup menu padding
 		if(icols > 1 && irows > 3)
-			this._scrollView.height = 
-				(this._scrollView.height/icols + 10)*3;//10 is from popup menu
+			this._scrollView.height = (this._scrollView.height/icols + 10)*3;
     },
     
     _removeMenuTimeout: function() {
@@ -819,6 +824,8 @@ const myFileIcon = new Lang.Class({
 			link = null;
 		}
 
+		this.menu.fileIconDeletion.actor.show();
+
         // Don't allow favoriting of transient apps
         if (link == null)
             return DND.DragMotionResult.NO_DROP;
@@ -841,8 +848,57 @@ const myFileIcon = new Lang.Class({
 		this.menu.open();
 		
 		return false;
-    }       
+    }
+});
+
+const myFileIconBin = new Lang.Class({
+    Name: 'myFileIconBin',
+
+    _init: function (size, menu) {
+		this.iconSize = size;
+		this.menu = menu;
+
+        this.actor = new St.Icon({ icon_name: 'user-trash',
+								icon_size: size,
+								style_class: 'show-apps-icon',
+								track_hover: true,
+								margin_top: 100 });
+                                     
+		this.actor._delegate = this;
+    },
     
+    handleDragOver : function(source, actor, x, y, time) {
+        let link;
+		if (source instanceof myFileIcon) {
+			link = source;
+		} else {
+			link = null;
+		}
+
+        // Don't allow favoriting of transient apps
+        if (link == null)
+            return DND.DragMotionResult.NO_DROP;
+
+        return DND.DragMotionResult.COPY_DROP;
+    },    
+    
+    acceptDrop : function(source, actor, x, y, time) {
+        let link;
+		if (source instanceof myFileIcon) {
+			link = source;		
+		} else {
+			link = null;
+			return false;
+		}
+
+		this.menu.linksStorage.remove_link_from_tray(this.menu.trayId, source.id);
+		this.actor.hide();
+		this.menu.close();
+		this.menu.populate();
+		this.menu.open();
+		
+		return false;
+    }
 });
 
 //this.box.set_style('background-color: yellow;');//Debugging
