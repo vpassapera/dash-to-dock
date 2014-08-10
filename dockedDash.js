@@ -191,8 +191,22 @@ const DashSlideContainer = new Lang.Class({
 
 			this._child.allocate(childBox, flags);
 			this._child.set_clip(-childBox.x1, 0, -childBox.x1+availWidth, availHeight);
-			
-log("slider: "+(-childBox.x1+availWidth));			
+
+
+//------------------
+/*		
+			log("slider: "+(-childBox.x1+availWidth));	
+
+			if (this._scrollView.width > slider.width) {
+				this._leftOrTopArrow.show();
+				this._rightOrBottomArrow.show();	
+			} else {
+				this._leftOrTopArrow.hide();
+				this._rightOrBottomArrow.hide();
+			}
+*/
+//------------------
+		
 		}
     },
 
@@ -293,7 +307,6 @@ const dockedDash = new Lang.Class({
 
         // Create the main actor and the containers for sliding
         // in and out, as well as centering, turn on track hover
-
 		this.actor = new St.Bin({ name: 'dashtodockContainer', reactive: false })
 
         this.actor._delegate = this;
@@ -304,6 +317,54 @@ const dockedDash = new Lang.Class({
         // This is the actor whose hover status us tracked for autohide
         this._dockBox = new St.BoxLayout({ name: 'dashtodockBox', reactive: true, track_hover:true });
 
+//---------------
+		this._dockBox.add_actor(this.dash.actor);
+		
+		// Adding a ScrollView container to contain the expansion of the dock
+		this._scrollView = new St.ScrollView({ x_expand: false, y_expand: false,
+			x_fill: false, y_fill: false, reactive: true });
+
+		this._leftOrTopArrow = new St.Button();
+		this._rightOrBottomArrow = new St.Button();
+
+        if (!dock_horizontal) {
+			this._scrollView.hscrollbar_policy = Gtk.PolicyType.NEVER;
+			this._scrollView.vscroll.hide();
+
+			this._appsContainer = new St.BoxLayout({ vertical: true, clip_to_allocation: false });
+
+			this._leftOrTopArrowIcon = new St.Icon({ icon_name: 'go-up-symbolic', icon_size: 16 });
+			this._leftOrTopArrow.set_child(this._leftOrTopArrowIcon);
+			this._appsContainer.add_actor(this._leftOrTopArrow);
+			this._leftOrTopArrow.connect('clicked', Lang.bind(this, this._onScrollBtnLeftOrTop));		
+
+			this._scrollView.add_actor(this._dockBox);		
+			this._appsContainer.add_actor(this._scrollView);
+			
+			this._rightOrBottomArrowIcon = new St.Icon({ icon_name: 'go-down-symbolic', icon_size: 16});
+			this._rightOrBottomArrow.set_child(this._rightOrBottomArrowIcon);
+			this._appsContainer.add_actor(this._rightOrBottomArrow);
+			this._rightOrBottomArrow.connect('clicked', Lang.bind(this, this._onScrollBtnRightOrBottom));
+		} else {
+			this._scrollView.vscrollbar_policy = Gtk.PolicyType.NEVER;
+			this._scrollView.hscroll.hide();
+
+			this._appsContainer = new St.BoxLayout({ vertical: false, clip_to_allocation: true });//clip was false
+
+			this._leftOrTopArrowIcon = new St.Icon({ icon_name: 'go-previous-symbolic', icon_size: 16 });
+			this._leftOrTopArrow.set_child(this._leftOrTopArrowIcon);
+			this._appsContainer.add_actor(this._leftOrTopArrow);
+			this._leftOrTopArrow.connect('clicked', Lang.bind(this, this._onScrollBtnLeftOrTop));	
+
+			this._scrollView.add_actor(this._dockBox);		
+			this._appsContainer.add_actor(this._scrollView);
+			
+			this._rightOrBottomArrowIcon = new St.Icon({ icon_name: 'go-next-symbolic', icon_size: 16});
+			this._rightOrBottomArrow.set_child(this._rightOrBottomArrowIcon);
+			this._appsContainer.add_actor(this._rightOrBottomArrow);
+			this._rightOrBottomArrow.connect('clicked', Lang.bind(this, this._onScrollBtnRightOrBottom));			
+		}
+//---------------
         this._dockBox.connect("notify::hover", Lang.bind(this, this._hoverChanged));
 
         if (dock_horizontal) {
@@ -403,9 +464,15 @@ const dockedDash = new Lang.Class({
         Main.overview._controls._dashSlider.actor.hide();
 
         // Add dash container actor and the container to the Chrome.
-        this.actor.set_child(this._slider);
+/*        this.actor.set_child(this._slider);
 		this._slider.add_child(this._dockBox);
         this._dockBox.add_actor(this.dash.actor);
+*/
+
+
+this.actor.set_child(this._slider);
+//this._dockBox.add_actor(this.dash.actor);
+this._slider.add_child(this._appsContainer);
 
         // Add aligning container without tracking it for input region (old affectsinputRegion: false that was removed).
         // The public method trackChrome requires the actor to be child of a tracked actor. Since I don't want the parent
@@ -534,6 +601,26 @@ const dockedDash = new Lang.Class({
             this._updateBarrier();
         }));
 
+    },
+
+    _onScrollBtnLeftOrTop: function() {
+		if (!dock_horizontal) {
+			let vscroll = this._scrollView.get_vscroll_bar();
+			vscroll.get_adjustment().set_value(vscroll.get_adjustment().get_value() - this._scrollView.height);				
+		} else {
+			let hscroll = this._scrollView.get_hscroll_bar();
+			hscroll.get_adjustment().set_value(hscroll.get_adjustment().get_value() - this._scrollView.width);	
+		}
+    },
+    
+    _onScrollBtnRightOrBottom: function() {
+		if (!dock_horizontal) {
+			let vscroll = this._scrollView.get_vscroll_bar();
+			vscroll.get_adjustment().set_value(vscroll.get_adjustment().get_value() + this._scrollView.height);				
+		} else {
+			let hscroll = this._scrollView.get_hscroll_bar();
+			hscroll.get_adjustment().set_value(hscroll.get_adjustment().get_value() + this._scrollView.width);			
+		}
     },
 
     _hoverChanged: function() {
@@ -1121,17 +1208,17 @@ const dockedDash = new Lang.Class({
 
 					switch ( event.get_scroll_direction() ) {
 						case Clutter.ScrollDirection.UP:
-							this.dash._onScrollBtnLeftOrTop();				
+							this._onScrollBtnLeftOrTop();				
 							break;
 						case Clutter.ScrollDirection.DOWN:
-							this.dash._onScrollBtnRightOrBottom();
+							this._onScrollBtnRightOrBottom();
 							break;
 						case Clutter.ScrollDirection.SMOOTH:			
 							let [dx, dy] = event.get_scroll_delta();
 							if (dy < 0) {
-								this.dash._onScrollBtnLeftOrTop();
+								this._onScrollBtnLeftOrTop();
 							} else if(dy > 0) {
-								this.dash._onScrollBtnRightOrBottom();
+								this._onScrollBtnRightOrBottom();
 							}
 							break;
 					}

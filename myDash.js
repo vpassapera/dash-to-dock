@@ -145,57 +145,16 @@ const myDash = new Lang.Class({
         this._labelShowing = false;
 
         this._container = new myDashActor(settings);
+        
         this._box;
+     
         if (!dock_horizontal) {
 			this._box = new St.BoxLayout({ vertical: true, clip_to_allocation: false });
 		} else {
 			this._box = new St.BoxLayout({ vertical: false, clip_to_allocation: false });
 		}
+		
 		this._box._delegate = this;
-
-		this._scrollView = new St.ScrollView({ x_expand: false, y_expand: false,
-			x_fill: false, y_fill: false, reactive: true });
-
-		this._leftOrTopArrow = new St.Button();
-		this._rightOrBottomArrow = new St.Button();
-
-        if (!dock_horizontal) {
-			this._scrollView.hscrollbar_policy = Gtk.PolicyType.NEVER;
-			this._scrollView.vscroll.hide();
-
-			this._appsContainer = new St.BoxLayout({ vertical: true, clip_to_allocation: false });
-
-			this._leftOrTopArrowIcon = new St.Icon({ icon_name: 'go-up-symbolic', icon_size: 16 });
-			this._leftOrTopArrow.set_child(this._leftOrTopArrowIcon);
-			this._appsContainer.add_actor(this._leftOrTopArrow);
-			this._leftOrTopArrow.connect('clicked', Lang.bind(this, this._onScrollBtnLeftOrTop));		
-
-			this._scrollView.add_actor(this._box);
-			this._appsContainer.add_actor(this._scrollView);
-			
-			this._rightOrBottomArrowIcon = new St.Icon({ icon_name: 'go-down-symbolic', icon_size: 16});
-			this._rightOrBottomArrow.set_child(this._rightOrBottomArrowIcon);
-			this._appsContainer.add_actor(this._rightOrBottomArrow);
-			this._rightOrBottomArrow.connect('clicked', Lang.bind(this, this._onScrollBtnRightOrBottom));
-		} else {
-			this._scrollView.vscrollbar_policy = Gtk.PolicyType.NEVER;
-			this._scrollView.hscroll.hide();
-
-			this._appsContainer = new St.BoxLayout({ vertical: false, clip_to_allocation: true });//clip was false
-
-			this._leftOrTopArrowIcon = new St.Icon({ icon_name: 'go-previous-symbolic', icon_size: 16 });
-			this._leftOrTopArrow.set_child(this._leftOrTopArrowIcon);
-			this._appsContainer.add_actor(this._leftOrTopArrow);
-			this._leftOrTopArrow.connect('clicked', Lang.bind(this, this._onScrollBtnLeftOrTop));		
-
-			this._scrollView.add_actor(this._box);
-			this._appsContainer.add_actor(this._scrollView);
-			
-			this._rightOrBottomArrowIcon = new St.Icon({ icon_name: 'go-next-symbolic', icon_size: 16});
-			this._rightOrBottomArrow.set_child(this._rightOrBottomArrowIcon);
-			this._appsContainer.add_actor(this._rightOrBottomArrow);
-			this._rightOrBottomArrow.connect('clicked', Lang.bind(this, this._onScrollBtnRightOrBottom));			
-		}
 
 		// Init Show Apps applet
 		if (!dock_horizontal) {
@@ -288,7 +247,7 @@ const myDash = new Lang.Class({
 						}
 						break;
 					case 2:
-						this._container.add_actor(this._appsContainer);
+						this._container.add_actor(this._box);
 						break;
 					case 3:
 						if (this._settings.get_boolean('applet-links-tray-visible')) {
@@ -326,26 +285,6 @@ const myDash = new Lang.Class({
 			}
 		} catch (e) {
 			log("Error in adding applets "+e.message);
-		}
-    },
-        
-    _onScrollBtnLeftOrTop: function() {
-		if (!dock_horizontal) {
-			let vscroll = this._scrollView.get_vscroll_bar();
-			vscroll.get_adjustment().set_value(vscroll.get_adjustment().get_value() - this._scrollView.height);				
-		} else {
-			let hscroll = this._scrollView.get_hscroll_bar();
-			hscroll.get_adjustment().set_value(hscroll.get_adjustment().get_value() - this._scrollView.width);	
-		}
-    },
-    
-    _onScrollBtnRightOrBottom: function() {
-		if (!dock_horizontal) {
-			let vscroll = this._scrollView.get_vscroll_bar();
-			vscroll.get_adjustment().set_value(vscroll.get_adjustment().get_value() + this._scrollView.height);				
-		} else {
-			let hscroll = this._scrollView.get_hscroll_bar();
-			hscroll.get_adjustment().set_value(hscroll.get_adjustment().get_value() + this._scrollView.width);			
 		}
     },
         
@@ -801,27 +740,6 @@ const myDash = new Lang.Class({
         // Workaround for https://bugzilla.gnome.org/show_bug.cgi?id=692744
         // Without it, StBoxLayout may use a stale size cache
         this._box.queue_relayout();
-/*
-		// Hiding/showing the arrows if required
-		if(this._container.get_stage()) {
-			if (!dock_horizontal) {
-				if (this._scrollView.height != this._scrollView.get_vscroll_bar().height) {
-					this._leftOrTopArrow.show();
-					this._rightOrBottomArrow.show();
-				} else {
-					this._leftOrTopArrow.hide();
-					this._rightOrBottomArrow.hide();			
-				}
-			} else {
-				if (this._scrollView.width != this._scrollView.get_hscroll_bar().width) {
-					this._leftOrTopArrow.show();
-					this._rightOrBottomArrow.show();	
-				} else {
-					this._leftOrTopArrow.hide();
-					this._rightOrBottomArrow.hide();
-				}
-			}
-		}*/
     },
 
     setMaxIconSize: function(size) {
