@@ -487,7 +487,7 @@ const myLinkTray = new Lang.Class({
 		let keep_items = 6;
 		if(this.menu_secondary.length > keep_items) {
 			let items = this.menu_secondary._getMenuItems();
-			for (let i = 0; i < (items.length - keep_items); i++) {			
+			for (let i = 0; i < (items.length - keep_items); i++) {
 				if (items[i] instanceof PopupMenu.PopupBaseMenuItem) {
 						items[i].destroy();
 				}
@@ -527,11 +527,11 @@ const myLinkTray = new Lang.Class({
     addSuggestedLink: function(file) {
 		let item = new PopupMenu.PopupBaseMenuItem;
 		let label = new St.Label({text: file.get_basename() });
-		item.connect("activate", Lang.bind(this, function(){
+		item.connect("activate", Lang.bind(this, function() {
 			this.addLink(file);
 		}));
 		item.actor.add_child(label);
-		this.menu_secondary.addMenuItem(item, 0);	
+		this.menu_secondary.addMenuItem(item, 0);
     },
 
 	/* The file link is added to the tray and LinksDB. */
@@ -721,7 +721,7 @@ log('oooooo 2');
 		// This is the bin icon that allows link deletion
 		this.fileIconDeletion = new myFileIconBin(this.iconSize, this);
 		this.box.add(this.fileIconDeletion.actor);
-		this.fileIconDeletion.actor.show();
+		this.fileIconDeletion.actor.hide();
 		
 		// Calculating the (aesthetic) height for ScrollView. 10 popup menu padding
 		if(this.icols > 1 && this.irows > 3)
@@ -790,6 +790,19 @@ const myFileIcon = new Lang.Class({
 		}
 		
         this._draggable = DND.makeDraggable(this.actor);
+        this._draggable.connect('drag-begin', Lang.bind(this,
+            function () {
+                this.menu._removeMenuTimeout();
+				this.menu.fileIconDeletion.actor.show();
+            }));
+        this._draggable.connect('drag-cancelled', Lang.bind(this,
+            function () {
+			this.menu.fileIconDeletion.actor.hide();
+            }));
+        this._draggable.connect('drag-end', Lang.bind(this,
+            function () {
+			this.menu.fileIconDeletion.actor.hide();
+            }));  
     },
 
     _createIcon: function(size) {
