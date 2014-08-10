@@ -80,78 +80,7 @@ const myLinkTray = new Lang.Class({
 		this.menuManager.addMenu(this.menu);
 		this.menuManager.addMenu(this.menu_secondary);
 
-//------------------------------------------------------------------
-
-let exo = new Convenience.LinksDB();
-
-
-/*let clipboard = St.Clipboard.get_default();
-clipboard.get_text(St.ClipboardType.CLIPBOARD, Lang.bind(this,
-	function(clipboard, text) {
-		if (!text)
-			return;
-			
-log(">>>>>>>>>>>> "+text);                  
-
-}));
-*/
-
-//St.Clipboard.get_default().get_text(St.ClipboardType.PRIMARY);
-//clipboard.get_text();
-//log('BOARD TEXT IS: '+ St.Clipboard.get_default().get_text(St.ClipboardType.PRIMARY) );
-
-		//let path = '/home/pc/.local/share/gnome-shell/extensions/dash-to-dock@micxgx.gmail.com/new.js1';
-/*
-        let path = Gio.file_new_for_path(ExtensionUtils.getCurrentExtension().path);
-path +='/new';
-log("My Path is1: "+path);
-log("My Path is2: "+ExtensionUtils.getCurrentExtension().path); 
-
-
-//let userExtensionsPath = GLib.build_filenamev([global.userdatadir, 'extensions']);
-//log("My Path is3: "+userExtensionsPath.path ); 
-//userExtensionsDir = Gio.file_new_for_path(userExtensionsPath);
-try {
-path.make_directory_with_parents(null);
-} catch (e) {
-global.logError('' + e);
-}*/
-
-     
-		
-		/*if ( GLib.file_test(path, GLib.FileTest.EXISTS) ) {
-			log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-			//return Gio.File.new_for_path(paths[i]);
-		} else {
-			log("WRITES? ");
-			Gio.File.new_for_path(path);
-		}*/
-
-//		var input_file = Gio.file_new_for_path(path);
-//		var fstream = input_file.read();
-//		var dstream = new Gio.DataInputStream.c_new(fstream);
-//		var line = dstream.read_until(“”, 0);
-//		fstream.close();
-//		log(line);
-
-/*
-		let rowFilePath = GLib.get_home_dir() + '.local/share/gnome-shell/extensions/dash-to-dock@micxgx.gmail.com/1';
-		log(rowFilePath);
-
-		if ( GLib.file_test(path, GLib.FileTest.EXISTS) ) {
-			log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
-		} else {
-			log("WRITES? ");
-			Gio.File.new_for_path(path);
-		}
-*/
-//------------------------------------------------------------------
-//		if (!dontCreateMenu)
-//			this.menu.populate();
-//------------------------------------------------------------------
-
-//let exo = new DIAL();
-
+		this.linksOfTray = new Convenience.LinksDB();
 	},
 
     destroy: function() {
@@ -205,8 +134,30 @@ global.logError('' + e);
     },     
 
     scanLinks: function() {
-
+		let clipboard = St.Clipboard.get_default();
+		clipboard.get_text(St.ClipboardType.CLIPBOARD, Lang.bind(this,
+			function(clipboard, text) {
+				if (!text) return;
+				
+				this.parseClipboardLinks(text);
+		}));
     },    
+
+    parseClipboardLinks: function(text) {
+		
+		let array = text.split("\n");
+		
+		array.forEach(function (element) {
+			if (element != null || element != undefined) {
+				element.trim();
+				
+				let file = Gio.file_new_for_path(element);
+				if (GLib.file_test(element, GLib.FileTest.EXISTS)) {
+						log(">>>>>>>>>>>> "+'YES IT EXISTS');
+				}
+			}
+		});
+    },
 
     freeContents: function() {
 
