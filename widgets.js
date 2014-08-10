@@ -315,8 +315,12 @@ const myShowDesktop = new Lang.Class({
                                      x_fill: true,
                                      y_fill: true });
         this.actor._delegate = this;		
-		
-//		this.actor.connect('clicked', Lang.bind(this, this.show_hide_desktop));
+
+        this.actor.connect("clicked", Lang.bind(this, this.show_hide_desktop));
+        this.tracker = Shell.WindowTracker.get_default();
+        this.desktopShown = false;
+        this.alreadyMinimizedWindows = [];
+
 		this.icon_actor = null;
         this.icon = new IconGrid.BaseIcon(_("Show Desktop"),
                                            { setSizeManually: true, showLabel: false,
@@ -342,6 +346,43 @@ const myShowDesktop = new Lang.Class({
                                         style_class: 'show-apps-icon',
                                         track_hover: true });
         return this.icon_actor;
+    },
+    
+	/* SOURCE: show desktop extension */
+    show_hide_desktop: function() {
+        Main.overview.hide();
+        let metaWorkspace = global.screen.get_active_workspace();
+        let windows = metaWorkspace.list_windows();
+        
+        if (this.desktopShown) {
+            for ( let i = 0; i < windows.length; ++i ) {  
+				if (windows[i].get_window_type() == 0 || windows[i].get_window_type() == 3) {               
+                    let shouldrestore = true;
+                    for (let j = 0; j < this.alreadyMinimizedWindows.length; j++) {
+                        if (windows[i] == this.alreadyMinimizedWindows[j]) {
+                            shouldrestore = false;
+                            break;
+                        }                        
+                    }    
+                    if (shouldrestore) {
+                        windows[i].unminimize();                                  
+                    }
+                }
+            }
+            this.alreadyMinimizedWindows.length = [];
+        } else {
+            for ( let i = 0; i < windows.length; ++i ) {
+				if (windows[i].get_window_type() == 0 || windows[i].get_window_type() == 3) {
+                    if (!windows[i].minimized) {
+                        windows[i].minimize();
+                    }
+                    else {
+                        this.alreadyMinimizedWindows.push(windows[i]);
+                    }                    
+                }
+            }
+        }
+        this.desktopShown = !this.desktopShown;
     }
 });
 
