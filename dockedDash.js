@@ -110,43 +110,29 @@ const DashSlideContainer = new Lang.Class({
 			this._child.allocate(childBox, flags);
 			this._child.set_clip(-childBox.x1, 0, -childBox.x1+availWidth, availHeight);
 		} else {
-			
-//log('IMPRINT ping '+box.x1+'   '+box.x2);
-mW = 500;
-let av = box.x2 - box.x1;
-let adjustedBox = box;
-let excessWidth = availWidth - mW;
-//if (av > mW){
-//adjustedBox.x1 -= Math.floor(excessWidth / 2);
-//adjustedBox.x2 += Math.floor(excessWidth / 2);
-
-//log('adj***** '+(adjustedBox.x1-Math.floor(excessWidth / 2)));
-//log('adj***** '+(adjustedBox.x2+Math.floor(excessWidth / 2)));
-//box = adjustedBox;
-//}		
+//let mW = 500;
+//let av = box.x2 - box.x1;
+//let adjustedBox = box;
+//let excessWidth = av - mW;
 				
 			this.set_allocation(box, flags);
-//log('IMPRINT '+box.x1+'   '+box.x2);
+
 			if (this._child == null)
 				return;
 
-			let availWidth = box.x2 - box.x1;
-//log('IMPRINT width '+availWidth);
-//------------------------------------------------
-/*
-        if (availWidth > maxWidth) {
-            let excessWidth = availWidth - maxWidth;
-            adjustedBox.x1 -= Math.floor(excessWidth / 2);
-            adjustedBox.x2 += Math.floor(excessWidth / 2);
-}*/
-//------------------------------------------------
-	
+			let availWidth = box.x2 - box.x1;	
 			let availHeight = box.y2 - box.y1;
 			let [minChildWidth, minChildHeight, natChildWidth, natChildHeight] =
 				this._child.get_preferred_size();
-//if (av > mW){
-//natChildWidth = mW;
-//}	
+
+/*
+if (av > mW) {
+//log('ZAPPPPP1 '+natChildWidth);
+natChildWidth = mW;
+//log('ZAPPPPP2 '+natChildWidth);
+}
+*/
+
 			let childWidth = natChildWidth;
 			let childHeight = natChildHeight;
 
@@ -159,7 +145,7 @@ let excessWidth = availWidth - mW;
 			
 			childBox.x1 = 0;
 			childBox.x2 = childBox.x1 + childWidth;
-			
+	
 			this._child.allocate(childBox, flags);
 			this._child.set_clip(-childBox.x1, 0, -childBox.x1+availWidth, availHeight);			
 		}
@@ -209,6 +195,33 @@ let excessWidth = availWidth - mW;
         return this._slidex;
     }
 
+});
+
+const myMaxWidthBin = new Lang.Class({
+    Name: 'myMaxWidthBin',
+    Extends: St.Bin,
+
+    vfunc_allocate: function(box, flags) {
+        let themeNode = this.get_theme_node();
+        let maxWidth = themeNode.get_max_width();
+        let availWidth = box.x2 - box.x1;
+        let adjustedBox = box;
+
+maxWidth = 1000;
+
+        if (availWidth > maxWidth) {
+            let excessWidth = availWidth - maxWidth;
+//log('::::: excessWidth = availWidth - maxWidth  '+excessWidth+'   '+availWidth+'   '+maxWidth);
+
+//            adjustedBox.x1 -= Math.floor(excessWidth / 2);
+//            adjustedBox.x2 += Math.floor(excessWidth / 2);
+                
+            adjustedBox.x1 += Math.floor(excessWidth / 2);
+            adjustedBox.x2 -= Math.floor(excessWidth / 2);        
+        }
+
+        this.parent(adjustedBox, flags);     
+    }
 });
 
 const dockedDash = new Lang.Class({
@@ -276,8 +289,11 @@ const dockedDash = new Lang.Class({
             direction:this._rtl?SlideDirection.RIGHT:SlideDirection.LEFT}, this._settings
         );
         // This is the actor whose hover status us tracked for autohide
-        this._box = new St.BoxLayout({ name: 'dashtodockBox', reactive: true, track_hover:true } );
-        this._box.connect("notify::hover", Lang.bind(this, this._hoverChanged));
+        this._dockBox = new St.BoxLayout({ name: 'dashtodockBox', reactive: true, track_hover:true });
+        
+this._myWidth = new myMaxWidthBin({ x_fill: true, y_fill: true, child: this._dockBox });
+        
+        this._dockBox.connect("notify::hover", Lang.bind(this, this._hoverChanged));
 
         // Create and apply height constraint to the dash. It's controlled by this.actor height
         this.actor.height = Main.overview.viewSelector.actor.height; // Guess initial reasonable height.
@@ -350,7 +366,7 @@ const dockedDash = new Lang.Class({
         this.dash._container.connect('allocation-changed', Lang.bind(this, this._updateStaticBox));
 
         // sync hover after a popupmenu is closed
-        this.dash.connect('menu-closed', Lang.bind(this, function(){this._box.sync_hover();}));
+        this.dash.connect('menu-closed', Lang.bind(this, function(){this._dockBox.sync_hover();}));
 
         // Restore dash accessibility
         Main.ctrlAltTabManager.addGroup(
@@ -375,8 +391,9 @@ const dockedDash = new Lang.Class({
 
         // Add dash container actor and the container to the Chrome.
         this.actor.set_child(this._slider);
-        this._slider.add_child(this._box);
-        this._box.add_actor(this.dash.actor);
+//        this._slider.add_child(this._dockBox);
+this._slider.add_child(this._myWidth);        
+        this._dockBox.add_actor(this.dash.actor);
 
         // Add aligning container without tracking it for input region (old affectsinputRegion: false that was removed).
         // The public method trackChrome requires the actor to be child of a tracked actor. Since I don't want the parent
@@ -385,7 +402,7 @@ const dockedDash = new Lang.Class({
         Main.layoutManager._trackActor(this._slider, {trackFullscreen: true});
 
         if ( this._settings.get_boolean('dock-fixed') )
-          Main.layoutManager._trackActor(this.dash._box, {affectsStruts: true});
+          Main.layoutManager._trackActor(this.dash._dockBox, {affectsStruts: true});
 
         // pretend this._slider is isToplevel child so that fullscreen is actually tracked
         let index = Main.layoutManager._findActor(this._slider);
@@ -471,11 +488,11 @@ const dockedDash = new Lang.Class({
         this._settings.connect('changed::dock-fixed', Lang.bind(this, function(){
 
             if(this._settings.get_boolean('dock-fixed')) {
-                Main.layoutManager._trackActor(this.dash._box, {affectsStruts: true});
+                Main.layoutManager._trackActor(this.dash._dockBox, {affectsStruts: true});
                 // show dash
                 this.disableAutoHide();
             } else {
-                Main.layoutManager._untrackActor(this.dash._box);
+                Main.layoutManager._untrackActor(this.dash._dockBox);
                 this.emit('box-changed');
             }
 
@@ -517,12 +534,12 @@ const dockedDash = new Lang.Class({
         // is not restored until the mouse move again (sync_hover has no effect).
         if(Main.wm._workspaceSwitcherPopup) {
             Mainloop.timeout_add(500, Lang.bind(this, function() {
-                    this._box.sync_hover();
+                    this._dockBox.sync_hover();
                     this._hoverChanged();
                     return false;
                 }));
         } else if(this._settings.get_boolean('autohide') && this._autohideStatus) {
-            if( this._box.hover ) {
+            if( this._dockBox.hover ) {
                 this._show();
             } else {
                 this._hide();
@@ -873,11 +890,11 @@ const dockedDash = new Lang.Class({
         let panelActor = Main.panel.actor;
 
         if (this._isPrimaryMonitor() && extendHeight && dockFixed) {
-            panelActor.set_width(this._monitor.width - this._box.width);
+            panelActor.set_width(this._monitor.width - this._dockBox.width);
             if (this._rtl) {
-                panelActor.set_margin_right(this._box.width - 1);
+                panelActor.set_margin_right(this._dockBox.width - 1);
             } else {
-                panelActor.set_margin_left(this._box.width - 1);
+                panelActor.set_margin_left(this._dockBox.width - 1);
             }
         } else {
             this._revertMainPanel();
@@ -894,10 +911,10 @@ const dockedDash = new Lang.Class({
     _updateStaticBox: function() {
 
         this.staticBox.init_rect(
-            this._monitor.x + (this._rtl?(this._monitor.width - this._box.width):0),
-            this.actor.y + this._slider.y + this._box.y,
-            this._box.width,
-            this._box.height
+            this._monitor.x + (this._rtl?(this._monitor.width - this._dockBox.width):0),
+            this.actor.y + this._slider.y + this._dockBox.y,
+            this._dockBox.width,
+            this._dockBox.height
         );
 
         // This prevents an allocation cycle warning. Somehow changing the topbar
@@ -963,7 +980,7 @@ const dockedDash = new Lang.Class({
     _onDragEnd: function(){
         if(this._oldAutohideStatus)
             this._autohideStatus  = this._oldAutohideStatus;
-        this._box.sync_hover();
+        this._dockBox.sync_hover();
         if(Main.overview._shown)
             this._pageChanged();
     },
@@ -983,7 +1000,7 @@ const dockedDash = new Lang.Class({
 
     // Show dock and give key focus to it
     _onAccessibilityFocus: function(){
-        this._box.navigate_focus(null, Gtk.DirectionType.TAB_FORWARD, false);
+        this._dockBox.navigate_focus(null, Gtk.DirectionType.TAB_FORWARD, false);
         this._animateIn(this._settings.get_double('animation-time'), 0);
     },
 
@@ -1059,7 +1076,7 @@ const dockedDash = new Lang.Class({
 
             this._signalHandler.pushWithLabel(label,
                 [
-                    this._box,
+                    this._dockBox,
                     'scroll-event',
                     Lang.bind(this, onScrollEvent)
                 ]
@@ -1192,10 +1209,10 @@ const dockedDash = new Lang.Class({
             this._autohideStatus = true;
             this._removeAnimations();
 
-            if(this._box.hover==true)
-                this._box.sync_hover();
+            if(this._dockBox.hover==true)
+                this._dockBox.sync_hover();
 
-            if( !this._box.hover || !this._settings.get_boolean('autohide')) {
+            if( !this._dockBox.hover || !this._settings.get_boolean('autohide')) {
                 this._animateOut(this._settings.get_double('animation-time'), 0);
                 delay = this._settings.get_double('animation-time');
             } else {

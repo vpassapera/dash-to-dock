@@ -95,8 +95,7 @@ const myShowAppsIcon = new Lang.Class({
 
 	showLabel: showHoverLabelTop
 });
-
-/**/
+/*
 const myMaxWidthBin = new Lang.Class({
     Name: 'myMaxWidthBin',
     Extends: St.Bin,
@@ -106,22 +105,25 @@ const myMaxWidthBin = new Lang.Class({
         let maxWidth = themeNode.get_max_width();
         let availWidth = box.x2 - box.x1;
         let adjustedBox = box;
-log('::::::::::::::::::: maxWidth availWidth  '+maxWidth+'   '+availWidth);
+
+maxWidth = 1000;
+
         if (availWidth > maxWidth) {
             let excessWidth = availWidth - maxWidth;
+log('::::: excessWidth = availWidth - maxWidth  '+excessWidth+'   '+availWidth+'   '+maxWidth);
+
 //            adjustedBox.x1 -= Math.floor(excessWidth / 2);
 //            adjustedBox.x2 += Math.floor(excessWidth / 2);
         
         
-            adjustedBox.x1 -= Math.floor(excessWidth / 2);
-            adjustedBox.x2 += Math.floor(excessWidth / 2);        
+            adjustedBox.x1 += Math.floor(excessWidth / 2);
+            adjustedBox.x2 -= Math.floor(excessWidth / 2);        
         }
 
         this.parent(adjustedBox, flags);
     }
 });
-
-
+*/
 /* This class is a fork of the upstream DashActor class (ui.dash.js)
  *
  * Summary of changes:
@@ -145,12 +147,12 @@ const myDashActor = new Lang.Class({
                       layout_manager: layout,
                       clip_to_allocation: true });
     },
-
-    vfunc_allocate: function(box, flags) {
+/*
+    vfunc_allocate: function(box, flags) {	
         let contentBox = this.get_theme_node().get_content_box(box);
         let availWidth = contentBox.x2 - contentBox.x1;        
         let availHeight = contentBox.y2 - contentBox.y1;
-//log('booooxx width  '+availWidth);
+log('IN myDASH vfunc_allocate availWidth  '+availWidth);
         this.set_allocation(box, flags);
 
         let [appIcons, showAppsButton] = this.get_children();
@@ -178,7 +180,7 @@ const myDashActor = new Lang.Class({
 				childBox.y1 = contentBox.y2 - showAppsNatHeight;
 				childBox.y2 = contentBox.y2;
 				showAppsButton.allocate(childBox, flags);          
-			}			
+			}
 		} else {
 			if( this._settings.get_boolean('show-apps-at-top') ) {
 				let [showAppsMinWidth, showAppsNatWidth] = showAppsButton.get_preferred_height(availWidth);
@@ -186,11 +188,12 @@ const myDashActor = new Lang.Class({
 				childBox.y1 = contentBox.y1;
 				childBox.x2 = contentBox.x2;
 				childBox.y2 = contentBox.y2;
+//log('!APPICONS WIDTH FOR DISPAY   x1 x2 totWid '+contentBox.x1+'  '+contentBox.x2+'  '+(contentBox.x2 - contentBox.x1));				
 				appIcons.allocate(childBox, flags);
 
 				childBox.x1 = contentBox.x1;
 				childBox.x2 = contentBox.x1 + showAppsNatWidth;
-				showAppsButton.allocate(childBox, flags);	
+				showAppsButton.allocate(childBox, flags);
 			} else {
 				childBox.x1 = contentBox.x1;
 				childBox.y1 = contentBox.y1;
@@ -202,8 +205,8 @@ const myDashActor = new Lang.Class({
 				childBox.x2 = contentBox.x2;
 				showAppsButton.allocate(childBox, flags);            
 			}
-		}
-    },
+		}	
+    },*/
 	
     vfunc_get_preferred_height: function(forWidth) {
         // We want to request the natural height of all our children
@@ -220,45 +223,7 @@ const myDashActor = new Lang.Class({
         [minHeight, ] = themeNode.adjust_preferred_height(minHeight, natHeight);
 
         return [minHeight, natHeight];
-    },/*
-//new    
-     vfunc_get_preferred_width: function(forHeight) {
-        // We want to request the natural height of all our children
-        // as our natural height, so we chain up to StWidget (which
-        // then calls BoxLayout), but we only request the showApps
-        // button as the minimum size
-
-        let [, natWidth] = this.parent(forHeight);
-
-        let themeNode = this.get_theme_node();
-//        let adjustedForWidth = themeNode.adjust_for_width(forHeight);
-//        let [, showAppsButton] = this.get_children();
-//        let [minWidth, ] = showAppsButton.get_preferred_height(adjustedForHeight);
-//        [minWidth, ] = themeNode.adjust_preferred_height(minWidth, natWidth);
-
-//        return [minWidth, natWidth];
-//log('WIDTH RUNS w '+natWidth);
-//if (natWidth>500) natWidth=500;
-
-minWidth = natWidth;
-return [minWidth, natWidth];
-    }*/  
-/*
-     vfunc_get_preferred_width: function(forHeight) {
-        let [, natWidth] = this.parent(forHeight);
-        let themeNode = this.get_theme_node();
-   
-let adjustedForWidth = themeNode.adjust_for_width(forHeight);
-let [, showAppsButton] = this.get_children();
-let [minWidth, ] = showAppsButton.get_preferred_height(adjustedForHeight);
-[minWidth, ] = themeNode.adjust_preferred_height(minWidth, natWidth);   
-        
-//if ( natWidth > (maxWidth - 20) ) natWidth = maxWidth - 20;
-//minWidth = natWidth;
-log('ASKED FOR HEIGHT   '+minWidth+'   '+natWidth+'   when   '+getMonitor.width);
-return [minWidth, natWidth];
-    }  
-*/       
+    }
 });
 
 /* This class is a fork of the upstream dash class (ui.dash.js)
@@ -305,22 +270,46 @@ const myDash = new Lang.Class({
                                                hscrollbar_policy: Gtk.PolicyType.AUTOMATIC,
                                                vscrollbar_policy: Gtk.PolicyType.NEVER});
                                                
-		this._scrollView.add_actor(this._box);
+		this._scrollView.add_actor(this._box);	                       
 		                       
         // Hideing the scrollbars
         //this._scrollView.hscroll.hide();
 
 //placing it somewhere where the size can be monitored
-this._contentBin = new myMaxWidthBin({ name: 'searchResultsBin',
-                                             x_fill: true,
-                                             y_fill: true,
-                                             child: this._scrollView });
+//this._contentBin = new myMaxWidthBin({ name: 'searchResultsBin',
+//                                             x_fill: true,
+//                                             y_fill: true,
+//                                             child: this._scrollView });
 
-this._container.add_actor(this._contentBin, { x_fill: true, y_fill: true, expand: true });
-//		this._container.add_actor(this._scrollView, { x_fill: true, y_fill: true, expand: true });
+//this._contentBin.add_actor(this._scrollView);
+//this._container.add_actor(this._scrollView, { x_fill: true, y_fill: true, expand: true });
+
+this._scrollView.hscroll.connect('scroll-start', Lang.bind(this, function() {
+//this.menu.passEvents = true;
+log('BBOX elem-B '+this._box.get_children().length);
+log ( 'BOX WIDTH   ' + this._box.width );
+log ( 'SCROLL VIEW WIDTH   ' + this._scrollView.width );
+}));
+this._scrollView.hscroll.connect('scroll-stop', Lang.bind(this, function() {
+//this.menu.passEvents = false;
+}));
+this._scrollView.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.NEVER);
+this._scrollView.set_mouse_scrolling(true);
+this._scrollView.hscroll.connect('button-release-event', Lang.bind(this, function(actor, event) {
+//let button = event.get_button();
+//if (button == 3) { //right click
+//do some activity...or not
+//}
+}));
+this._scrollView.hscroll.connect('button-press-event', Lang.bind(this, function(actor, event) {
+//log("ABOUT TO FREEZE");
+}));
+
+
+//this._myWidth = new myMaxWidthBin({ x_fill: true, y_fill: true, child: this._scrollView });
+//this._container.add_actor(this._myWidth, { expand: false });
+this._container.add_actor(this._scrollView);//, { expand: true });
 //--------------------------------------------------------------------------------------------------
-
-
 		if (!this._settings.get_boolean('dock-horizontal')) {
 			this._showAppsIcon = new Dash.ShowAppsIcon();
 		} else {
@@ -351,6 +340,17 @@ this._container.add_actor(this._contentBin, { x_fill: true, y_fill: true, expand
 				}
             }));
 */
+
+
+
+this.actor.connect('notify::height', Lang.bind(this,
+function() {
+log('_________notify::height______  '+this.actor.width);
+//this._box.queue_relayout();
+}));
+
+
+
         this._workId = Main.initializeDeferredWork(this._box, Lang.bind(this, this._redisplay));
 
         this._appSystem = Shell.AppSystem.get_default();
@@ -566,6 +566,7 @@ this._container.add_actor(this._contentBin, { x_fill: true, y_fill: true, expand
     },
 
     _adjustIconSize: function() {
+/*		
         // For the icon size, we only consider children which are "proper"
         // icons (i.e. ignoring drag placeholders) and which are not
         // animating out (which means they will be destroyed at the end of
@@ -602,6 +603,7 @@ log('_adjustIconSize OTHER THAN -1  _maxWidth '+this._maxWidth);
 			availHeight = maxContent.y2 - maxContent.y1;
 		} else {
 			availWidth = maxContent.x2 - maxContent.x1;
+log('_adjustIconSize  availWidth  '+availWidth);			
 		}
         let spacing = themeNode.get_length('spacing');
 
@@ -686,6 +688,7 @@ log('newIconSize  '+newIconSize+'  availSize '+availSize);
                              });
 log('RESIZED ICON');                             
         }
+*/        
     },
 
     _redisplay: function () {
