@@ -35,6 +35,10 @@ let DASH_ITEM_HOVER_TIMEOUT = Dash.DASH_ITEM_HOVER_TIMEOUT;
 
 let dock_horizontal = true;
 
+let subjectLabel = null;
+let descriptionLabel = null;
+let labelProceedBtn = null;
+
 const myLinkTray = new Lang.Class({
     Name: 'myLinkTray',
     Extends: St.Widget,
@@ -168,20 +172,63 @@ global.logError('' + e);
     },
 
 	populate_menu_secondary: function() {
-		let itemDelete = new PopupMenu.PopupBaseMenuItem;
-		let labelDelete = new St.Label({text: _("Delete Binned Files")});
-		//itemDelete.connect("activate", Lang.bind(this, this.deleteBin));
-		itemDelete.actor.add_child(labelDelete);
-		this.menu_secondary.addMenuItem(itemDelete);
+		let itemScanLinks = new PopupMenu.PopupBaseMenuItem;
+		let labelScanLinks = new St.Label({text: _("Scan Clipboard for Links")});
+		itemScanLinks.connect("activate", Lang.bind(this,  this.scanLinks));
+		itemScanLinks.actor.add_child(labelScanLinks);
+		this.menu_secondary.addMenuItem(itemScanLinks);
 		
         this.menu_secondary.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
-		let itemOpen = new PopupMenu.PopupBaseMenuItem;
-		let labelOpen = new St.Label({text: _("Open in Nautilus")});
-		//itemOpen.connect("activate", Lang.bind(this, this.openBin));
-		itemOpen.actor.add_child(labelOpen);
-		this.menu_secondary.addMenuItem(itemOpen);
+		let itemFreeContents = new PopupMenu.PopupBaseMenuItem;
+		let labelFreeContents = new St.Label({text: _("Free Tray Contents")});
+		itemFreeContents.connect("activate", Lang.bind(this, function() { this.callHandler(0) }));
+		itemFreeContents.actor.add_child(labelFreeContents);
+		this.menu_secondary.addMenuItem(itemFreeContents);
+
+		let itemRemoveTray = new PopupMenu.PopupBaseMenuItem;
+		let labelRemoveTray = new St.Label({text: _("Remove This Tray")});
+		itemRemoveTray.connect("activate", Lang.bind(this, function() { this.callHandler(1) }));
+		itemRemoveTray.actor.add_child(labelRemoveTray);
+		this.menu_secondary.addMenuItem(itemRemoveTray);
+		
+		let itemAddTray = new PopupMenu.PopupBaseMenuItem;
+		let labelAddTray = new St.Label({text: _("Add Another Tray")});
+		itemAddTray.connect("activate", Lang.bind(this, this.addTray));
+		itemAddTray.actor.add_child(labelAddTray);
+		this.menu_secondary.addMenuItem(itemAddTray);		
 	},
+    
+    
+    callHandler: function(conductor) {
+			if (conductor == 0) {
+				let subjectLabel = _("A");
+				let descriptionLabel = _("B");
+				let labelProceedBtn = _("C");
+				new ConfirmationDialog(Lang.bind(this, this.freeContents)).open();
+			} else if (conductor == 1) {
+				let subjectLabel = _("A");
+				let descriptionLabel = _("B");
+				let labelProceedBtn = _("C");
+				new ConfirmationDialog(Lang.bind(this, this.removeTray)).open();
+			}
+    },     
+
+    scanLinks: function() {
+
+    },    
+
+    freeContents: function() {
+
+    },
+    
+    removeTray: function() {
+
+    },
+    
+    addTray: function() {
+
+    },        
     
     _removeMenuTimeout: function() {
         if (this._menuTimeoutId > 0) {
@@ -191,7 +238,7 @@ global.logError('' + e);
     },
     
 	buttonPressed: function(actor, event) {
-		if (event.get_button() == 1) {
+		if (event.get_button() == 1 && event.get_click_count() == 1) {
 			this.popupMenu(true);
 		} else {
 			this.popupMenu(false);
@@ -693,6 +740,51 @@ const ConfirmClearBinDialog = new Lang.Class({
 			action: Lang.bind(this, function() {
 			this.close();
 			deleteMethod();
+			})
+		}
+		]);
+	}
+});
+
+const ConfirmationDialog = new Lang.Class({
+	Name: 'ConfirmationDialog',
+    Extends: ModalDialog.ModalDialog,
+
+	_init: function(givenMethod) {	
+		this.parent({ styleClass: null });
+		
+		let mainContentBox = new St.BoxLayout({ style_class: 'polkit-dialog-main-layout',
+			vertical: false });
+		this.contentLayout.add(mainContentBox, { x_fill: true, y_fill: true });
+
+		let messageBox = new St.BoxLayout({ style_class: 'polkit-dialog-message-layout',
+			vertical: true });
+		mainContentBox.add(messageBox, { y_align: St.Align.START });
+
+		this._subjectLabel = new St.Label({ style_class: 'polkit-dialog-headline',
+			text: subjectLabel });
+
+		messageBox.add(this._subjectLabel, { y_fill:  false, y_align: St.Align.START });
+
+		this._descriptionLabel = new St.Label({ style_class: 'polkit-dialog-description',
+			text: descriptionLabel });
+
+		messageBox.add(this._descriptionLabel, { y_fill:  true, y_align: St.Align.START });
+
+		this.setButtons(
+		[
+		{
+			label: _("Cancel"),
+			action: Lang.bind(this, function() {
+			this.close();
+			}),
+			key: Clutter.Escape
+		},
+		{
+			label: labelProceedBtn,
+			action: Lang.bind(this, function() {
+			this.close();
+			givenMethod();
 			})
 		}
 		]);
