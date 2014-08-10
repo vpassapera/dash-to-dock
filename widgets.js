@@ -134,6 +134,9 @@ const myLinkBox = new Lang.Class({
 		for(let i = 0; i < this.linksStorage.links_data.folders.length ;i++) {		
 			this.loadTray(this.linksStorage.links_data.folders[i].collection_id);	
 		}
+		
+		if (this.linksStorage.links_data.folders.length < 1)
+			this.addTray();
 	},
 
     loadTray: function(trayId) {
@@ -427,7 +430,8 @@ const myLinkTray = new Lang.Class({
     },
 
     _createIcon: function(size) {
-        return new St.Icon({ gicon: Gio.icon_new_for_string(Me.path + "/media/links-tray.svg"),
+        return new St.Icon({ //gicon: Gio.icon_new_for_string(Me.path + "/media/links-tray.svg"),
+								icon_name: 'view-list-symbolic',
 								icon_size: size,
 								style_class: 'show-apps-icon',
 								track_hover: true });
