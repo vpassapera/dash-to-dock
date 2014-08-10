@@ -35,12 +35,64 @@ let DASH_ITEM_HOVER_TIMEOUT = Dash.DASH_ITEM_HOVER_TIMEOUT;
 
 let dock_horizontal = true;
 
+/* This class is a extension of the upstream ShowAppsIcon class (ui.dash.js). */
+const myShowAppsIcon = new Lang.Class({
+    Name: 'myShowAppsIcon',
+    Extends: Dash.ShowAppsIcon,
+
+    _init: function() {
+        this.parent();
+    },
+
+	showLabel: function() {
+		if (!this._labelText) {
+			return;
+		}
+
+		this.label.set_text(this._labelText);
+		this.label.opacity = 0;
+		this.label.show();
+
+		//let [stageX, stageY] = this.actor.get_transformed_position();
+		let [stageX, stageY] = this.get_transformed_position();
+
+		let labelHeight = this.label.get_height();
+		let labelWidth = this.label.get_width();
+
+		let node = this.label.get_theme_node();
+		let yOffset = node.get_length('-x-offset');
+		let y = stageY - labelHeight - yOffset;
+		
+		//let itemWidth = this.actor.allocation.x2 - this.actor.allocation.x1;
+		let itemWidth = this.allocation.x2 - this.allocation.x1;
+		let xOffset = Math.floor((itemWidth - labelWidth) / 2);
+		let x = stageX + xOffset;
+
+		this.label.set_position(x, y);
+
+		Tweener.addTween(this.label, {
+			opacity: 255,
+			time: DASH_ITEM_LABEL_SHOW_TIME,
+			transition: 'easeOutQuad',
+		});
+	},
+
+    hideLabel: function () {
+        Tweener.addTween(this.label,
+                         { opacity: 0,
+                           time: DASH_ITEM_LABEL_HIDE_TIME,
+                           transition: 'easeOutQuad',
+                           onComplete: Lang.bind(this, function() {
+                               this.label.hide();
+                           })
+		});
+    }
+});
+
 const myLinkTray = new Lang.Class({
     Name: 'myLinkTray',
-    Extends: St.Widget,
                         
-    _init: function(iconSize, settings) {
-this.parent();					
+    _init: function(iconSize, settings) {				
 		this._labelText = _("Links Tray");
 		this.label = new St.Label({ style_class: 'dash-label'});
 		this.label.hide();
@@ -67,8 +119,7 @@ this.parent();
 
 		this.menu = new myLinkTrayMenu(this.actor, iconSize);
 		this.menu.actor.hide();
-//		this.menu_secondary = new PopupMenu.PopupMenu(this.actor, 0.5, St.Side.BOTTOM, 0);
-this.menu_secondary = new PopupMenu.PopupMenu(this.icon.actor, 0.5, St.Side.BOTTOM, 0);
+		this.menu_secondary = new PopupMenu.PopupMenu(this.icon.actor, 0.5, St.Side.BOTTOM, 0);
 		this.menu_secondary.blockSourceEvents = true;		
 		this.populate_menu_secondary();
 		this.menu_secondary.actor.add_style_class_name('app-well-menu');
@@ -242,7 +293,7 @@ this.menu_secondary = new PopupMenu.PopupMenu(this.icon.actor, 0.5, St.Side.BOTT
 	        //this._draggable.fakeRelease();
 			this.emit('menu-state-changed', true);
 			this.actor.set_hover(true);
-this.menu_secondary.close();			
+			this.menu_secondary.close();			
 			this.menu.toggle();		
 			this.menuManager.ignoreRelease();
 			this.emit('sync-tooltip');
@@ -252,7 +303,7 @@ this.menu_secondary.close();
 	        //this._draggable.fakeRelease();
 			this.emit('menu-state-changed', true);
 			this.actor.set_hover(true);
-this.menu.close();	
+			this.menu.close();	
 			this.menu_secondary.toggle();
 			this.menuManager.ignoreRelease();
 			this.emit('sync-tooltip');		

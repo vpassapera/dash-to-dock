@@ -85,20 +85,6 @@ const myDashItemContainer = new Lang.Class({
 	showLabel: showHoverLabelTop
 });
 
-/* This class is a extension of the upstream ShowAppsIcon class (ui.dash.js).
- * Changes are done to make label shows on top side.
- */
-const myShowAppsIcon = new Lang.Class({
-    Name: 'myShowAppsIcon',
-    Extends: Dash.ShowAppsIcon,
-
-    _init: function() {
-        this.parent();
-    },
-
-	showLabel: showHoverLabelTop
-});
-
 /* This class is a fork of the upstream DashActor class (ui.dash.js)
  *
  * Summary of changes:
@@ -211,39 +197,14 @@ const myDash = new Lang.Class({
 			this._rightOrBottomArrow.connect('clicked', Lang.bind(this, this._onScrollBtnRightOrBottom));			
 		}
 
-		if (!dock_horizontal) {
-			this._showAppsIcon = new Dash.ShowAppsIcon();
-		} else {		
-			this._showAppsIcon = new myShowAppsIcon();
-		}
+		// Init applet variables
+		this.showAppsButton = new St.Button({ toggle_mode: true });
+		this._showAppsIcon = null;
+		this._linkTray = null;
+		this._showDesktop = null;
+		this._recyclingBin = null;
 
-        this._showAppsIcon.childScale = 1;
-        this._showAppsIcon.childOpacity = 255;
-        this._showAppsIcon.icon.setIconSize(this.iconSize);
-        this._hookUpLabel(this._showAppsIcon);
-
-        this.showAppsButton = this._showAppsIcon.toggleButton;
-//------------------------------------------------------------------------
-		this._linkTray = new Widgets.myLinkTray(this.iconSize, this._settings);
-		this._linkTray.childScale = 1;
-		this._linkTray.childOpacity = 255;
-		this._linkTray.icon.setIconSize(this.iconSize);
-		this._hookUpLabelForApplets(this._linkTray);
-//-------------->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-		this._showDesktop = new Widgets.myShowDesktop(this.iconSize, this._settings);
-		this._showDesktop.childScale = 1;
-		this._showDesktop.childOpacity = 255;
-		this._showDesktop.icon.setIconSize(this.iconSize);
-		this._hookUpLabelForApplets(this._showDesktop);
-//-------------->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-		this._recyclingBin = new Widgets.myRecyclingBin(this.iconSize, this._settings);
-		this._recyclingBin.childScale = 1;
-		this._recyclingBin.childOpacity = 255;
-		this._recyclingBin.icon.setIconSize(this.iconSize);	
-		this._hookUpLabelForApplets(this._recyclingBin);		
-//-------------->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-		this.make_dock();	
-//------ADDING WIDGETS HERE------------------------------------------------//
+		this.make_dock();
 
         this.actor = new St.Bin({ child: this._container, y_align: St.Align.START });
          
@@ -301,18 +262,39 @@ const myDash = new Lang.Class({
 				let pos = parseInt(position[i]);
 				switch (pos) {
 					case 1:
-						this._container.add_actor(this._showAppsIcon);
+ 						this._showAppsIcon = new Widgets.myShowAppsIcon();
+						this._showAppsIcon.childScale = 1;
+						this._showAppsIcon.childOpacity = 255;
+						this._showAppsIcon.icon.setIconSize(this.iconSize);
+						this._hookUpLabel(this._showAppsIcon);
+						this.showAppsButton = this._showAppsIcon.toggleButton;
+						this._container.add_actor(this._showAppsIcon);				
 						break;
 					case 2:
 						this._container.add_actor(this._appsContainer);
 						break;			
 					case 3:
+						this._linkTray = new Widgets.myLinkTray(this.iconSize, this._settings);
+						this._linkTray.childScale = 1;
+						this._linkTray.childOpacity = 255;
+						this._linkTray.icon.setIconSize(this.iconSize);
+						this._hookUpLabelForApplets(this._linkTray);					
 						this._container.add_actor(this._linkTray.actor);
 						break;
 					case 4:
+						this._showDesktop = new Widgets.myShowDesktop(this.iconSize, this._settings);
+						this._showDesktop.childScale = 1;
+						this._showDesktop.childOpacity = 255;
+						this._showDesktop.icon.setIconSize(this.iconSize);
+						this._hookUpLabelForApplets(this._showDesktop);					
 						this._container.add_actor(this._showDesktop.actor);
 						break;
 					case 5:
+						this._recyclingBin = new Widgets.myRecyclingBin(this.iconSize, this._settings);
+						this._recyclingBin.childScale = 1;
+						this._recyclingBin.childOpacity = 255;
+						this._recyclingBin.icon.setIconSize(this.iconSize);	
+						this._hookUpLabelForApplets(this._recyclingBin);
 						this._container.add_actor(this._recyclingBin.actor);
 						break;												
 					default:
@@ -321,7 +303,7 @@ const myDash = new Lang.Class({
 			}
 		} catch (e) {
 			log("Error in adding applets "+e.message);
-		}		
+		}
     },
         
     _onScrollBtnLeftOrTop: function() {
@@ -406,7 +388,7 @@ const myDash = new Lang.Class({
         Main.queueDeferredWork(this._workId);
     },
 
-    _hookUpLabel: function(item, appIcon) {	
+    _hookUpLabel: function(item, appIcon) {		
         item.child.connect('notify::hover', Lang.bind(this, function() {
             this._syncLabel(item, appIcon);
         }));
@@ -423,41 +405,9 @@ const myDash = new Lang.Class({
         }
     },
 
-    _hookUpLabelForApplets: function(item) {
-        item.actor.connect('notify::hover', Lang.bind(this, function() {		
-            //this._syncLabel(item, null);
-            //let shouldShow = appIcon ? appIcon.shouldShowTooltip() : item.child.get_hover();//ORIGINAL in _sync
-			//let shouldShow = item.actor.get_hover();
-			let shouldShow = item.actor.get_hover();
-			if (shouldShow) {
-				if (this._showLabelTimeoutId == 0) {
-					let timeout = this._labelShowing ? 0 : DASH_ITEM_HOVER_TIMEOUT;
-					this._showLabelTimeoutId = Mainloop.timeout_add(timeout,
-						Lang.bind(this, function() {
-							this._labelShowing = true;
-							item.showLabel();
-							this._showLabelTimeoutId = 0;
-							return GLib.SOURCE_REMOVE;
-						}));
-					if (this._resetHoverTimeoutId > 0) {
-						Mainloop.source_remove(this._resetHoverTimeoutId);
-						this._resetHoverTimeoutId = 0;
-					}
-				}
-			} else {
-				if (this._showLabelTimeoutId > 0)
-					Mainloop.source_remove(this._showLabelTimeoutId);
-					this._showLabelTimeoutId = 0;
-					item.hideLabel();
-					if (this._labelShowing) {
-						this._resetHoverTimeoutId = Mainloop.timeout_add(DASH_ITEM_HOVER_TIMEOUT,
-							Lang.bind(this, function() {
-								this._labelShowing = false;
-								this._resetHoverTimeoutId = 0;
-								return GLib.SOURCE_REMOVE;
-							}));
-					}
-			}
+    _hookUpLabelForApplets: function(item) {	
+        item.actor.connect('notify::hover', Lang.bind(this, function() {
+            this._syncLabelForApplets(item);
         }));
 
         Main.overview.connect('hiding', Lang.bind(this, function() {
@@ -465,7 +415,6 @@ const myDash = new Lang.Class({
             item.hideLabel();
         }));
     },
-
 
     _createAppItem: function(app) {
 		let appIcon = new myAppIcon(this._settings, app, 
@@ -553,6 +502,39 @@ const myDash = new Lang.Class({
                     }));
             }
         }
+    },
+
+    _syncLabelForApplets: function (item) {
+		let shouldShow = item.actor.get_hover();
+		if (shouldShow) {
+			if (this._showLabelTimeoutId == 0) {
+				let timeout = this._labelShowing ? 0 : DASH_ITEM_HOVER_TIMEOUT;
+				this._showLabelTimeoutId = Mainloop.timeout_add(timeout,
+					Lang.bind(this, function() {
+						this._labelShowing = true;
+						item.showLabel();
+						this._showLabelTimeoutId = 0;
+						return GLib.SOURCE_REMOVE;
+					}));
+				if (this._resetHoverTimeoutId > 0) {
+					Mainloop.source_remove(this._resetHoverTimeoutId);
+					this._resetHoverTimeoutId = 0;
+				}
+			}
+		} else {
+			if (this._showLabelTimeoutId > 0)
+				Mainloop.source_remove(this._showLabelTimeoutId);
+			this._showLabelTimeoutId = 0;
+			item.hideLabel();
+			if (this._labelShowing) {
+				this._resetHoverTimeoutId = Mainloop.timeout_add(DASH_ITEM_HOVER_TIMEOUT,
+				Lang.bind(this, function() {
+					this._labelShowing = false;
+					this._resetHoverTimeoutId = 0;
+					return GLib.SOURCE_REMOVE;
+				}));
+			}
+		}
     },
 
     _adjustIconSize: function() {	
