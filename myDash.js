@@ -31,7 +31,6 @@ let DASH_ITEM_LABEL_HIDE_TIME = Dash.DASH_ITEM_LABEL_HIDE_TIME;
 let DASH_ITEM_HOVER_TIMEOUT = Dash.DASH_ITEM_HOVER_TIMEOUT;
 
 let dock_horizontal = true;
-let dock_placement = 3;
 
 /* This class is a extension of the upstream DashItemContainer class (ui.dash.js).
  * Changes are done to make label shows on top side. SOURCE: simple-dock extension.
@@ -112,6 +111,7 @@ const myDashActor = new Lang.Class({
 
     _init: function(settings) {
         this._settings = settings;
+        
         let layout;
         if (!dock_horizontal) {
 			layout = new Clutter.BoxLayout({ orientation: Clutter.Orientation.VERTICAL });
@@ -133,7 +133,7 @@ const myDashActor = new Lang.Class({
         let [appIcons, showAppsButton] = this.get_children();
  
         let childBox = new Clutter.ActorBox();
-        if (!dock_horizontal) {
+		if (!dock_horizontal) {
 			let [showAppsMinHeight, showAppsNatHeight] = showAppsButton.get_preferred_height(availWidth);
 			if( this._settings.get_boolean('show-apps-at-top') ) {
 				childBox.x1 = contentBox.x1;
@@ -213,16 +213,14 @@ const myDashActor = new Lang.Class({
 const myDash = new Lang.Class({
     Name: 'dashToDock.myDash',
 
-    _init : function(settings) {
+    _init: function(settings) {	
 		this._settings = settings;
 		
-		dock_placement = this._settings.get_int('dock-placement');		
-        if (dock_placement == 0 || dock_placement == 1) {
+		if (this._settings.get_int('dock-placement') == 0 || this._settings.get_int('dock-placement') == 1)
 			dock_horizontal = false;
-		} else if (dock_placement == 2 || dock_placement == 3) {
+		else
 			dock_horizontal = true;
-		}
-					
+        
         this._signalHandler = new Convenience.globalSignalHandler();				
         this._maxWidth = -1;        
 		this._maxHeight = -1;
@@ -239,7 +237,7 @@ const myDash = new Lang.Class({
 
         this._container = new myDashActor(settings);
         this._box;
-        if (!dock_horizontal) {        
+        if (!dock_horizontal) {
 			this._box = new St.BoxLayout({ vertical: true, clip_to_allocation: false });
 		} else {
 			this._box = new St.BoxLayout({ vertical: false, clip_to_allocation: false });
@@ -294,7 +292,7 @@ const myDash = new Lang.Class({
 
 		if (!dock_horizontal) {
 			this._showAppsIcon = new Dash.ShowAppsIcon();
-		} else {
+		} else {		
 			this._showAppsIcon = new myShowAppsIcon();
 		}
 
@@ -471,7 +469,7 @@ const myDash = new Lang.Class({
 				this._itemMenuStateChanged(item, opened);
 			}));
 
-		let item;
+		let item;	
 		if (!dock_horizontal) {
 			item = new Dash.DashItemContainer();
 		} else {
@@ -1095,10 +1093,10 @@ const myAppIcon = new Lang.Class({
         this.actor.fake_release();
         this._draggable.fakeRelease();
 
-        if (!this._menu) {
+        if (!this._menu) {		
 			if (!dock_horizontal) {
 				this._menu = new AppDisplay.AppIconMenu(this);
-			} else {
+			} else {				
 				this._menu = new myAppIconMenu(this);				
 			}
 

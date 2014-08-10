@@ -25,7 +25,6 @@ const MyDash = Me.imports.myDash;
 const PRESSURE_TIMEOUT = 1000;
 
 let dock_horizontal = true;
-let dock_placement = 3;
 
 const SlideDirection = {
     LEFT: 0,
@@ -52,7 +51,7 @@ const DashSlideContainer = new Lang.Class({
 
     _init: function(params, settings) {
 		this._settings = settings;
-        
+                
         /* Default local params */
         let localDefaults = {
             direction: SlideDirection.LEFT,
@@ -82,7 +81,8 @@ const DashSlideContainer = new Lang.Class({
     },
 
     vfunc_allocate: function(box, flags) {
-		if (!dock_horizontal) {
+			
+        if (!dock_horizontal) {
 			let panelHeight =  Main.panel.actor.height;
 			let maxH = Main.layoutManager.primaryMonitor.height - panelHeight;
 			let boxH = box.y2 - box.y1;
@@ -198,7 +198,7 @@ const DashSlideContainer = new Lang.Class({
     /* Just the child width but taking into account the slided out part */
     vfunc_get_preferred_width: function(forHeight) {
 		let [minWidth, natWidth ] = this._child.get_preferred_width(forHeight);   
-        if (!dock_horizontal) {			
+		if (!dock_horizontal) {		
 			minWidth = (minWidth - this._slideoutWidth)*this._slidex + this._slideoutWidth;
 			natWidth = (natWidth - this._slideoutWidth)*this._slidex + this._slideoutWidth;
 		}	
@@ -208,9 +208,9 @@ const DashSlideContainer = new Lang.Class({
     /* Just the child min height, no border, no positioning etc. */
     vfunc_get_preferred_height: function(forWidth) {
         let [minHeight, natHeight] = this._child.get_preferred_height(forWidth);
-		if (dock_horizontal) {
+		if (!dock_horizontal) {
 			minHeight = (minHeight - this._slideoutWidth)*this._slidex + this._slideoutWidth;
-			natHeight = (natHeight - this._slideoutWidth)*this._slidex + this._slideoutWidth;
+			natHeight = (natHeight - this._slideoutWidth)*this._slidex + this._slideoutWidth;		
 		} 
         return [minHeight, natHeight];
     },
@@ -243,19 +243,17 @@ const DashSlideContainer = new Lang.Class({
 
 const dockedDash = new Lang.Class({
     Name: 'dockedDash',
- 
+    
     _init: function(settings) {
 
         // Load settings
         this._settings = settings;
         this._bindSettingsChanges();
 
-		dock_placement = this._settings.get_int('dock-placement');		
-        if (dock_placement == 0 || dock_placement == 1) {
+		if (this._settings.get_int('dock-placement') == 0 || this._settings.get_int('dock-placement') == 1)
 			dock_horizontal = false;
-		} else if (dock_placement == 2 || dock_placement == 3) {
+		else
 			dock_horizontal = true;
-		}
 
         // Authohide current status. Not to be confused with autohide enable/disagle global (g)settings
         this._autohideStatus = this._settings.get_boolean('autohide') && !this._settings.get_boolean('dock-fixed');
@@ -307,7 +305,7 @@ const dockedDash = new Lang.Class({
         this.actor._delegate = this;
 
         // This is the sliding actor whose allocation is to be tracked for input regions
-        this._slider = new DashSlideContainer({ direction: dock_placement }, this._settings);
+        this._slider = new DashSlideContainer({ direction: this._settings.get_int('dock-placement') }, this._settings);
         
         // This is the actor whose hover status us tracked for autohide
         this._dockBox = new St.BoxLayout({ name: 'dashtodockBox', reactive: true, track_hover:true });
@@ -429,7 +427,7 @@ const dockedDash = new Lang.Class({
         Main.layoutManager._trackedActors[index].isToplevel = true;
     },
 
-    _initialize: function(){
+    _initialize: function() {
 
         if(this._realizeId>0){
             this.actor.disconnect(this._realizeId);
@@ -460,7 +458,7 @@ const dockedDash = new Lang.Class({
         this._updateBarrier();
     },
 
-    destroy: function(){
+    destroy: function() {
 
         // Disconnect global signals
         this._signalHandler.disconnect();
@@ -735,7 +733,7 @@ const dockedDash = new Lang.Class({
 					
             let x,y, direction;
 			if (!dock_horizontal) {
-				if (dock_placement == 1) {
+				if (this._settings.get_int('dock-placement') == 1) {
 					x = this._monitor.x + this._monitor.width;
 					direction = Meta.BarrierDirection.NEGATIVE_X;
 				} else {				
@@ -903,7 +901,7 @@ const dockedDash = new Lang.Class({
 
         if (this._isPrimaryMonitor() && extendSize && dockFixed) {
             panelActor.set_width(this._monitor.width - this._dockBox.width);
-            if (dock_placement == 1) {
+            if (this._settings.get_int('dock-placement') == 1) {
                 panelActor.set_margin_right(this._dockBox.width - 1);
             } else {
                 panelActor.set_margin_left(this._dockBox.width - 1);
@@ -922,7 +920,7 @@ const dockedDash = new Lang.Class({
 
     _updateStaticBox: function() {
         this.staticBox.init_rect(
-			this._monitor.x + ((dock_placement == 1) ? (this._monitor.width - this._dockBox.width):0),
+			this._monitor.x + ((this._settings.get_int('dock-placement') == 1) ? (this._monitor.width - this._dockBox.width):0),
             this.actor.y + this._slider.y + this._dockBox.y,
             this._dockBox.width,
             this._dockBox.height
@@ -949,7 +947,7 @@ const dockedDash = new Lang.Class({
 
         let position, anchor_point;
 
-        if(dock_placement == 1){
+        if(this._settings.get_int('dock-placement') == 1){
             anchor_point = Clutter.Gravity.NORTH_EAST;
             position = this.staticBox.x2;
         } else {
@@ -982,13 +980,13 @@ const dockedDash = new Lang.Class({
         this._animStatus.clearAll();
     },
 
-    _onDragStart: function(){
+    _onDragStart: function() {
         this._oldAutohideStatus = this._autohideStatus;
         this._autohideStatus = false;
         this._animateIn(this._settings.get_double('animation-time'), 0);
     },
 
-    _onDragEnd: function(){
+    _onDragEnd: function() {
         if(this._oldAutohideStatus)
             this._autohideStatus  = this._oldAutohideStatus;
         this._dockBox.sync_hover();
@@ -1010,7 +1008,7 @@ const dockedDash = new Lang.Class({
     },
 
     // Show dock and give key focus to it
-    _onAccessibilityFocus: function(){
+    _onAccessibilityFocus: function() {
         this._dockBox.navigate_focus(null, Gtk.DirectionType.TAB_FORWARD, false);
         this._animateIn(this._settings.get_double('animation-time'), 0);
     },
@@ -1025,7 +1023,7 @@ const dockedDash = new Lang.Class({
 
         let selector = Main.overview.viewSelector;
 
-        if(selector._showAppsButton.checked !== this.dash.showAppsButton.checked){
+        if(selector._showAppsButton.checked !== this.dash.showAppsButton.checked) {
 
             if(this.dash.showAppsButton.checked){
                 if (!Main.overview._shown) {
@@ -1116,7 +1114,7 @@ const dockedDash = new Lang.Class({
 
                 let [x,y] = event.get_coords();
 
-                if (dock_placement == 1) {
+                if (this._settings.get_int('dock-placement') == 1) {
                     if(x < this.staticBox.x2 - 1)
                         return false;
                 } else {
@@ -1142,7 +1140,7 @@ const dockedDash = new Lang.Class({
                 break;
             }
 
-            if(direction !==0 ){
+            if(direction !==0 ) {
 
                 // Prevent scroll events from triggering too many workspace switches
                 // by adding a deadtime between each scroll event.
@@ -1182,7 +1180,7 @@ const dockedDash = new Lang.Class({
 
     _updateCustomTheme: function() {
         if (this._settings.get_boolean('apply-custom-theme')) {
-			switch (dock_placement) {
+			switch (this._settings.get_int('dock-placement')) {
 				case 0:
 					this.actor.add_style_class_name('dashtodockLTR');				
 					break;
@@ -1200,7 +1198,7 @@ const dockedDash = new Lang.Class({
 					break;
 			}
         } else {
-			switch (dock_placement) {
+			switch (this._settings.get_int('dock-placement')) {
 				case 0:
 					this.actor.remove_style_class_name('dashtodockLTR');
 					break;
