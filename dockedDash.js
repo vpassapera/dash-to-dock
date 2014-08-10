@@ -765,7 +765,7 @@ const dockedDash = new Lang.Class({
 	  
 			// Corner rounding
 			let borderColor = themeNode.get_border_color(St.Side.BOTTOM);
-			let borderWidth = themeNode.get_border_width(St.Side.BOTTOM);
+			let borderWidth = themeNode.get_border_width(St.Side.BOTTOM);		
 			let borderRadius = themeNode.get_border_radius(St.Corner.TOPRIGHT);
 
 			let newStyle = 'border-bottom: none;' +

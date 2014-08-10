@@ -83,7 +83,8 @@
     background: rgba(0,0,0,0.9);
 }
 
-/* HORIZONTAL DOCK --------------------------------------
+/* -----------------------------------------------------------------------------
+ * HORIZONTAL DOCK 
  * Q: Why use png's not svg's for the horizontal dock?
  * A: Inkscape does not save them properly and they are 
  *    invisible. If you can fix it, and the dots for the
@@ -94,8 +95,9 @@
 
 /* Shrink the dash by reducing padding and border radius */
 #dashtodockContainer.dashtodockHorizontal #dash {
-    padding: 1px 0px;
-border-bottom: none;    
+    padding: 1px;
+    border-left: 1px;    
+	border-bottom: none;    
     border-radius: 6px 6px 0px 0px;
 }
 
@@ -136,35 +138,35 @@ background: #f2f00;
 }
 
 #dashtodockContainer.dashtodockHorizontal .running1 {
-    background-image: url('./media/one_btt.png');
+    background-image: url('./media/one_btt.svg');
 }
 
 #dashtodockContainer.dashtodockHorizontal:ttb .running1 {
-    background-image: url('./media/one_ttb.png');
+    background-image: url('./media/one_ttb.svg');
 }
 
 #dashtodockContainer.dashtodockHorizontal .running2 {
-    background-image: url('./media/two_btt.png');
+    background-image: url('./media/two_btt.svg');
 }
 
 #dashtodockContainer.dashtodockHorizontal:ttb .running2 {
-    background-image: url('./media/two_ttb.png');
+    background-image: url('./media/two_ttb.svg');
 }
 
 #dashtodockContainer.dashtodockHorizontal .running3 {
-   background-image: url('./media/three_btt.png');
+   background-image: url('./media/three_btt.svg');
 }
 
 #dashtodockContainer.dashtodockHorizontal:ttb .running3 {
-    background-image: url('./media/three_ttb.png');
+    background-image: url('./media/three_ttb.svg');
 }
 
 #dashtodockContainer.dashtodockHorizontal .running4 {
-    background-image: url('./media/four_btt.png');
+    background-image: url('./media/four_btt.svg');
 }
 
 #dashtodockContainer.dashtodockHorizontal:ttb .running4 {
-    background-image: url('./media/four_ttb.png');
+    background-image: url('./media/four_ttb.svg');
 }
 
 #dashtodockContainer.dashtodockHorizontal #dash {
