@@ -109,17 +109,44 @@ const DashSlideContainer = new Lang.Class({
 			childBox.y2 = childBox.y1 + childHeight;
 			this._child.allocate(childBox, flags);
 			this._child.set_clip(-childBox.x1, 0, -childBox.x1+availWidth, availHeight);
-		} else {		
-			this.set_allocation(box, flags);
+		} else {
+			
+//log('IMPRINT ping '+box.x1+'   '+box.x2);
+mW = 500;
+let av = box.x2 - box.x1;
+let adjustedBox = box;
+let excessWidth = availWidth - mW;
+//if (av > mW){
+//adjustedBox.x1 -= Math.floor(excessWidth / 2);
+//adjustedBox.x2 += Math.floor(excessWidth / 2);
 
+//log('adj***** '+(adjustedBox.x1-Math.floor(excessWidth / 2)));
+//log('adj***** '+(adjustedBox.x2+Math.floor(excessWidth / 2)));
+//box = adjustedBox;
+//}		
+				
+			this.set_allocation(box, flags);
+//log('IMPRINT '+box.x1+'   '+box.x2);
 			if (this._child == null)
 				return;
 
 			let availWidth = box.x2 - box.x1;
+//log('IMPRINT width '+availWidth);
+//------------------------------------------------
+/*
+        if (availWidth > maxWidth) {
+            let excessWidth = availWidth - maxWidth;
+            adjustedBox.x1 -= Math.floor(excessWidth / 2);
+            adjustedBox.x2 += Math.floor(excessWidth / 2);
+}*/
+//------------------------------------------------
+	
 			let availHeight = box.y2 - box.y1;
 			let [minChildWidth, minChildHeight, natChildWidth, natChildHeight] =
 				this._child.get_preferred_size();
-
+//if (av > mW){
+//natChildWidth = mW;
+//}	
 			let childWidth = natChildWidth;
 			let childHeight = natChildHeight;
 
@@ -138,14 +165,13 @@ const DashSlideContainer = new Lang.Class({
 		}
     },
 
-
     /* Just the child width but taking into account the slided out part */
     vfunc_get_preferred_width: function(forHeight) {
 		let [minWidth, natWidth ] = this._child.get_preferred_width(forHeight);   
         if (!this._settings.get_boolean('dock-horizontal')) {
 			minWidth = (minWidth - this._slideoutWidth)*this._slidex + this._slideoutWidth;
 			natWidth = (natWidth - this._slideoutWidth)*this._slidex + this._slideoutWidth;
-		}
+		}	
         return [minWidth, natWidth];
     },
  
@@ -258,7 +284,7 @@ const dockedDash = new Lang.Class({
         this.constrainHeight = new Clutter.BindConstraint({ source: this.actor,
                                                             coordinate: Clutter.BindCoordinate.HEIGHT });
         this.dash.actor.add_constraint(this.constrainHeight);
-
+         
         // Connect global signals
         this._signalHandler = new Convenience.globalSignalHandler();
         this._signalHandler.push(
@@ -364,7 +390,6 @@ const dockedDash = new Lang.Class({
         // pretend this._slider is isToplevel child so that fullscreen is actually tracked
         let index = Main.layoutManager._findActor(this._slider);
         Main.layoutManager._trackedActors[index].isToplevel = true ;
-
     },
 
     _initialize: function(){
@@ -911,7 +936,7 @@ const dockedDash = new Lang.Class({
         this._updateYPosition();
     },
 
-    _getMonitor: function(){
+    _getMonitor: function() {
 
         let monitorIndex = this._settings.get_int('preferred-monitor');
         let monitor;

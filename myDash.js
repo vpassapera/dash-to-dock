@@ -1,5 +1,7 @@
 // -*- mode: js; js-indent-level: 4; indent-tabs-mode: nil -*-
 
+const Gtk = imports.gi.Gtk;//For scrollbar policy
+
 const Clutter = imports.gi.Clutter;
 const GLib = imports.gi.GLib;
 const Signals = imports.signals;
@@ -63,7 +65,6 @@ const showHoverLabelTop = function() {
         time: DASH_ITEM_LABEL_SHOW_TIME,
         transition: 'easeOutQuad',
     });
-
 };
 
 /* 
@@ -95,6 +96,32 @@ const myShowAppsIcon = new Lang.Class({
 	showLabel: showHoverLabelTop
 });
 
+/**/
+const myMaxWidthBin = new Lang.Class({
+    Name: 'myMaxWidthBin',
+    Extends: St.Bin,
+
+    vfunc_allocate: function(box, flags) {
+        let themeNode = this.get_theme_node();
+        let maxWidth = themeNode.get_max_width();
+        let availWidth = box.x2 - box.x1;
+        let adjustedBox = box;
+log('::::::::::::::::::: maxWidth availWidth  '+maxWidth+'   '+availWidth);
+        if (availWidth > maxWidth) {
+            let excessWidth = availWidth - maxWidth;
+//            adjustedBox.x1 -= Math.floor(excessWidth / 2);
+//            adjustedBox.x2 += Math.floor(excessWidth / 2);
+        
+        
+            adjustedBox.x1 -= Math.floor(excessWidth / 2);
+            adjustedBox.x2 += Math.floor(excessWidth / 2);        
+        }
+
+        this.parent(adjustedBox, flags);
+    }
+});
+
+
 /* This class is a fork of the upstream DashActor class (ui.dash.js)
  *
  * Summary of changes:
@@ -121,9 +148,9 @@ const myDashActor = new Lang.Class({
 
     vfunc_allocate: function(box, flags) {
         let contentBox = this.get_theme_node().get_content_box(box);
-        let availWidth = contentBox.x2 - contentBox.x1;
+        let availWidth = contentBox.x2 - contentBox.x1;        
         let availHeight = contentBox.y2 - contentBox.y1;
-
+//log('booooxx width  '+availWidth);
         this.set_allocation(box, flags);
 
         let [appIcons, showAppsButton] = this.get_children();
@@ -177,13 +204,13 @@ const myDashActor = new Lang.Class({
 			}
 		}
     },
-
+	
     vfunc_get_preferred_height: function(forWidth) {
         // We want to request the natural height of all our children
         // as our natural height, so we chain up to StWidget (which
         // then calls BoxLayout), but we only request the showApps
         // button as the minimum size
-
+        
         let [, natHeight] = this.parent(forWidth);
 
         let themeNode = this.get_theme_node();
@@ -193,7 +220,45 @@ const myDashActor = new Lang.Class({
         [minHeight, ] = themeNode.adjust_preferred_height(minHeight, natHeight);
 
         return [minHeight, natHeight];
-    }
+    },/*
+//new    
+     vfunc_get_preferred_width: function(forHeight) {
+        // We want to request the natural height of all our children
+        // as our natural height, so we chain up to StWidget (which
+        // then calls BoxLayout), but we only request the showApps
+        // button as the minimum size
+
+        let [, natWidth] = this.parent(forHeight);
+
+        let themeNode = this.get_theme_node();
+//        let adjustedForWidth = themeNode.adjust_for_width(forHeight);
+//        let [, showAppsButton] = this.get_children();
+//        let [minWidth, ] = showAppsButton.get_preferred_height(adjustedForHeight);
+//        [minWidth, ] = themeNode.adjust_preferred_height(minWidth, natWidth);
+
+//        return [minWidth, natWidth];
+//log('WIDTH RUNS w '+natWidth);
+//if (natWidth>500) natWidth=500;
+
+minWidth = natWidth;
+return [minWidth, natWidth];
+    }*/  
+/*
+     vfunc_get_preferred_width: function(forHeight) {
+        let [, natWidth] = this.parent(forHeight);
+        let themeNode = this.get_theme_node();
+   
+let adjustedForWidth = themeNode.adjust_for_width(forHeight);
+let [, showAppsButton] = this.get_children();
+let [minWidth, ] = showAppsButton.get_preferred_height(adjustedForHeight);
+[minWidth, ] = themeNode.adjust_preferred_height(minWidth, natWidth);   
+        
+//if ( natWidth > (maxWidth - 20) ) natWidth = maxWidth - 20;
+//minWidth = natWidth;
+log('ASKED FOR HEIGHT   '+minWidth+'   '+natWidth+'   when   '+getMonitor.width);
+return [minWidth, natWidth];
+    }  
+*/       
 });
 
 /* This class is a fork of the upstream dash class (ui.dash.js)
@@ -211,9 +276,8 @@ const myDash = new Lang.Class({
 
     _init : function(settings) {
 		this._settings = settings;
-        this._signalHandler = new Convenience.globalSignalHandler();		
-		
-        this._maxWidth = -1;
+        this._signalHandler = new Convenience.globalSignalHandler();				
+        this._maxWidth = -1;        
 		this._maxHeight = -1;
         this.iconSize = this._settings.get_int('dash-max-icon-size');
         this._avaiableIconSize = Dash.baseIconSizes;
@@ -234,7 +298,28 @@ const myDash = new Lang.Class({
 			this._box = new St.BoxLayout({ vertical: false, clip_to_allocation: true });
 		}
 		this._box._delegate = this;
-		this._container.add_actor(this._box);
+//		this._container.add_actor(this._box);
+//--------------------------------------------------------------------------------------------------
+        this._scrollView = new St.ScrollView({ x_expand: true, y_expand: true,
+                                               x_fill: true, y_fill: false, reactive: true,
+                                               hscrollbar_policy: Gtk.PolicyType.AUTOMATIC,
+                                               vscrollbar_policy: Gtk.PolicyType.NEVER});
+                                               
+		this._scrollView.add_actor(this._box);
+		                       
+        // Hideing the scrollbars
+        //this._scrollView.hscroll.hide();
+
+//placing it somewhere where the size can be monitored
+this._contentBin = new myMaxWidthBin({ name: 'searchResultsBin',
+                                             x_fill: true,
+                                             y_fill: true,
+                                             child: this._scrollView });
+
+this._container.add_actor(this._contentBin, { x_fill: true, y_fill: true, expand: true });
+//		this._container.add_actor(this._scrollView, { x_fill: true, y_fill: true, expand: true });
+//--------------------------------------------------------------------------------------------------
+
 
 		if (!this._settings.get_boolean('dock-horizontal')) {
 			this._showAppsIcon = new Dash.ShowAppsIcon();
@@ -252,7 +337,7 @@ const myDash = new Lang.Class({
         this._container.add_actor(this._showAppsIcon);
 
         this.actor = new St.Bin({ child: this._container, y_align: St.Align.START });
-        
+/*        
         this.actor.connect('notify::height', Lang.bind(this,
             function() {
 				if (!this._settings.get_boolean('dock-horizontal')) {
@@ -265,7 +350,7 @@ const myDash = new Lang.Class({
 						this._maxWidth = this.actor.width;
 				}
             }));
-
+*/
         this._workId = Main.initializeDeferredWork(this._box, Lang.bind(this, this._redisplay));
 
         this._appSystem = Shell.AppSystem.get_default();
@@ -307,7 +392,6 @@ const myDash = new Lang.Class({
         );
 
         this.setMaxIconSize(this._settings.get_int('dash-max-icon-size'));
-
     },
 
     destroy: function() {
@@ -494,14 +578,15 @@ const myDash = new Lang.Class({
         });
 
         iconChildren.push(this._showAppsIcon);
-
+log('HOW MANY ICONS ARE THERE?  '+iconChildren.length);
 		if (!this._settings.get_boolean('dock-horizontal')) {
 			if (this._maxHeight == -1)
 				return;
-		}else{
+		} else {
 			if (this._maxWidth == -1)
 				return;
 		}
+log('_adjustIconSize OTHER THAN -1  _maxWidth '+this._maxWidth);		
         let themeNode = this._container.get_theme_node();
         let maxAllocation;
 		if (!this._settings.get_boolean('dock-horizontal')) {
@@ -599,6 +684,7 @@ log('newIconSize  '+newIconSize+'  availSize '+availSize);
                                time: DASH_ANIMATION_TIME,
                                transition: 'easeOutQuad',
                              });
+log('RESIZED ICON');                             
         }
     },
 
