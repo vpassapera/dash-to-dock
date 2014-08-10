@@ -53,7 +53,7 @@ const DashSlideContainer = new Lang.Class({
         
         /* Default local params */
         let localDefaults = {
-            direction: SlideDirection.LEFT,
+            direction: SlideDirection.BOTTOM,//SlideDirection.LEFT,
             initialSlideValue: 1
         }
 
@@ -79,7 +79,66 @@ const DashSlideContainer = new Lang.Class({
         this._slideoutWidth = 1; // minimum width when slided out
     },
 
+    vfunc_allocate: function(box, flags) {
 
+        this.set_allocation(box, flags);
+
+        if (this._child == null)
+            return;
+
+        let availWidth = box.x2 - box.x1;
+        let availHeight = box.y2 - box.y1;
+        let [minChildWidth, minChildHeight, natChildWidth, natChildHeight] =
+            this._child.get_preferred_size();
+
+        let childWidth = natChildWidth;
+        let childHeight = natChildHeight;
+
+        let childBox = new Clutter.ActorBox();
+
+        let slideoutWidth = this._slideoutWidth;
+log('_____________________________________________________________________');          
+log('SlideDirection: '+this._direction);
+log('COORDS1: childBox x = '+childBox.x1+' -> '+childBox.x2+' | y =  '+childBox.y1+' -> '+childBox.y2);
+/*
+        if (this._direction == SlideDirection.LEFT) {
+            childBox.x1 = (this._slidex -1)*(childWidth - slideoutWidth);
+            childBox.x2 = slideoutWidth + this._slidex*(childWidth - slideoutWidth);
+        } else if (this._direction == SlideDirection.RIGHT) {
+            childBox.x1 = 0;
+            childBox.x2 = childWidth;
+        } else if (this._direction == SlideDirection.BOTTOM) {
+log('SlideDirection.TOP');
+            childBox.x1 = 0;
+            childBox.x2 = childWidth;
+        }
+
+        childBox.y1 = 0;
+        childBox.y2 = childBox.y1 + childHeight;
+        this._child.allocate(childBox, flags);
+        this._child.set_clip(-childBox.x1, 0, -childBox.x1+availWidth, availHeight);
+log('COORDS2: childBox x = '+childBox.x1+' -> '+childBox.x2+' | y =  '+childBox.y1+' -> '+childBox.y2);//COMPARE WITH SIMPLE DOCK
+*/
+
+//		childBox.x1 = 0;
+//		childBox.x2 = childWidth;
+//        childBox.y1 = 0;
+//        childBox.y2 = childHeight;
+
+
+childBox.x1 = (this._slidex -1)*(childWidth - 1);
+childBox.x2 = 1 + this._slidex*(childWidth - 1);    
+childBox.y1 = (this._slidex -1)*(childWidth - 1);
+childBox.y2 = slideoutWidth + this._slidex*(childWidth - 1);   
+        
+        this._child.allocate(childBox, flags);
+        this._child.set_clip(-childBox.x1, 0, -childBox.x1+availWidth, availHeight);//WTF??
+//this._child.set_clip(0, 0, -childBox.x1+availWidth, availHeight);//cuts off: A, offTop, C, D
+log('COORDS2: childBox x = '+childBox.x1+' -> '+childBox.x2+' | y =  '+childBox.y1+' -> '+childBox.y2);//COMPARE WITH SIMPLE DOCK
+
+    },
+
+/* older code
     vfunc_allocate: function(box, flags) {
 
         this.set_allocation(box, flags);
@@ -112,6 +171,7 @@ const DashSlideContainer = new Lang.Class({
         this._child.allocate(childBox, flags);
         this._child.set_clip(-childBox.x1, 0, -childBox.x1+availWidth, availHeight);
     },
+*/
 
     /* Just the child width but taking into account the slided out part */
     vfunc_get_preferred_width: function(forHeight) {
@@ -203,12 +263,13 @@ const dockedDash = new Lang.Class({
 
         // This is the vertical centering actor
         this.actor = new St.Bin({ name: 'dashtodockContainer',reactive: false,
-            y_align: St.Align.MIDDLE});
+            y_align: St.Align.MIDDLE});//TODO:chek if its supposed to be x_align for horizontal
         this.actor._delegate = this;
 
         // This is the sliding actor whose allocation is to be tracked for input regions
         this._slider = new DashSlideContainer( {
-            direction:this._rtl?SlideDirection.RIGHT:SlideDirection.LEFT}
+//            direction:this._rtl?SlideDirection.RIGHT:SlideDirection.LEFT}
+			direction:3}//+|
         );
         // This is the actor whose hover status us tracked for autohide
         this._box = new St.BoxLayout({ name: 'dashtodockBox', reactive: true, track_hover:true } );
@@ -517,12 +578,15 @@ const dockedDash = new Lang.Class({
 
         }
     },
-
+    
     _animateIn: function(time, delay) {
-
+		
         this._animStatus.queue(true);
         Tweener.addTween(this._slider,{
             slidex: 1,
+//-----------------------------------------------------
+//y: this._monitor.y + this._monitor.height - this._box.height,//simple-dock
+//-----------------------------------------------------
             time: time,
             delay: delay,
             transition: 'easeOutQuad',
@@ -744,7 +808,7 @@ const dockedDash = new Lang.Class({
 //----------------------------------------------------------------------
         this.actor.width = this._monitor.width;
         this.actor.x = this._monitor.x;
-        this.actor.x_align = St.Align.MIDDLE;
+        this.actor.x_align = St.Align.MIDDLE;//TODO: return to MIDDLE OF SCREEEN
 
 		this.actor.height = this._monitor.height;        
 		this.actor.y = this._monitor.y;
@@ -819,6 +883,11 @@ const dockedDash = new Lang.Class({
         this.actor.move_anchor_point_from_gravity(anchor_point);
         this.actor.x = position;
 
+//Moving teh reveal position to the bottom of the screen
+//anchor_point = Clutter.Gravity.SOUTH;
+//this.actor.move_anchor_point_from_gravity(anchor_point);
+//this.actor.set_anchor_point(-(100),-(10));//x,y
+//this.actor.x = this.staticBox.x2/2;
 
         this._updateYPosition();
     },

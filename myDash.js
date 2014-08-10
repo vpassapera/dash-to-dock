@@ -65,15 +65,7 @@ const myDashActor = new Lang.Class({
 
 			childBox.x1 = contentBox.x1;
 			childBox.x2 = contentBox.x1 + showAppsNatWidth;
-			showAppsButton.allocate(childBox, flags);
-			
-			
-			
-			
-			
-			
-			
-			
+			showAppsButton.allocate(childBox, flags);	
         } else {
 			childBox.x1 = contentBox.x1;
 			childBox.y1 = contentBox.y1;
@@ -150,8 +142,8 @@ const myDash = new Lang.Class({
 
         this._container.add_actor(this._showAppsIcon);
 
-        this.actor = new St.Bin({ child: this._container,
-            y_align: St.Align.START});//, x_align: St.Align.MIDDLE});//+|TODO: add the x_align?
+		this.actor = new St.Bin({ child: this._container, 
+			y_align: St.Align.START});
         this.actor.connect('notify::height', Lang.bind(this,
             function() {
                 if (this._maxWidth !== this.actor.width)

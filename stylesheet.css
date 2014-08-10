@@ -9,11 +9,11 @@
 /* Shrink the dash by reducing padding and border radius */
 #dashtodockContainer.dashtodock #dash {
     padding: 1px 0px;
-    border-radius: 0px;/*0px 6px 6px 0px;*/
+    border-radius: 0px 6px 6px 0px;
 }
 
 #dashtodockContainer.dashtodock #dash:rtl {
-    border-radius: 0px;/*6px 0px 0px 6px;*/
+    border-radius: 6px 0px 0px 6px;
 }
 
 #dashtodockContainer.dashtodock .dash-item-container > StButton {
@@ -43,7 +43,7 @@
     background-gradient-start: rgba(255, 255, 255, .05);
     background-gradient-end: rgba(255, 255, 255, .15);
     background-gradient-direction: vertical;
-    border-radius: 0px;/*4px;*/
+    border-radius: 4px;
     box-shadow: inset 0px 1px 2px 0px rgba(0, 0, 0, 1);
 }
 
