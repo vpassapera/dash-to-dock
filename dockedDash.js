@@ -26,8 +26,8 @@ const PRESSURE_TIMEOUT = 1000;
 
 let dock_horizontal = true;
 let dock_placement = 3;
-let dock_width = -1;
-let dock_height = -1;
+//let dock_width = -1;
+//let dock_height = -1;
 let size_fraction = 1;
 
 const SlideDirection = {
@@ -36,7 +36,7 @@ const SlideDirection = {
     TOP: 2,
     BOTTOM: 3
 };
-
+/*
 const myMaxSizeBin = new Lang.Class({
     Name: 'myMaxSizeBin',
     Extends: St.Bin,
@@ -49,7 +49,7 @@ const myMaxSizeBin = new Lang.Class({
         let boxH = box.y2 - box.y1;
         let adjustedBox = box;
 
-		if (!dock_horizontal) {		
+		if (!dock_horizontal) {
 			if (boxH > Math.floor(maxH * size_fraction)) {
 				let excess = maxH - (maxH * size_fraction);
 				adjustedBox.y1 = Math.floor(excess / 2) + panelHeight;
@@ -78,7 +78,7 @@ log('TRIPWIRE SNAAAAAP! horizontal');
         this.parent(adjustedBox, flags);     
     }
 });
-
+*/
 /*
  * A simple Actor with one child whose allocation takes into account the
  * slide out of its child via the _slidex parameter ([0:1]).
@@ -128,6 +128,50 @@ const DashSlideContainer = new Lang.Class({
 
     vfunc_allocate: function(box, flags) {
 		if (!dock_horizontal) {
+
+
+			let maxW = Main.layoutManager.primaryMonitor.width;
+			let panelHeight =  Main.panel.actor.height;
+			let maxH = Main.layoutManager.primaryMonitor.height - panelHeight;
+			let boxW = box.x2 - box.x1;
+			let boxH = box.y2 - box.y1;
+
+			if (boxH > Math.floor(maxH * size_fraction)) {
+boxH = Math.floor(maxH * size_fraction);
+let excess = maxH - boxH;
+box.y1 = Math.floor(excess / 2) + panelHeight;
+box.y2 = Math.floor(excess / 2) + panelHeight + (maxH * size_fraction);
+
+				//let excess = maxH - (maxH * size_fraction);
+				//box.y1 = Math.floor(excess / 2) + panelHeight;
+				//box.y2 = Math.floor(excess / 2) + panelHeight + (maxH * size_fraction);
+log('>1 bigger '+boxH+'='+(box.y2 - box.y1)+' exte:  '+this._settings.get_boolean('extend-size')+'  frac '+size_fraction);
+				//boxH = Math.floor(maxH * size_fraction);//box.y2 - box.y1;//RECALC
+			} else if (size_fraction == 1) {
+				boxH = maxH;	
+				box.y1 = panelHeight;
+				box.y2 = panelHeight + boxH + 300;
+log('=1 equal '+boxH+'='+(box.y2 - box.y1)+'  exte: '+this._settings.get_boolean('extend-size')+'  frac '+size_fraction);				
+			} else {
+log('<1 smaller ');				
+//				let lack = maxH - dock_height;
+//				adjustedBox.y1 = Math.floor(lack / 2) + panelHeight;
+//				adjustedBox.y2 = Math.floor(lack / 2) + panelHeight + dock_height;
+//log('ZZZZZAAAAAAAP  lack '+lack+' adj.y1 '+adjustedBox.y1+' adj.y2 '+adjustedBox.y2+' size='+(adjustedBox.y2-adjustedBox.y1)+'='+dock_height);
+			}
+
+
+
+			/*
+			let panelHeight =  Main.panel.actor.height;
+			if (panelHeight > 0) {
+				log('.....  '+box.y1+'  '+box.y2);
+				box.y1 += panelHeight;
+				box.y2 += panelHeight;
+				log('.....  '+box.y1+'  '+box.y2);
+			}
+			*/
+//--------------------------------------------------------------------------------
 			this.set_allocation(box, flags);
 
 			if (this._child == null)
@@ -139,7 +183,10 @@ const DashSlideContainer = new Lang.Class({
 				this._child.get_preferred_size();
 
 			let childWidth = natChildWidth;
-			let childHeight = natChildHeight;
+//			let childHeight = natChildHeight;
+
+let childHeight = boxH;
+log('ch sss   '+childHeight);
 
 			let childBox = new Clutter.ActorBox();
 
@@ -155,9 +202,10 @@ const DashSlideContainer = new Lang.Class({
 
 			childBox.y1 = 0;
 			childBox.y2 = childBox.y1 + childHeight;
+log('ch ZZA   '+(childBox.y2 - childBox.y1));			
 			this._child.allocate(childBox, flags);
 			this._child.set_clip(-childBox.x1, 0, -childBox.x1+availWidth, availHeight);
-		} else {				
+		} else {
 			this.set_allocation(box, flags);
 
 			if (this._child == null)
@@ -288,10 +336,10 @@ const dockedDash = new Lang.Class({
 
         // This is the vertical centering actor
 		if (!dock_horizontal) {
-			this.actor = new St.Bin({ name: 'dashtodockContainer',reactive: false,
+			this.actor = new St.Bin({ name: 'dashtodockContainer', reactive: false,
             y_align: St.Align.MIDDLE})
 		} else {
-			this.actor = new St.Bin({ name: 'dashtodockContainer',reactive: false,
+			this.actor = new St.Bin({ name: 'dashtodockContainer', reactive: false,
 			x_align: St.Align.MIDDLE})
 		}
 
@@ -303,9 +351,18 @@ const dockedDash = new Lang.Class({
         // This is the actor whose hover status us tracked for autohide
         this._dockBox = new St.BoxLayout({ name: 'dashtodockBox', reactive: true, track_hover:true });
                 
-		this._myMaxSize = new myMaxSizeBin({ x_fill: true, y_fill: true, child: this._dockBox }, this);
+//		this._myMaxSize = new myMaxSizeBin({ x_fill: true, y_fill: true, child: this._dockBox }, this);
         
         this._dockBox.connect("notify::hover", Lang.bind(this, this._hoverChanged));
+
+this._dockBox.connect('notify::height', Lang.bind(this,
+            function() {
+log('RESIZE  '+this._dockBox.height);
+				
+                //if (this._maxHeight != this.actor.height)
+                //    this._queueRedisplay();
+                //this._maxHeight = this.actor.height;
+            }));
 
         if (dock_horizontal) {
 			// Create and apply height constraint to the dash. It's controlled by this.actor height
@@ -314,7 +371,7 @@ const dockedDash = new Lang.Class({
 				coordinate: Clutter.BindCoordinate.HEIGHT });
 			this.dash.actor.add_constraint(this.constrainHeight);
         }
-      
+     
         // Connect global signals
         this._signalHandler = new Convenience.globalSignalHandler();
         this._signalHandler.push(
@@ -404,8 +461,9 @@ const dockedDash = new Lang.Class({
         Main.overview._controls._dashSlider.actor.hide();
 
         // Add dash container actor and the container to the Chrome.
-        this.actor.set_child(this._slider);      
-		this._slider.add_child(this._myMaxSize);
+        this.actor.set_child(this._slider);
+this._slider.add_child(this._dockBox);        
+//		this._slider.add_child(this._myMaxSize);
         this._dockBox.add_actor(this.dash.actor);
 
         // Add aligning container without tracking it for input region (old affectsinputRegion: false that was removed).
@@ -856,24 +914,12 @@ const dockedDash = new Lang.Class({
 
     _updatePosition: function() {
 		if (!dock_horizontal) {
-			dock_width = this.actor.width;
-			dock_height = this.actor.height;
-			
-			let unavailableTopSpace = 0;
-			
 			let fraction = this._settings.get_double('size-fraction');
 			let extendSize = this._settings.get_boolean('extend-size');
-			let dockFixed = this._settings.get_boolean('dock-fixed');
 
-			// check if the dock is on the primary monitor
-			if (this._isPrimaryMonitor()){
-				if (!extendSize || !dockFixed) {
-					unavailableTopSpace = Main.panel.actor.height;
-				}
-			}
-
-			let availableHeight = this._monitor.height - unavailableTopSpace;
-			
+			let panelHeight =  Main.panel.actor.height;
+			let availableHeight = this._monitor.height - panelHeight;
+					
 			if(extendSize)
 				fraction = 1;
 			else if(fraction<0 || fraction >1)
@@ -881,15 +927,13 @@ const dockedDash = new Lang.Class({
 
 			size_fraction = fraction;
 
-			if(extendSize) {			
+			if(extendSize || fraction = 1) {			
 				this.dash._container.set_height(availableHeight);
-				this._dockBox.set_height(availableHeight);
 				//this.actor.add_style_class_name('extended');
 			} else {
 				this.dash._container.set_height(-1);
-				this._dockBox.set_height(-1);
 				//this.actor.remove_style_class_name('extended');
-			}	
+			}
 		} else {
 			let fraction = this._settings.get_double('size-fraction');
 			let extendSize = this._settings.get_boolean('extend-size');
