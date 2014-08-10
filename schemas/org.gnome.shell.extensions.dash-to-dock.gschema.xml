@@ -175,5 +175,9 @@
       <default>"12345"</default>
       <summary>Order of appearance for the enabled applets: 1,2,3,4,5 if enabled</summary>
     </key>
+    <key type="b" name="insensitive-message-tray">
+      <default>false</default>
+      <summary>Does not allow message tray to show. Required by bottom doc placement.</summary>
+    </key>    
   </schema>
 </schemalist>

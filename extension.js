@@ -25,7 +25,7 @@ function rebootDock() {
 	enable();
 }
 
-function enable() {
+function enable() {	
     settings = Convenience.getSettings('org.gnome.shell.extensions.dash-to-dock');
     settings.connect('changed::dock-placement', Lang.bind(this, this.rebootDock));
     settings.connect('changed::applets-order', Lang.bind(this, this.rebootDock));
@@ -33,7 +33,7 @@ function enable() {
     intellihide = new Intellihide.Intellihide(show, hide, dock, settings);
 }
 
-function disable() {
+function disable() {	
     intellihide.destroy();
     dock.destroy();
     settings.run_dispose();
@@ -42,4 +42,3 @@ function disable() {
     intellihide=null;
     settings = null;
 }
-

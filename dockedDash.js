@@ -16,6 +16,8 @@ const Tweener = imports.ui.tweener;
 const ViewSelector = imports.ui.viewSelector;
 const WorkspaceSwitcherPopup= imports.ui.workspaceSwitcherPopup;
 const Layout = imports.ui.layout;
+const LayoutManager = imports.ui.main.layoutManager;
+const MessageTray = imports.ui.main.messageTray;
 
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 const Convenience = Me.imports.convenience;
@@ -23,6 +25,7 @@ const MyDash = Me.imports.myDash;
 
 const PRESSURE_TIMEOUT = 1000;
 
+let _myDwell = 0;
 let dock_horizontal = true;
 
 /*
@@ -447,6 +450,9 @@ const dockedDash = new Lang.Class({
         // Setup pressure barrier (GS38+ only)
         this._updatePressureBarrier();
         this._updateBarrier();
+        
+        // Insensitive Message Tray
+        this._updateInsensitiveTray();
     },
 
     destroy: function() {
@@ -521,6 +527,8 @@ const dockedDash = new Lang.Class({
         this._settings.connect('changed::size-fraction', Lang.bind(this,this._updatePosition));
 
         this._settings.connect('changed::apply-custom-theme', Lang.bind(this, this._updateCustomTheme));
+
+		this._settings.connect('changed::insensitive-message-tray', Lang.bind(this,this._updateInsensitiveTray));
 
         this._settings.connect('changed::require-pressure-to-show', Lang.bind(this, this._updateBarrier));
         
@@ -1177,16 +1185,6 @@ const dockedDash = new Lang.Class({
         this._onThemeChanged();
     },
 
-    // Disable autohide effect, thus show dash
-    disableAutoHide: function() {
-        if(this._autohideStatus==true){
-            this._autohideStatus = false;
-
-            this._removeAnimations();
-            this._animateIn(this._settings.get_double('animation-time'), 0);
-        }
-    },
-
     // Enable autohide effect, hide dash
     enableAutoHide: function() {
         if(this._autohideStatus==false){
@@ -1206,7 +1204,40 @@ const dockedDash = new Lang.Class({
                 delay = 0;
             }
         }
-    }
+    },
+    
+    // Disable autohide effect, thus show dash
+    disableAutoHide: function() {
+        if(this._autohideStatus==true){
+            this._autohideStatus = false;
+
+            this._removeAnimations();
+            this._animateIn(this._settings.get_double('animation-time'), 0);
+        }
+    },
+        
+    // Makes the message not show. SOURCE: insensitive-tray extension.
+    _updateInsensitiveTray: function() {
+		if (this._settings.get_boolean('insensitive-message-tray')) {
+			if("_trayPressure" in LayoutManager) {
+				LayoutManager._trayPressure._keybindingMode = null;
+					//Shell.KeyBindingMode.OVERVIEW;
+			}
+				
+			_myDwell = MessageTray._trayDwellTimeout;
+			MessageTray._trayDwellTimeout = function() { return false; };			
+		} else {
+		if("_trayPressure" in LayoutManager) {
+			LayoutManager._trayPressure._keybindingMode = 
+				Shell.KeyBindingMode.NORMAL | Shell.KeyBindingMode.OVERVIEW;
+		}
+    
+		if(_myDwell) {
+			MessageTray._trayDwellTimeout = _myDwell;
+			_myDwell = 0;
+		}			
+		}
+	}
 });
 
 Signals.addSignalMethods(dockedDash.prototype);

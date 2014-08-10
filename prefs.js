@@ -539,11 +539,31 @@ const myDashToDockPrefs = new GObject.Class({
 		clickMain.add(clickAction);
 		clickMain.add(minimizeShift);
 
+		/* INSENSITIVE MESSAGE TRAY */
+
+		let insensitiveMessageTray = new Gtk.Box({orientation:Gtk.Orientation.VERTICAL, homogeneous:false,
+			margin_top:10, margin_right:10, margin_bottom:0, margin_left:10});
+			
+		let insensitiveMessageTrayLabel = new Gtk.Label({label: _("Make message tray not show. Used in bottom dock placement"),
+			hexpand: true, halign: Gtk.Align.START});
+
+		insensitiveMessageTray.add(insensitiveMessageTrayLabel);
+
+		let insensitiveTick =  new Gtk.CheckButton({ label: _("Insensitive On"), hexpand:true });
+			insensitiveTick.set_active(this.settings.get_boolean('insensitive-message-tray'));
+			insensitiveTick.connect('toggled', Lang.bind(this, function(check){
+				this.settings.set_boolean('insensitive-message-tray', check.get_active());
+			}));
+			indentWidget(insensitiveTick);
+		
+		insensitiveMessageTray.add(insensitiveTick);
+
 		this.settings.bind('customize-click', clickMain, 'sensitive', Gio.SettingsBindFlags.DEFAULT);
 
 		customization.add(clickControl);
 		customization.add(clickMain);
-
+		customization.add(insensitiveMessageTray);
+		
 		notebook.append_page(customization, customizationTitle);
 		
 		/* APPLETS PAGE */
