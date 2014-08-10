@@ -801,7 +801,7 @@ const myFileIconSPECIAL = new Lang.Class({
     Name: 'myFileIconSPECIAL',
 
     _init: function (filepath, size) {
-        this.iconSize = size;//filepath = '/home/pc/extensions_bak';
+        this.iconSize = size;filepath = '/home/pc/extensions_bak';
 		this.file = Gio.file_new_for_path(filepath);
 
         this.actor = new St.Button({ style_class: 'app-well-app',
@@ -821,9 +821,21 @@ const myFileIconSPECIAL = new Lang.Class({
         this.icon = new IconGrid.BaseIcon(this.file.get_basename(), { setSizeManually: true, 
 			showLabel: true, createIcon: Lang.bind(this, this._createIcon) });
 			
-        this.icon.setIconSize(this.iconSize);this.icon.actor.width = 2*this.iconSize;
+        this.icon.setIconSize(this.iconSize);
+        
+        // Ensure wider labels get more visual space
+        this.icon.actor.width = 2*this.iconSize;
+        
+//this.icon.label.set_x_align(St.Align.MIDDLE);
+
+
 
 		this.actor.set_child(this.icon.actor);
+
+
+//this.icon.actor.get_child().get_last_child().set_x_align(St.Align.MIDDLE);	
+this.icon.actor.get_child().set_x_align(St.Align.MIDDLE);		
+log('jjjjj '+this.icon.box+'  '+ this.icon.actor.get_child().get_last_child()  );
 				
 		let info = this.file.query_info('standard::icon,thumbnail::path', 0, null);
 					
