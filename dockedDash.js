@@ -176,7 +176,7 @@ const DashSlideContainer = new Lang.Class({
 			let [minChildWidth, minChildHeight, natChildWidth, natChildHeight] =
 				this._child.get_preferred_size();
 
-			let childWidth = natChildWidth;
+			let childWidth = boxW;//natChildWidth;
 			let childHeight = natChildHeight;
 
 			let childBox = new Clutter.ActorBox();
@@ -194,7 +194,7 @@ const DashSlideContainer = new Lang.Class({
 		}
     },
 
-    /* Just the child width but taking into account the slided out part */
+    /* Just the child width but taking into account the slided out part */ //TODO POSSIBLY NOT NEEDED AT ALL
     vfunc_get_preferred_width: function(forHeight) {
 		let [minWidth, natWidth ] = this._child.get_preferred_width(forHeight);   
 		if (!dock_horizontal) {		
@@ -204,7 +204,7 @@ const DashSlideContainer = new Lang.Class({
         return [minWidth, natWidth];
     },
  
-    /* Just the child min height, no border, no positioning etc. */
+    /* Just the child min height, no border, no positioning etc. */ //TODO POSSIBLY NOT NEEDED AT ALL
     vfunc_get_preferred_height: function(forWidth) {
         let [minHeight, natHeight] = this._child.get_preferred_height(forWidth);
 		if (dock_horizontal) {		
@@ -412,7 +412,7 @@ const dockedDash = new Lang.Class({
         Main.layoutManager._trackActor(this._slider, {trackFullscreen: true});
 
         if ( this._settings.get_boolean('dock-fixed') )
-          Main.layoutManager._trackActor(this.dash._dockBox, {affectsStruts: true});
+          Main.layoutManager._trackActor(this.dash._box, {affectsStruts: true});
 
         // Pretend this._slider is isToplevel child so that fullscreen is actually tracked
         let index = Main.layoutManager._findActor(this._slider);
@@ -498,11 +498,11 @@ const dockedDash = new Lang.Class({
         this._settings.connect('changed::dock-fixed', Lang.bind(this, function(){
 
             if(this._settings.get_boolean('dock-fixed')) {
-                Main.layoutManager._trackActor(this.dash._dockBox, {affectsStruts: true});
+                Main.layoutManager._trackActor(this.dash._box, {affectsStruts: true});
                 // show dash
                 this.disableAutoHide();
             } else {
-                Main.layoutManager._untrackActor(this.dash._dockBox);
+                Main.layoutManager._untrackActor(this.dash._box);
                 this.emit('box-changed');
             }
 
@@ -858,28 +858,30 @@ const dockedDash = new Lang.Class({
 			let fraction = this._settings.get_double('size-fraction');
 			let extendSize = this._settings.get_boolean('extend-size');
 
-			let availableHeight = this._monitor.height - Main.panel.actor.height;
+			//let availableHeight = this._monitor.height - Main.panel.actor.height;
 					
 			if(extendSize)
 				fraction = 1;
 			else if(fraction<0 || fraction >1)
 				fraction = 0.95;
 				
-//			this.dash._container.set_height(availableHeight * fraction);
+			//this.dash._container.set_height(availableHeight * fraction);
 		} else {
 			let fraction = this._settings.get_double('size-fraction');
 			let extendSize = this._settings.get_boolean('extend-size');
 
-			let availableWidth = this._monitor.width;
+			//let availableWidth = this._monitor.width;
 					
 			if(extendSize)
 				fraction = 1;
 			else if(fraction<0 || fraction >1)
 				fraction = 0.95;
 				
-//			this.dash._container.set_width(availableWidth * fraction);
-log('MAYVE IS '+(availableWidth * fraction));
+			//this.dash._container.set_width(availableWidth * fraction);
 
+//----------------------------------------------------------------------
+//log('appContainer '+this.dash._appsContainer.width + ' scrollView '+this.dash._scrollView.width);
+//----------------------------------------------------------------------
 
 			this.actor.height = this._monitor.height;
 			this.actor.y = this._monitor.y;
