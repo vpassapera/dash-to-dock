@@ -754,7 +754,8 @@ const dockedDash = new Lang.Class({
     _onThemeChanged: function() {
         this.dash._queueRedisplay();
         this._getBackgroundColor();
-        this._updateBackgroundOpacity();       
+        this._updateBackgroundOpacity();
+		this._adjustBorders();               
     },
 
 	// This function was taken from an extension called simple-dock
