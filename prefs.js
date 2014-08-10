@@ -639,7 +639,7 @@ const WorkspaceSettingsWidget = new GObject.Class({// FIXME: Why call it this fu
 		let ordering = this.settings.get_string('applets-order');
 
 		let storeOrder = new Gtk.ListStore();
-			storeOrder.set_column_types ([GObject.TYPE_STRING, GObject.TYPE_STRING]);//FLOAT
+			storeOrder.set_column_types ([GObject.TYPE_STRING, GObject.TYPE_STRING]);
             
 		for (let i = 0; i < ordering.length ;i++) {
 			switch (ordering[i]) {
@@ -673,23 +673,42 @@ const WorkspaceSettingsWidget = new GObject.Class({// FIXME: Why call it this fu
 			
 		let treeOrderSelection = treeOrder.get_selection();
 		
-		let btnMoveAppletUp = new Gtk.Button({ label: "↑↓", halign: Gtk.Align.END });
+		let OrderOfAppletsButtons = new Gtk.Box({ margin_left:10, margin_top:10, margin_bottom:5, margin_right:10 });		
+		
+		let btnMoveAppletUp = new Gtk.Button({ label: "↑", hexpand: true, halign: Gtk.Align.END });
 			btnMoveAppletUp.connect('clicked', Lang.bind (this, function(widget) {
-				//this.settings.set_string('applets-order', widget.get_text());
-				//let [ isSelected, model, iter ] = treeOrderSelection.get_selected();
-				//log("SELECTION CHANGED "+storeOrder.get_value (iter, 1));
-
 				let [ isSelected, model, iter ] = treeOrderSelection.get_selected();
-				storeOrder.iter_next(iter);
-				let [ isSelected, model, iter2 ] = treeOrderSelection.get_selected();
-				
-				storeOrder.swap(iter, iter2);
-
-            //------------
+				let previous_exists = storeOrder.iter_previous(iter);		
+				let [ isSelected, model, iter_previous ] = treeOrderSelection.get_selected();
+				if (previous_exists) {
+					storeOrder.swap(iter, iter_previous);
+					let new_ordering = '';
+					storeOrder.foreach(function (for_model, for_path, for_iter, for_data) {
+						new_ordering += storeOrder.get_value (for_iter, 1);
+					});
+					this.settings.set_string('applets-order', new_ordering);
+				}
 			}));
+			
+		let btnMoveAppletDown = new Gtk.Button({ label: "↓", halign: Gtk.Align.END });
+			btnMoveAppletDown.connect('clicked', Lang.bind (this, function(widget) {
+				let [ isSelected, model, iter ] = treeOrderSelection.get_selected();
+				let next_exists = storeOrder.iter_next(iter);		
+				let [ isSelected, model, iter_next ] = treeOrderSelection.get_selected();
+				if (next_exists) {
+					storeOrder.swap(iter, iter_next);
+					let new_ordering = '';
+					storeOrder.foreach(function (for_model, for_path, for_iter, for_data) {
+						new_ordering += storeOrder.get_value (for_iter, 1);
+					});
+					this.settings.set_string('applets-order', new_ordering);
+				}
+			}));			
 
+		OrderOfAppletsButtons.add(btnMoveAppletUp);
+		OrderOfAppletsButtons.add(btnMoveAppletDown);
 		OrderOfApplets.add(treeOrder);
-		OrderOfApplets.add(btnMoveAppletUp);
+		OrderOfApplets.add(OrderOfAppletsButtons);
 		
 		/* ADDING SETTINGS TO PAGE */
 		
