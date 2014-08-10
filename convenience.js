@@ -222,19 +222,22 @@ log(this.string_data+'<');
 		}
 	},
 	
-	move_tray: function(previous_id, next_id) {
-log('MOVING TRAY IN DB');		
-/*		
+	move_tray: function(trayId, trayPos) {
+		let current_position;
+
 		for(let i = 0; i < this.links_data.folders.length ;i++) {
-			if (id == this.links_data.folders[i].collection_id) {
-				for(let k = 0; k < this.links_data.folders[i].links_array.length ;k++) {
-					//this.links_data.folders[i].links_array[k];
-					//REARRANGEMENT ARRAY SPLICER
-					//this.save_db();
-				}
+			if (trayId == this.links_data.folders[i].collection_id) {
+				current_position = i;
 			}
 		}
-*/
+
+		print( JSON.stringify(this.links_data) );
+		var cache = this.links_data.folders[current_position];
+		this.links_data.folders[current_position] = this.links_data.folders[trayPos];
+		this.links_data.folders[trayPos] = cache;
+		print( JSON.stringify(this.links_data) );
+
+		this.save_db();
 	},	
 	
 	/* lid = link id */

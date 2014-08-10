@@ -131,7 +131,7 @@ const myLinkBox = new Lang.Class({
 		
 		this.linksStorage = new Convenience.LinksDB();
 
-		for(let i = 0; i < this.linksStorage.links_data.folders.length ;i++) {
+		for(let i = 0; i < this.linksStorage.links_data.folders.length ;i++) {		
 			this.loadTray(this.linksStorage.links_data.folders[i].collection_id);	
 		}			
 	},
@@ -323,7 +323,7 @@ const myLinkBox = new Lang.Class({
 		
         let tray;
 		if (source instanceof myLinkTray) {
-			tray = source;
+			tray = source;		
 		} else {
 			tray = null;
 			return false;
@@ -339,17 +339,19 @@ const myLinkBox = new Lang.Class({
             if (this._dragPlaceholder && children[i] == this._dragPlaceholder)
                 continue;
 
-            if (tray.id == children[i].id)
-                continue;
-
 			trayPos++;
         }
 
-	tray.actor.unparent();
-	this._box.replace_child(this._dragPlaceholder, tray.actor);
-	this.linksStorage.move_tray();
-	this._clearDragPlaceholder();
-	return true;
+		tray.actor.unparent();
+		this._box.replace_child(this._dragPlaceholder, tray.actor);
+//		this.linksStorage.move_tray();
+
+//		children = this._box.get_children();
+//		this.linksStorage.move_tray(this._box.get_children());
+this.linksStorage.move_tray(tray.id, trayPos);		
+		this._clearDragPlaceholder();
+		
+		return true;
     }	
 });
 
@@ -357,35 +359,37 @@ Signals.addSignalMethods(myLinkBox.prototype);
 
 const myLinkTray = new Lang.Class({
     Name: 'myLinkTray',
-                        
+
     _init: function(iconSize, settings, myLinkBoxInstance, id) {
-		this._labelText = _("Links Tray");
-		this.label = new St.Label({ style_class: 'dash-label'});
+
+		this._labelText = _("Links Tray");	
+		this.label = new St.Label({ text: this._labelText, style_class: 'dash-label' });	
 		this.label.hide();
 		Main.layoutManager.addChrome(this.label);
 		this.label_actor = this.label;
 
-		this._settings = settings;
-		this._iconSize = iconSize;
-		this._myLinkBoxInstance = myLinkBoxInstance;
-		this._id = id;
-		
+		this.settings = settings;
+		this.iconSize = iconSize;
+		this.myLinkBoxInstance = myLinkBoxInstance;
+		this.id = id;
+
         this.actor = new St.Button({ style_class: 'app-well-app',
                                      reactive: true,
                                      button_mask: St.ButtonMask.ONE | St.ButtonMask.TWO,
                                      can_focus: true,
                                      x_fill: true,
                                      y_fill: true });
+
         this.actor._delegate = this;		
         this.actor.connect('button_release_event', Lang.bind(this, this.buttonPressed));
         this.icon = new IconGrid.BaseIcon(this._labelText, { setSizeManually: true, 
 			showLabel: false, createIcon: Lang.bind(this, this._createIcon) });
-			
+		
 		this.actor.set_child(this.icon.actor);
 				
 		this.menuManager = new PopupMenu.PopupMenuManager(this);		
 
-		this.menu = new myLinkTrayMenu(this.actor, this._iconSize, this._myLinkBoxInstance.linksStorage, this._id);
+		this.menu = new myLinkTrayMenu(this.actor, this.iconSize, this.myLinkBoxInstance.linksStorage, this.id);
 		this.menu.actor.hide();
 		this.menu_secondary = new PopupMenu.PopupMenu(this.icon.actor, 0.5, St.Side.BOTTOM, 0);
 		this.menu_secondary.blockSourceEvents = true;		
@@ -402,17 +406,17 @@ const myLinkTray = new Lang.Class({
             function () {
                 this._removeMenuTimeout();
                 //this._myLinkBoxInstance._onDragBegin();
- Main.overview.beginItemDrag(this);
+				Main.overview.beginItemDrag(this);
             }));
         this._draggable.connect('drag-cancelled', Lang.bind(this,
             function () {
                 //this._myLinkBoxInstance._onDragCancelled();
-Main.overview.cancelledItemDrag(this);
+				Main.overview.cancelledItemDrag(this);
             }));
         this._draggable.connect('drag-end', Lang.bind(this,
             function () {
                //this._myLinkBoxInstance._onDragEnd();
-Main.overview.endItemDrag(this);
+				Main.overview.endItemDrag(this);
             }));
 	},
 
@@ -469,13 +473,13 @@ Main.overview.endItemDrag(this);
     callHandler: function(conductor) {
 		switch (conductor) {
 			case 0:
-				new ConfirmFreeContentsDialog(this.menu, this._id, this._myLinkBoxInstance.linksStorage).open();
+				new ConfirmFreeContentsDialog(this.menu, this.id, this.myLinkBoxInstance.linksStorage).open();
                 break;
             case 1:
-				new ConfirmRemoveTrayDialog( this._myLinkBoxInstance, this._id, this ).open();
+				new ConfirmRemoveTrayDialog( this.myLinkBoxInstance, this.id, this ).open();
                 break;
             case 2:
-				this._myLinkBoxInstance.addTray();
+				this.myLinkBoxInstance.addTray();
 			default:
                 break;
 		}
@@ -546,7 +550,7 @@ Main.overview.endItemDrag(this);
 			let handler = file.query_default_handler (null);
 			let result = handler.launch ([file], null);
 		}));
-		this._myLinkBoxInstance.linksStorage.add_link_to_tray(this._id, item.lid, file);		
+		this._myLinkBoxInstance.linksStorage.add_link_to_tray(this.id, item.lid, file);		
     },
 
     _removeMenuTimeout: function() {
