@@ -447,34 +447,43 @@ const myLinkTray = new Lang.Class({
 		
         this.menu_secondary.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
 
+		let itemRemoveEmptyLinks = new PopupMenu.PopupBaseMenuItem;
+		let labelRemoveEmptyLinks = new St.Label({text: _("Remove Empty Links")});
+		itemRemoveEmptyLinks.connect("activate", Lang.bind(this, function() { this.callHandler(0) }));
+		itemRemoveEmptyLinks.actor.add_child(labelRemoveEmptyLinks);
+		this.menu_secondary.addMenuItem(itemRemoveEmptyLinks);
+
 		let itemFreeContents = new PopupMenu.PopupBaseMenuItem;
 		let labelFreeContents = new St.Label({text: _("Free Tray Contents")});
-		itemFreeContents.connect("activate", Lang.bind(this, function() { this.callHandler(0) }));
+		itemFreeContents.connect("activate", Lang.bind(this, function() { this.callHandler(1) }));
 		itemFreeContents.actor.add_child(labelFreeContents);
 		this.menu_secondary.addMenuItem(itemFreeContents);
 
 		let itemRemoveTray = new PopupMenu.PopupBaseMenuItem;
 		let labelRemoveTray = new St.Label({text: _("Remove This Tray")});
-		itemRemoveTray.connect("activate", Lang.bind(this, function() { this.callHandler(1) }));
+		itemRemoveTray.connect("activate", Lang.bind(this, function() { this.callHandler(2) }));
 		itemRemoveTray.actor.add_child(labelRemoveTray);
 		this.menu_secondary.addMenuItem(itemRemoveTray);
 		
 		let itemAddTray = new PopupMenu.PopupBaseMenuItem;
 		let labelAddTray = new St.Label({text: _("Add Another Tray")});
-		itemAddTray.connect("activate", Lang.bind(this, function() { this.callHandler(2) }));
+		itemAddTray.connect("activate", Lang.bind(this, function() { this.callHandler(3) }));
 		itemAddTray.actor.add_child(labelAddTray);
 		this.menu_secondary.addMenuItem(itemAddTray);		
 	},
     
-    callHandler: function(conductor) {
+    callHandler: function(conductor) {	
 		switch (conductor) {
 			case 0:
+				this.myLinkBoxInstance.linksStorage.remove_empty_links_from_tray(this.id);
+				break;
+			case 1:
 				new ConfirmFreeContentsDialog(this.menu, this.id, this.myLinkBoxInstance.linksStorage).open();
                 break;
-            case 1:
+            case 2:
 				new ConfirmRemoveTrayDialog( this.myLinkBoxInstance, this.id, this ).open();
                 break;
-            case 2:
+            case 3:
 				this.myLinkBoxInstance.addTray();
 			default:
                 break;

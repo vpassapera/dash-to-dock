@@ -290,5 +290,23 @@ const LinksDB = new Lang.Class({
 				}
 			}
 		}
-	}
+	},
+
+	remove_empty_links_from_tray: function(id) {
+		for(let i = 0; i < this.links_data.folders.length ;i++) {
+			if (id == this.links_data.folders[i].collection_id) {
+				for(let k = 0; k < this.links_data.folders[i].links_array.length ;k++) {
+					if(!GLib.file_test(this.links_data.folders[i].links_array[k].link ,
+						GLib.FileTest.EXISTS)) {
+						
+						delete this.links_data.folders[i].links_array[k];
+						this.links_data.folders[i].links_array = this.links_data
+							.folders[i].links_array.filter(function(n){ return n != null });
+						this.save_db();
+					}
+					
+				}
+			}
+		}
+	}	
 });
