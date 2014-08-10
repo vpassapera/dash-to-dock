@@ -148,5 +148,29 @@
       <summary>Action when clicking on a running app</summary>
       <description>Set the action that is executed when clicking on the icon of a running application</description>
     </key>
+    <key type="b" name="applet-show-apps-visible">
+      <default>true</default>
+      <summary>Shows the Show Apps Button Applet </summary>
+    </key>
+    <key type="b" name="applet-favourite-apps-visible">
+      <default>true</default>
+      <summary>Shows the Favourite Apps Applet </summary>
+    </key>
+    <key type="b" name="applet-links-tray-visible">
+      <default>true</default>
+      <summary>Shows the Links Tray Button Applet </summary>
+    </key>
+    <key type="b" name="applet-show-desktop-visible">
+      <default>false</default>
+      <summary>Shows the Show Desktop Button Applet </summary>
+    </key>
+    <key type="b" name="applet-recycling-bin-visible">
+      <default>false</default>
+      <summary>Shows the Recycling Bin Button Applet </summary>
+    </key>
+    <key type="ai" name="applets-order">
+      <default>[1,2,3,4,5]</default>
+      <summary>Order of appearance for the enabled applets</summary>
+    </key>
   </schema>
 </schemalist>

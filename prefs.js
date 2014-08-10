@@ -130,6 +130,77 @@ const WorkspaceSettingsWidget = new GObject.Class({// FIXME: Why call it this fu
 		dockPreferredMonitor.add(dockPreferredMonitorLabel);
 		dockPreferredMonitor.add(dockPreferredMonitorCombo);
 
+		/* ICON SIZE */
+
+		let dockIconSize = new Gtk.Box({orientation:Gtk.Orientation.HORIZONTAL, homogeneous:true, hexpand:true,
+			margin_top:10, margin_right:10, margin_left:10});
+
+		let allSizes  = [ 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64 ];
+
+		let IconSizeLabel = new Gtk.Label({label: _("Dock icon size"), use_markup: true,
+			xalign: 0, valign: Gtk.Align.END, margin_bottom:0, margin_left:0});
+		let IconSize = new Gtk.SpinButton({halign:Gtk.Align.END});
+				IconSize.set_sensitive(true);
+				IconSize.set_range(16, 64);
+				IconSize.set_value(this.settings.get_int('dash-max-icon-size'));
+				IconSize.set_increments(1, 2); 
+				IconSize.connect('value-changed', Lang.bind(this, function(button){
+					let s = button.get_value_as_int();
+					this.settings.set_int('dash-max-icon-size', s);
+				}));
+
+		dockIconSize.add(IconSizeLabel);
+		dockIconSize.add(IconSize);
+
+		/* DOCK SIZE */
+
+		let dockDimensions = new Gtk.Box({orientation:Gtk.Orientation.VERTICAL, homogeneous:false,
+			margin_top:10, margin_right:10, margin_bottom:0, margin_left:10});
+			
+		let dockDimensionsLabel = new Gtk.Label({label: _("Dock size limits"), hexpand: true, halign: Gtk.Align.START});
+
+		dockDimensions.add(dockDimensionsLabel);
+
+		let dockDimensionsInternal = new Gtk.Box({orientation:Gtk.Orientation.HORIZONTAL, homogeneous:false,
+			margin_top:10, margin_right:10, margin_bottom:10, margin_left:10});					
+		indentWidget(dockDimensionsInternal);
+
+		let extendSize =  new Gtk.CheckButton({label: _("Expand all the way"), hexpand:true});
+			extendSize.set_active(this.settings.get_boolean('extend-size'));
+			extendSize.connect('toggled', Lang.bind(this, function(check){
+				this.settings.set_boolean('extend-size', check.get_active());
+			}));    
+
+		dockDimensionsInternal.add(extendSize);
+		
+		let dockMaxSizeTimeout=0; // Used to avoid to continuosly update the dock height
+		let dockMaxSizeLabel = new Gtk.Label({label: _("Max height/width"), xalign: 0, halign:Gtk.Align.END, margin_right:30});
+		let dockMaxSize =  new Gtk.Scale({orientation: Gtk.Orientation.HORIZONTAL, valuePos: Gtk.PositionType.RIGHT});
+			dockMaxSize.set_range(0, 100);
+			dockMaxSize.set_value(this.settings.get_double('size-fraction')*100);
+			dockMaxSize.set_digits(0);
+			dockMaxSize.set_increments(5,5);
+			dockMaxSize.set_size_request(200, -1);
+			dockMaxSize.connect('value-changed', Lang.bind(this, function(button){
+				let s = button.get_value()/100;
+				if(dockMaxSizeTimeout>0)
+					Mainloop.source_remove(dockMaxSizeTimeout);
+				dockMaxSizeTimeout = Mainloop.timeout_add(250, Lang.bind(this, function(){
+					this.settings.set_double('size-fraction', s);
+					return false;
+				}));
+			}));
+
+			dockMaxSize.connect('format-value', function(scale, value) {return value + '%'});
+
+
+		dockDimensionsInternal.add(dockMaxSizeLabel);
+		dockDimensionsInternal.add(dockMaxSize);
+		dockDimensions.add(dockDimensionsInternal);
+
+		this.settings.bind('extend-size', dockMaxSizeLabel, 'sensitive', Gio.SettingsBindFlags.INVERT_BOOLEAN);
+		this.settings.bind('extend-size', dockMaxSize, 'sensitive', Gio.SettingsBindFlags.INVERT_BOOLEAN);
+
 		/* DOCK INTELLIHIDE */
 
 		let dockIntellihidePanel = new Gtk.Box({orientation:Gtk.Orientation.VERTICAL, homogeneous:true});
@@ -224,11 +295,11 @@ const WorkspaceSettingsWidget = new GObject.Class({// FIXME: Why call it this fu
 
 		this.settings.bind('dock-fixed', dockSettingsMainPage, 'sensitive', Gio.SettingsBindFlags.INVERT_BOOLEAN);
 
-		/* PRESSURE */
+		/* REVEAL PRESSURE */
 
 		let dockPressureControl = new Gtk.Box({orientation:Gtk.Orientation.HORIZONTAL, hexpand:false});
 		let dockPressureContainer = new Gtk.Box({halign:Gtk.Align.END, hexpand:true, 
-			margin_top:0, margin_right:10, margin_bottom:0, margin_left:0});
+			margin_top:0, margin_right:10, margin_bottom:10, margin_left:0});
 		indentWidget(dockPressureControl);
 
 
@@ -279,109 +350,18 @@ const WorkspaceSettingsWidget = new GObject.Class({// FIXME: Why call it this fu
 		this.settings.bind('intellihide', dockIntellihide, 'sensitive', Gio.SettingsBindFlags.DEFAULT);
 		this.settings.bind('autohide', dockPressureControl, 'sensitive', Gio.SettingsBindFlags.DEFAULT);
 		this.settings.bind('autohide', dockPressureContainer, 'sensitive', Gio.SettingsBindFlags.DEFAULT);
-
-		/* SIZE */
-
-		let dockDimensions = new Gtk.Box({orientation:Gtk.Orientation.HORIZONTAL, homogeneous:false,
-			margin_top:5, margin_right:10, margin_bottom:10, margin_left:10});
-		indentWidget(dockDimensions);
-
-		let extendSize =  new Gtk.CheckButton({label: _("Expand all the way"), hexpand:true});
-			extendSize.set_active(this.settings.get_boolean('extend-size'));
-			extendSize.connect('toggled', Lang.bind(this, function(check){
-				this.settings.set_boolean('extend-size', check.get_active());
-			}));    
-
-		dockDimensions.add(extendSize);
 		
-		let dockMaxSizeTimeout=0; // Used to avoid to continuosly update the dock height
-		let dockMaxSizeLabel = new Gtk.Label({label: _("Max height/width"), xalign: 0, halign:Gtk.Align.END, margin_right:30});
-		let dockMaxSize =  new Gtk.Scale({orientation: Gtk.Orientation.HORIZONTAL, valuePos: Gtk.PositionType.RIGHT});
-			dockMaxSize.set_range(0, 100);
-			dockMaxSize.set_value(this.settings.get_double('size-fraction')*100);
-			dockMaxSize.set_digits(0);
-			dockMaxSize.set_increments(5,5);
-			dockMaxSize.set_size_request(200, -1);
-			dockMaxSize.connect('value-changed', Lang.bind(this, function(button){
-				let s = button.get_value()/100;
-				if(dockMaxSizeTimeout>0)
-					Mainloop.source_remove(dockMaxSizeTimeout);
-				dockMaxSizeTimeout = Mainloop.timeout_add(250, Lang.bind(this, function(){
-					this.settings.set_double('size-fraction', s);
-					return false;
-				}));
-			}));
-
-			dockMaxSize.connect('format-value', function(scale, value) {return value + '%'});
-
-
-		dockDimensions.add(dockMaxSizeLabel);
-		dockDimensions.add(dockMaxSize);
-
-		this.settings.bind('extend-size', dockMaxSizeLabel, 'sensitive', Gio.SettingsBindFlags.INVERT_BOOLEAN);
-		this.settings.bind('extend-size', dockMaxSize, 'sensitive', Gio.SettingsBindFlags.INVERT_BOOLEAN);
-		
-		/* ICON SIZE */
-
-		let iconSizeMain = new Gtk.Box({orientation:Gtk.Orientation.HORIZONTAL, homogeneous:true, hexpand:true,
-			margin_top:10, margin_right:10, margin_bottom:0, margin_left:10});
-
-		let allSizes  = [ 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64 ];
-
-		let IconSizeLabel = new Gtk.Label({label: _("Icon size"), use_markup: true,
-			xalign: 0, valign: Gtk.Align.END, margin_bottom:0, margin_left:0});
-		let IconSize = new Gtk.SpinButton({halign:Gtk.Align.END});
-				IconSize.set_sensitive(true);
-				IconSize.set_range(16, 64);
-				IconSize.set_value(this.settings.get_int('dash-max-icon-size'));
-				IconSize.set_increments(1, 2); 
-				IconSize.connect('value-changed', Lang.bind(this, function(button){
-					let s = button.get_value_as_int();
-					this.settings.set_int('dash-max-icon-size', s);
-				}));
-
-		iconSizeMain.add(IconSizeLabel);
-		iconSizeMain.add(IconSize);    
-
-		/* SHOW FAVORITES/RUNNING */
-
-		let showIcons = new Gtk.Box({orientation: Gtk.Orientation.VERTICAL,
-			margin_top:5, margin_right:10, margin_bottom:10,  margin_left:10})
-		indentWidget(showIcons);
-
-		let showFavorites =  new Gtk.CheckButton({label: _("Show favorite application icons")});
-			showFavorites.set_active(this.settings.get_boolean('show-favorites'));
-			showFavorites.connect('toggled', Lang.bind(this, function(check){
-				this.settings.set_boolean('show-favorites', check.get_active());
-			}));
-		let showRunning =  new Gtk.CheckButton({label: _("Show running application icons")});
-			showRunning.set_active(this.settings.get_boolean('show-running'));
-			showRunning.connect('toggled', Lang.bind(this, function(check){
-				this.settings.set_boolean('show-running', check.get_active());
-			}));
-		let showAppsAtTop =  new Gtk.CheckButton({label: _("Show applications button on the other end")});
-			showAppsAtTop.set_active(this.settings.get_boolean('show-apps-at-top'));
-			showAppsAtTop.connect('toggled', Lang.bind(this, function(check){
-				this.settings.set_boolean('show-apps-at-top', check.get_active());
-			}));
-
-		showIcons.add(showFavorites);
-		showIcons.add(showRunning);
-		showIcons.add(showAppsAtTop);
-
 		/* ADDING SETTINGS TO PAGE */
 		
 		dockSettings.add(dockPlacement);
 		dockSettings.add(dockFixed);
 		dockSettings.add(dockPreferredMonitor);
+		dockSettings.add(dockIconSize);		
+		dockSettings.add(dockDimensions);
 		dockSettings.add(dockIntellihidePanel);
 		dockSettings.add(dockAutohidePanel);    
 		dockSettings.add(dockSettingsMainPage);
 		dockSettings.add(dockPressureControl);
-		dockSettings.add(dockDimensions);
-		dockSettings.add(iconSizeMain);    
-		dockSettings.add(showIcons);
-
 		notebook.append_page(dockSettings, dockSettingsTitle);
 
 		/* CUSTOMIZATION PAGE */
@@ -568,8 +548,8 @@ const WorkspaceSettingsWidget = new GObject.Class({// FIXME: Why call it this fu
 		
 		/* APPLETS PAGE */
 
-		let applets = new Gtk.Box({orientation:Gtk.Orientation.VERTICAL});
-		let appletsTitle = new Gtk.Label({label: _("Applets")});
+		let appletsPage = new Gtk.Box({orientation:Gtk.Orientation.VERTICAL});
+		let appletsPageTitle = new Gtk.Label({label: _("Applets")});
 		
 		/* SHOW APPS BUTTON APPLET */
 		
@@ -584,16 +564,29 @@ const WorkspaceSettingsWidget = new GObject.Class({// FIXME: Why call it this fu
 
 		ShowAppsApplet.add(ShowAppsAppletLabel);
 		ShowAppsApplet.add(ShowAppsAppletSwitch);
-		applets.add(ShowAppsApplet);
 		
 		/* FAVOURITE APPS APPLET */
-		
-		let FavouriteAppsApplet = new Gtk.Box({margin_left:10, margin_top:10, margin_bottom:5, margin_right:10});
 
+		let FavouriteAppsApplet = new Gtk.Box({orientation: Gtk.Orientation.VERTICAL,
+			margin_top:10, margin_right:10, margin_bottom:10,  margin_left:10})
+//		indentWidget(FavouriteAppsApplet);
+		
 		let FavouriteAppsAppletLabel = new Gtk.Label({label: _("2. Favourite Apps"), hexpand: true, halign: Gtk.Align.START});
+
+		let showFavorites =  new Gtk.CheckButton({label: _("Show favorite application icons")});
+			showFavorites.set_active(this.settings.get_boolean('show-favorites'));
+			showFavorites.connect('toggled', Lang.bind(this, function(check){
+				this.settings.set_boolean('show-favorites', check.get_active());
+			}));
+		let showRunning =  new Gtk.CheckButton({label: _("Show running application icons")});
+			showRunning.set_active(this.settings.get_boolean('show-running'));
+			showRunning.connect('toggled', Lang.bind(this, function(check){
+				this.settings.set_boolean('show-running', check.get_active());
+			}));
 		
 		FavouriteAppsApplet.add(FavouriteAppsAppletLabel);
-		applets.add(FavouriteAppsApplet);	
+		FavouriteAppsApplet.add(showFavorites);
+		FavouriteAppsApplet.add(showRunning);		
 
 		/* LINKS TRAY APPLET */
 		
@@ -607,8 +600,7 @@ const WorkspaceSettingsWidget = new GObject.Class({// FIXME: Why call it this fu
 //				}));
 
 		LinksTrayApplet.add(LinksTrayAppletLabel);
-		LinksTrayApplet.add(LinksTrayAppletSwitch);
-		applets.add(LinksTrayApplet);	
+		LinksTrayApplet.add(LinksTrayAppletSwitch);	
 
 		/* SHOW DESKTOP APPLET */
 		
@@ -623,7 +615,6 @@ const WorkspaceSettingsWidget = new GObject.Class({// FIXME: Why call it this fu
 
 		ShowDesktopApplet.add(ShowDesktopAppletLabel);
 		ShowDesktopApplet.add(ShowDesktopAppletSwitch);
-		applets.add(ShowDesktopApplet);	
 		
 		/* RECYCLING BIN APPLET */
 		
@@ -638,20 +629,29 @@ const WorkspaceSettingsWidget = new GObject.Class({// FIXME: Why call it this fu
 
 		RecyclingBinApplet.add(RecyclingBinAppletLabel);
 		RecyclingBinApplet.add(RecyclingBinAppletSwitch);
-		applets.add(RecyclingBinApplet);			
-
+					
 		/* ORDER OF APPLETS */
 		
 		let OrderOfApplets = new Gtk.Box({margin_left:10, margin_top:10, margin_bottom:5, margin_right:10});
 
-		let OrderOfAppletsLabel = new Gtk.Label({label: _("Order of the applets: "), hexpand: true, halign: Gtk.Align.START});
+		let OrderOfAppletsLabel = new Gtk.Label({label: _("Order of the applets: 1,2,3,4,5"), 
+			hexpand: true, halign: Gtk.Align.START});
         let OrderOfAppletsEntry = new Gtk.Entry({halign: Gtk.Align.END});
 			OrderOfAppletsEntry.set_width_chars(15);
+			//OrderOfAppletsEntry.set_text();
 		OrderOfApplets.add(OrderOfAppletsLabel);
 		OrderOfApplets.add(OrderOfAppletsEntry);
-		applets.add(OrderOfApplets);
 		
-		notebook.append_page(applets, appletsTitle);
+		/* ADDING SETTINGS TO PAGE */
+		
+		appletsPage.add(ShowAppsApplet);		
+		appletsPage.add(FavouriteAppsApplet);
+		appletsPage.add(LinksTrayApplet);		
+		appletsPage.add(ShowDesktopApplet);			
+		appletsPage.add(RecyclingBinApplet);
+		appletsPage.add(OrderOfApplets);
+		
+		notebook.append_page(appletsPage, appletsPageTitle);
 		this.add(notebook);
     }
 });
