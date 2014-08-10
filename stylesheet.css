@@ -141,25 +141,15 @@
 
 
 
-/* THIS IS STILL VERY EXPERIMENTAL */
+/* THIS IS ALL STILL VERY EXPERIMENTAL */
 
-/* Applet Recycling Bin Icon */
-#dashtodockContainer.dashtodockLTR .applet-recycling-bin,
-#dashtodockContainer.dashtodockRTL .applet-recycling-bin,
-#dashtodockContainer.dashtodockTTB .applet-recycling-bin,
-#dashtodockContainer.dashtodockBTT .applet-recycling-bin {
-    background-image: url('./media/four_btt.png');
-}
-
-
-#dashtodockContainer.dashtodockLTR .app-well-menu-custom,
-#dashtodockContainer.dashtodockRTL .app-well-menu-custom,
-#dashtodockContainer.dashtodockTTB .app-well-menu-custom,
-#dashtodockContainer.dashtodockBTT .app-well-menu-custom {
-min-width: 50px;
+#dashtodockContainer.dashtodockLTR .app-well-menu2,
+#dashtodockContainer.dashtodockRTL .app-well-menu2,
+#dashtodockContainer.dashtodockTTB .app-well-menu2,
+#dashtodockContainer.dashtodockBTT .app-well-menu2 {
+	min-width: 10px;
+    max-width: 10px;
     font-size: 15pt;
-    
-    max-width: 50px;
     width: 0em;
     color: red;
     background-color: blue;
@@ -178,6 +168,14 @@ min-width: 50px;
 #dashtodockContainer.dashtodockRTL .popup-menu-ornament2,
 #dashtodockContainer.dashtodockTTB .popup-menu-ornament2,
 #dashtodockContainer.dashtodockBTT .popup-menu-ornament2 {
-    text-align: right;
-    width: 0em;
+	text-align: center;
+	width: 1em;
+}
+
+
+#dashtodockContainer.dashtodockLTR .popup-menu-item2,
+#dashtodockContainer.dashtodockRTL .popup-menu-item2,
+#dashtodockContainer.dashtodockTTB .popup-menu-item2,
+#dashtodockContainer.dashtodockBTT .popup-menu-item2 {
+	spacing: 12px;
 }

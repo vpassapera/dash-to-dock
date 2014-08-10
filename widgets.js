@@ -637,8 +637,8 @@ const myLinkTrayMenu = new Lang.Class({
 		
         // We want to keep the item hovered while the menu is up
         this.blockSourceEvents = true;
-//this.actor.set_style(null);
-        this.actor.add_style_class_name('app-well-menu-custom');
+this.actor.set_style(null);
+//        this.actor.add_style_class_name('app-well-menu2');
         
         // Chain our visibility and lifecycle to that of the source
         source.connect('notify::mapped', Lang.bind(this, function () {
@@ -688,69 +688,16 @@ const myPopupImageMenuItem = new Lang.Class({
     Name: 'myPopupImageMenuItem',
     Extends: PopupMenu.PopupBaseMenuItem,
 
-    _init: function (file, size) {
-/*
-
-.popup-menu-content {
-    padding: 1em 0em;
-}
-
-.popup-menu-item {
-    spacing: 12px;
-}
-
-.popup-menu-item:ltr {
-    padding: .4em 1.75em .4em 0em;
-}
-
-.popup-menu-item:rtl {
-    padding: .4em 0em .4em 1.75em;
-}
-
-.popup-menu-item:active {
-    background-color: #4c4c4c;
-}
-
-.popup-menu-item:insensitive {
-    color: #9f9f9f;
-}
-
-.popup-sub-menu:scrolled .popup-menu-item:ltr {
-    padding-right: 0em;
-}
-
-.popup-sub-menu:scrolled .popup-menu-item:rtl {
-    padding-left: 0em;
-}
-
-.popup-menu-ornament {
-    text-align: right;
-    width: 1em;
-}
-
-.popup-inactive-menu-item, .popup-inactive-menu-item:insensitive {
-    color: white;
-}
-  
-  
-  
-        this.actor = new St.BoxLayout({ style_class: 'popup-menu-item',
-                                        reactive: params.reactive,
-                                        track_hover: params.reactive,
-                                        can_focus: params.can_focus,
-                                        accessible_role: Atk.Role.MENU_ITEM });
-
-        this._ornamentLabel = new St.Label({ style_class: 'popup-menu-ornament' });
-        if (!this._activatable)
-            this.actor.add_style_class_name('popup-inactive-menu-item');
-*/		
+    _init: function (file, size) {		
         this.parent();
 
-		this.actor.set_vertical(true);
+		this.actor.set_style(null);
+		this._ornamentLabel.set_style(null);
 
+		this._label = new St.Label({ text: file.get_basename() });
+		this._label.set_style('text-align: center;');
         this._icon = new St.Icon();
-		this.actor.add(this._icon, { x_align: St.Align.MIDDLE });
-
+		
         let info = file.query_info('standard::icon,thumbnail::path', 0, null);
         
 		if(info.get_file_type() == Gio.FileType.DIRECTORY) {
@@ -772,9 +719,15 @@ const myPopupImageMenuItem = new Lang.Class({
 			}
 			this._icon.set_gicon(gicon);
 		}
+			
+		this.box = new St.BoxLayout({ vertical: true, x_expand: true });
 		
-		this.label = new St.Label({ text: file.get_basename() });
-        this.actor.add(this.label, { icon_size: size, x_align: St.Align.MIDDLE });		
+//this.box.set_style('background-color: yellow;');
+			
+		this.box.width = 2*size;
+		this.box.add(this._icon, { x_align: St.Align.MIDDLE });
+		this.box.add(this._label, { icon_size: size, x_align: St.Align.MIDDLE });
+		this.actor.add(this.box, { x_align: St.Align.MIDDLE });
     },
 
     setIcon: function(name) {
