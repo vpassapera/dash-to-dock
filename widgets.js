@@ -12,6 +12,7 @@ const Shell = imports.gi.Shell;
 const St = imports.gi.St;
 const Mainloop = imports.mainloop;
 
+const ModalDialog = imports.ui.modalDialog;
 const PopupMenu = imports.ui.appDisplay.PopupMenu;
 const AppDisplay = imports.ui.appDisplay;
 const AppFavorites = imports.ui.appFavorites;
@@ -388,6 +389,9 @@ const myShowDesktop = new Lang.Class({
 
 Signals.addSignalMethods(myShowDesktop.prototype);
 
+/* Functions i.e. openTrash(),
+ * have been taken from SOURCE: gnome-shell-trash extension
+ */
 const myRecyclingBin = new Lang.Class({
     Name: 'myRecyclingBin',
                     
@@ -408,20 +412,23 @@ const myRecyclingBin = new Lang.Class({
                                            { setSizeManually: true, showLabel: false,
                                              createIcon: Lang.bind(this, this._createIcon) });
 		this.actor.set_child(this.icon.actor);
+//-----
 
-		let dontCreateMenu = false;
+        this.recycling_bin_path = 'trash:///';
+        this.recycling_file = Gio.file_new_for_uri(this.recycling_bin_path);
+        
+//        this._addConstMenuItems();
+        this.binChange();
+        this.setupWatch();
 
+//-----
 		this.menuManager = new PopupMenu.PopupMenuManager(this);
-
-		if (dontCreateMenu) {
-            this.menu = new PopupMenu.PopupDummyMenu(this);
-        } else {
-            this.menu = new PopupMenu.PopupMenu(this.icon.actor, 0.5, St.Side.BOTTOM, 0);
-            this.blockSourceEvents = true;
-            this.menu.actor.add_style_class_name('app-well-menu');
-            Main.uiGroup.add_actor(this.menu.actor);         
-            this.menu.actor.hide();
-        }
+		
+		this.menu = new PopupMenu.PopupMenu(this.icon.actor, 0.5, St.Side.BOTTOM, 0);
+		this.blockSourceEvents = true;
+		this.menu.actor.add_style_class_name('app-well-menu');
+		Main.uiGroup.add_actor(this.menu.actor);         
+		this.menu.actor.hide();
         
 		this.menuManager.addMenu(this.menu);
 		this.populate();
@@ -453,25 +460,107 @@ const myRecyclingBin = new Lang.Class({
     },
 
 	populate: function(button) {
-		let itemWipe = new PopupMenu.PopupBaseMenuItem;
-		let labelWipe = new St.Label({text: _("Wipe Bin Securely")});
-//		itemWipe.connect("activate", function () {fav.open_new_window(-1);});
-		itemWipe.actor.add_child(labelWipe);
-		this.menu.addMenuItem(itemWipe);			
-		
-		let itemRestore = new PopupMenu.PopupBaseMenuItem;
-		let labelRestore = new St.Label({text: _("Restore Contents")});
-//		itemRestore.connect("activate", function () {fav.open_new_window(-1);});
-		itemRestore.actor.add_child(labelRestore);
-		this.menu.addMenuItem(itemRestore);		
-		
 		let itemClear = new PopupMenu.PopupBaseMenuItem;
 		let labelClear = new St.Label({text: _("Clear Recycling Bin")});
-//		itemClear.connect("activate", function () {fav.open_new_window(-1);});
+		itemClear.connect("activate", Lang.bind(this, this.clearBin));
 		itemClear.actor.add_child(labelClear);
-		this.menu.addMenuItem(itemClear);	
+		this.menu.addMenuItem(itemClear);
+		
+		let itemWipe = new PopupMenu.PopupBaseMenuItem;
+		let labelWipe = new St.Label({text: _("Wipe Bin Securely")});
+
+		itemWipe.actor.add_child(labelWipe);
+		this.menu.addMenuItem(itemWipe);			
+
+        this.menu.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+
+		let itemRestore = new PopupMenu.PopupBaseMenuItem;
+		let labelRestore = new St.Label({text: _("Restore Contents")});
+
+		itemRestore.actor.add_child(labelRestore);
+		this.menu.addMenuItem(itemRestore);
+
+		let itemOpen = new PopupMenu.PopupBaseMenuItem;
+		let labelOpen = new St.Label({text: _("Open in Nautilus")});
+		itemOpen.connect("activate", Lang.bind(this, this.openBin));
+		itemOpen.actor.add_child(labelOpen);
+		this.menu.addMenuItem(itemOpen);
 	},
-    
+
+//    openTrash: function() {
+//        Gio.app_info_launch_default_for_uri(this.recycling_bin_path, null);
+//    },
+//---------------------------------------------------------------------------------    
+    openBin: function() {
+//        Gio.app_info_launch_default_for_uri(this.recycling_bin_path, null);
+    },
+
+    setupWatch: function() {	
+//        this.binMonitor = this.recycling_file.monitor_directory(0, null, null);
+//        this.binMonitor.connect('changed', Lang.bind(this, this.binChange));      
+    },
+
+    binChange: function() {
+	//REPOPULATE?
+	/*
+      this._clearMenu();
+      if (this._listFilesInTrash() == 0) {
+          this.actor.visible = false;
+      } else {
+          this.actor.show();
+          this.actor.visible = true;
+      }*/
+    },
+
+	clearBin: function() {
+		new ConfirmClearBinDialog(Lang.bind(this, this.doClearBin)).open();
+    },
+
+	doClearBin: function() {
+		let children = this.recycling_file.enumerate_children('*', 0, null, null);
+		let child_info = null;
+		while ((child_info = children.next_file(null, null)) != null) {
+			let child = this.recycling_file.get_child(child_info.get_name());
+			child.delete(null);
+		}
+    },
+
+	listFilesInBin: function() {
+/*		
+		let children = this.recycling_file.enumerate_children('*', 0, null, null);
+		let count  = 0;
+		let file_info = null;
+			while ((file_info = children.next_file(null, null)) != null) {
+				let file_name  = file_info.get_name();
+				let item = new TrashMenuItem(file_info.get_display_name(), null,
+					file_info.get_icon(), Lang.bind(this, 
+						function() {
+							this.openBinItem(file_name);
+						}));
+				
+				this.menu.addMenuItem(item);
+				count++;
+			}			
+      children.close(null, null)
+      return count;
+*/
+return 0; 
+    },
+
+    clearMenu: function() {/*
+      let existing = this.menu._getMenuItems();
+      let i = existing.length - 1;
+      while(i > 2) {
+        existing[i].destroy();
+        i--;
+      }*/
+    },
+
+	openBinItem: function(file_name) {
+		file = this.recycling_file.get_child(file_name);
+//		Gio.app_info_launch_default_for_uri(file.get_uri(), null);
+    },
+//---------------------------------------------------------------------------------
     popupMenu: function() {
         this._removeMenuTimeout();
         this.actor.fake_release();
@@ -482,7 +571,52 @@ const myRecyclingBin = new Lang.Class({
         this.emit('sync-tooltip');
 
         return false;
-    }   
+    } 
 });
 
 Signals.addSignalMethods(myRecyclingBin.prototype);
+
+const ConfirmClearBinDialog = new Lang.Class({
+	Name: 'TrashMenu.TrashMenu',
+    Extends: ModalDialog.ModalDialog,
+
+	_init: function(clearMethod) {
+		ModalDialog.ModalDialog.prototype._init.call(this, { styleClass: null });
+
+		let mainContentBox = new St.BoxLayout({ style_class: 'polkit-dialog-main-layout',
+			vertical: false });
+		this.contentLayout.add(mainContentBox, { x_fill: true, y_fill: true });
+
+		let messageBox = new St.BoxLayout({ style_class: 'polkit-dialog-message-layout',
+			vertical: true });
+		mainContentBox.add(messageBox, { y_align: St.Align.START });
+
+		this._subjectLabel = new St.Label({ style_class: 'polkit-dialog-headline',
+			text: _("Clear Recycling Bin?") });
+
+		messageBox.add(this._subjectLabel, { y_fill:  false, y_align: St.Align.START });
+
+		this._descriptionLabel = new St.Label({ style_class: 'polkit-dialog-description',
+			text: _("Are you sure you want to delete all of the items in the recycling bin?") });
+
+		messageBox.add(this._descriptionLabel, { y_fill:  true, y_align: St.Align.START });
+
+		this.setButtons(
+		[
+		{
+			label: _("Cancel"),
+			action: Lang.bind(this, function() {
+			this.close();
+			}),
+			key: Clutter.Escape
+		},
+		{
+			label: _("Clear"),
+			action: Lang.bind(this, function() {
+			this.close();
+			clearMethod();
+			})
+		}
+		]);
+	}
+});
