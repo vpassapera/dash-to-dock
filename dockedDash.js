@@ -31,6 +31,28 @@ const SlideDirection = {
     BOTTOM: 3
 };
 
+const myMaxWidthBin = new Lang.Class({
+    Name: 'myMaxWidthBin',
+    Extends: St.Bin,
+
+    vfunc_allocate: function(box, flags) {
+        let themeNode = this.get_theme_node();
+        let maxWidth = themeNode.get_max_width();
+        let availWidth = box.x2 - box.x1;
+        let adjustedBox = box;
+
+maxWidth = 500;
+
+        if (availWidth > maxWidth) {
+            let excessWidth = Math.floor((availWidth - maxWidth)/2);            
+            adjustedBox.x1 += excessWidth;
+            adjustedBox.x2 -= excessWidth;            
+        }
+
+        this.parent(adjustedBox, flags);     
+    }
+});
+
 /*
  * A simple Actor with one child whose allocation takes into account the
  * slide out of its child via the _slidex parameter ([0:1]).
@@ -110,10 +132,10 @@ const DashSlideContainer = new Lang.Class({
 			this._child.allocate(childBox, flags);
 			this._child.set_clip(-childBox.x1, 0, -childBox.x1+availWidth, availHeight);
 		} else {
-//let mW = 500;
-//let av = box.x2 - box.x1;
-//let adjustedBox = box;
-//let excessWidth = av - mW;
+let mW = 500;
+let av = box.x2 - box.x1;
+let adjustedBox = box;
+let excessWidth = av - mW;
 				
 			this.set_allocation(box, flags);
 
@@ -125,13 +147,13 @@ const DashSlideContainer = new Lang.Class({
 			let [minChildWidth, minChildHeight, natChildWidth, natChildHeight] =
 				this._child.get_preferred_size();
 
-/*
+
 if (av > mW) {
 //log('ZAPPPPP1 '+natChildWidth);
-natChildWidth = mW;
+//natChildWidth = mW;
 //log('ZAPPPPP2 '+natChildWidth);
 }
-*/
+
 
 			let childWidth = natChildWidth;
 			let childHeight = natChildHeight;
@@ -195,33 +217,6 @@ natChildWidth = mW;
         return this._slidex;
     }
 
-});
-
-const myMaxWidthBin = new Lang.Class({
-    Name: 'myMaxWidthBin',
-    Extends: St.Bin,
-
-    vfunc_allocate: function(box, flags) {
-        let themeNode = this.get_theme_node();
-        let maxWidth = themeNode.get_max_width();
-        let availWidth = box.x2 - box.x1;
-        let adjustedBox = box;
-
-maxWidth = 1000;
-
-        if (availWidth > maxWidth) {
-            let excessWidth = availWidth - maxWidth;
-//log('::::: excessWidth = availWidth - maxWidth  '+excessWidth+'   '+availWidth+'   '+maxWidth);
-
-//            adjustedBox.x1 -= Math.floor(excessWidth / 2);
-//            adjustedBox.x2 += Math.floor(excessWidth / 2);
-                
-            adjustedBox.x1 += Math.floor(excessWidth / 2);
-            adjustedBox.x2 -= Math.floor(excessWidth / 2);        
-        }
-
-        this.parent(adjustedBox, flags);     
-    }
 });
 
 const dockedDash = new Lang.Class({
@@ -299,7 +294,7 @@ this._myWidth = new myMaxWidthBin({ x_fill: true, y_fill: true, child: this._doc
         this.actor.height = Main.overview.viewSelector.actor.height; // Guess initial reasonable height.
         this.constrainHeight = new Clutter.BindConstraint({ source: this.actor,
                                                             coordinate: Clutter.BindCoordinate.HEIGHT });
-        this.dash.actor.add_constraint(this.constrainHeight);
+        this.dash.actor.add_constraint(this.constrainHeight);      
          
         // Connect global signals
         this._signalHandler = new Convenience.globalSignalHandler();
@@ -406,7 +401,7 @@ this._slider.add_child(this._myWidth);
 
         // pretend this._slider is isToplevel child so that fullscreen is actually tracked
         let index = Main.layoutManager._findActor(this._slider);
-        Main.layoutManager._trackedActors[index].isToplevel = true ;
+        Main.layoutManager._trackedActors[index].isToplevel = true;
     },
 
     _initialize: function(){
@@ -1170,13 +1165,6 @@ this._slider.add_child(this._myWidth);
     },
 
     _updateCustomTheme: function() {
-/*		
-        if (this._settings.get_boolean('apply-custom-theme'))
-            this.actor.add_style_class_name('dashtodock');
-        else
-           this.actor.remove_style_class_name('dashtodock');
-*/
-
         if (this._settings.get_boolean('apply-custom-theme')) {
 			if (!this._settings.get_boolean('dock-horizontal')) {
 				this.actor.add_style_class_name('dashtodock');

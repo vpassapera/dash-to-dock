@@ -235,59 +235,30 @@ const myDash = new Lang.Class({
 		}
 		this._box._delegate = this;
 //--------------------------------------------------------------------------------------------------
+		this._scrollView = new St.ScrollView({ x_expand: true, y_expand: true,
+                                               x_fill: true, y_fill: false, reactive: true });
+
+		this._scrollView.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.NEVER);
+        this._scrollView.hscroll.hide();
+
 		this._appsContainer = new St.BoxLayout({ vertical: false, clip_to_allocation: false });
 
-		//let leftArrowIcon = new St.Icon({ icon_name: 'avatar-default-symbolic', icon_size: 24});
-		let leftArrowIcon = new St.Icon({ icon_name: 'go-previous-symbolic', icon_size: 24 });	
-		let leftArrow = new St.Button();
-		leftArrow.set_child(leftArrowIcon);
-		this._appsContainer.add_actor(leftArrow);
-		leftArrow.connect('clicked', function() {
-			log('TO THE LEFT ');
-		});
+		let leftOrTopArrowIcon = new St.Icon({ icon_name: 'go-previous-symbolic', icon_size: 24 });	
+		let leftOrTopArrow = new St.Button();
+		leftOrTopArrow.set_child(leftOrTopArrowIcon);
+		this._appsContainer.add_actor(leftOrTopArrow);
+		leftOrTopArrow.connect('clicked', Lang.bind(this, this._onScrollBtnLeftOrTop));
 
-		this._appsContainer.add_actor(this._box);	  
-
-		let rightArrowIcon = new St.Icon({ icon_name: 'go-next-symbolic', icon_size: 24});
-		let rightArrow = new St.Button();
-		rightArrow.set_child(rightArrowIcon);
-		this._appsContainer.add_actor(rightArrow);
-		rightArrow.connect('clicked', function() {
-			log('TO THE RIGHT ');
-		});
-
-        this._scrollView = new St.ScrollView({ x_expand: true, y_expand: true,
-                                               x_fill: true, y_fill: false, reactive: true,
-                                               hscrollbar_policy: Gtk.PolicyType.AUTOMATIC,
-                                               vscrollbar_policy: Gtk.PolicyType.NEVER});
-                                               
-		this._scrollView.add_actor(this._appsContainer);	                       
-		                       
-        // Hideing the scrollbars
-        this._scrollView.hscroll.hide();
-        
-		this._scrollView.hscroll.connect('scroll-start', Lang.bind(this, function() {
-			//this.menu.passEvents = true;
-			log('BBOX elem-B '+this._box.get_children().length);
-			log('BOX WIDTH ' + this._box.width );
-			log('SCROLL VIEW WIDTH ' + this._scrollView.width );
-		}));
-		this._scrollView.hscroll.connect('scroll-stop', Lang.bind(this, function() {
-			//this.menu.passEvents = false;
-		}));
-		this._scrollView.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.NEVER);
-		this._scrollView.set_mouse_scrolling(true);
-		this._scrollView.hscroll.connect('button-press-event', Lang.bind(this, function(actor, event) {
-			//log("ABOUT TO FREEZE");
-		}));
-		this._scrollView.hscroll.connect('button-release-event', Lang.bind(this, function(actor, event) {
-			//let button = event.get_button();
-			//if (button == 3) { //right click
-			//do some activity...or not
-			//}
-		}));
-
-		this._container.add_actor(this._scrollView);
+		this._scrollView.add_actor(this._box);
+		this._appsContainer.add_actor(this._scrollView);
+		
+		let rightOrBottomArrowIcon = new St.Icon({ icon_name: 'go-next-symbolic', icon_size: 24});
+		let rightOrBottomArrow = new St.Button();
+		rightOrBottomArrow.set_child(rightOrBottomArrowIcon);
+		this._appsContainer.add_actor(rightOrBottomArrow);
+		rightOrBottomArrow.connect('clicked', Lang.bind(this, this._onScrollBtnRightOrBottom));
+		
+		this._container.add_actor(this._appsContainer);
 //--------------------------------------------------------------------------------------------------
 		if (!this._settings.get_boolean('dock-horizontal')) {
 			this._showAppsIcon = new Dash.ShowAppsIcon();
@@ -303,7 +274,6 @@ const myDash = new Lang.Class({
         this.showAppsButton = this._showAppsIcon.toggleButton;
 
         this._container.add_actor(this._showAppsIcon);
-
         this.actor = new St.Bin({ child: this._container, y_align: St.Align.START });
 /*        
         this.actor.connect('notify::height', Lang.bind(this,
@@ -365,7 +335,17 @@ const myDash = new Lang.Class({
     destroy: function() {
         this._signalHandler.disconnect();
     },
-
+    
+    _onScrollBtnLeftOrTop: function() {
+		let hscroll = this._scrollView.get_hscroll_bar();
+		hscroll.get_adjustment().set_value(hscroll.get_adjustment().get_value() - this.iconSize*5);
+    },
+    
+    _onScrollBtnRightOrBottom: function() {
+		let hscroll = this._scrollView.get_hscroll_bar();
+		hscroll.get_adjustment().set_value(hscroll.get_adjustment().get_value() + this.iconSize*5);
+    },
+        
     _onDragBegin: function() {
         this._dragCancelled = false;
         this._dragMonitor = {
