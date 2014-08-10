@@ -240,6 +240,7 @@ const myDash = new Lang.Class({
 		this._showDesktop.childOpacity = 255;
 		this._showDesktop.icon.setIconSize(this.iconSize);
 //		this._hookUpLabel(this._showDesktop);
+this._hookUpLabelForApplets(this._showDesktop);
 //-------------->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 		this._recyclingBin = new Widgets.myRecyclingBin(this.iconSize, this._settings);
 		this._recyclingBin.childScale = 1;
@@ -293,7 +294,7 @@ const myDash = new Lang.Class({
             ]
         );
 
-        this.setMaxIconSize(this._settings.get_int('dash-max-icon-size'));
+        this.setMaxIconSize(this._settings.get_int('dash-max-icon-size'));     
     },
     
     destroy: function() {
@@ -321,7 +322,7 @@ const myDash = new Lang.Class({
 						break;
 					case 5:
 						//this._container.add_actor(this._recyclingBin.actor);
-						this._container.add_actor(this._recyclingBin);
+						this._container.add_actor(this._recyclingBin);					
 						break;												
 					default:
 						break;

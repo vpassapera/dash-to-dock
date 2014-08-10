@@ -425,9 +425,16 @@ const myPopupImageMenuItem = new Lang.Class({
 });
 
 const myShowDesktop = new Lang.Class({
-    Name: 'myShowDesktop',
+	Name: 'myShowDesktop',
                     
     _init: function(iconSize, settings) {
+		
+this._labelText = _("Show Desktop#2");
+this.label = new St.Label({ style_class: 'dash-label'});
+this.label.hide();
+Main.layoutManager.addChrome(this.label);
+this.label_actor = this.label;		
+		
 		this._settings = settings;
 		this.iconSize = iconSize;	
         this.actor = new St.Button({ style_class: 'app-well-app',
@@ -502,7 +509,55 @@ const myShowDesktop = new Lang.Class({
             }
         }
         this.desktopShown = !this.desktopShown;
-    }
+    },
+    
+	showLabel: function() {
+		if (!this._labelText) {
+			return;
+		}
+
+		this.label.set_text(this._labelText);
+		this.label.opacity = 0;
+		this.label.show();
+
+//		let [stageX, stageY] = this.actor.get_transformed_position();//works
+//		let [stageX, stageY] = this.icon.get_transformed_position();//works
+		let [stageX, stageY] = this.actor.get_transformed_position();
+
+		let labelHeight = this.label.get_height();
+		let labelWidth = this.label.get_width();
+
+		let node = this.label.get_theme_node();
+		let yOffset = node.get_length('-x-offset');
+
+	//	let y = stageY - labelHeight - yOffset;
+		let y = stageY - labelHeight - yOffset;
+	log('yNEW '+Math.round(stageY)+' '+labelHeight+' '+yOffset);
+		//let itemWidth = this.allocation.x2 - this.allocation.x1;
+		let itemWidth = this.actor.allocation.x2 - this.actor.allocation.x1;
+		let xOffset = Math.floor((itemWidth - labelWidth) / 2);
+
+		let x = stageX + xOffset;
+
+		this.label.set_position(x, y);
+
+		Tweener.addTween(this.label, {
+			opacity: 255,
+			time: DASH_ITEM_LABEL_SHOW_TIME,
+			transition: 'easeOutQuad',
+		});
+	},
+
+    hideLabel: function () {
+        Tweener.addTween(this.label,
+                         { opacity: 0,
+                           time: DASH_ITEM_LABEL_HIDE_TIME,
+                           transition: 'easeOutQuad',
+                           onComplete: Lang.bind(this, function() {
+                               this.label.hide();
+                           })
+                         });
+    } 
 });
 
 Signals.addSignalMethods(myShowDesktop.prototype);
@@ -514,7 +569,7 @@ const myRecyclingBin = new Lang.Class({
     Name: 'myRecyclingBin',
     Extends: St.Widget,
                     
-    _init: function(iconSize, settings) {
+    _init: function(iconSize, settings) {	
 		this.parent({ style_class: 'dash-item-container' });
 			
 		this._labelText = _("Recycling Bin");
@@ -527,7 +582,6 @@ const myRecyclingBin = new Lang.Class({
 		this.iconSize = iconSize;
 		
         this.btn = new St.Button({ style_class: 'app-well-app',
-									//style_class: 'show-apps',
                                      reactive: true,
                                      button_mask: St.ButtonMask.ONE | St.ButtonMask.TWO,
                                      can_focus: true,
@@ -563,7 +617,7 @@ this.btn.add_style_class_name('app-well-app');
 		this.populate();
 	
         //this.setupWatch();			
-        //this.binChange();       
+        //this.binChange();          
 	},
 
     destroy: function() {
@@ -671,8 +725,8 @@ this.btn.add_style_class_name('app-well-app');
 		this.label.show();
 
 //		let [stageX, stageY] = this.actor.get_transformed_position();//works
-//		let [stageX, stageY] = this.icon.get_transformed_position();//works
-		let [stageX, stageY] = this.actor.get_transformed_position();
+		let [stageX, stageY] = this.icon.get_transformed_position();//works
+//		let [stageX, stageY] = this.actor.get_transformed_position();
 
 		let labelHeight = this.label.get_height();
 		let labelWidth = this.label.get_width();
