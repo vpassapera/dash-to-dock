@@ -115,7 +115,7 @@ const WorkspaceSettingsWidget = new GObject.Class({
             this.settings.set_boolean('autohide', check.get_active());
         }));
 
-    let intellihideLabel = new Gtk.Label({label: _("intellihide"),  xalign: 0, hexpand:true});
+    let intellihideLabel = new Gtk.Label({label: _("Intellihide"),  xalign: 0, hexpand:true});
     let intellihide =  new Gtk.Switch({halign:Gtk.Align.END});
         intellihide.set_active(this.settings.get_boolean('intellihide'));
         intellihide.connect('notify::active', Lang.bind(this, function(check){

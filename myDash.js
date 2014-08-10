@@ -210,14 +210,14 @@ const myDash = new Lang.Class({
     Name: 'dashToDock.myDash',
 
     _init : function(settings) {
+		this._settings = settings;
+        this._signalHandler = new Convenience.globalSignalHandler();		
+		
         this._maxWidth = -1;
 		this._maxHeight = -1;
-        this.iconSize = 64;
+        this.iconSize = this._settings.get_int('dash-max-icon-size');
         this._avaiableIconSize = Dash.baseIconSizes;
         this._shownInitially = false;
-
-        this._settings = settings;
-        this._signalHandler = new Convenience.globalSignalHandler();
 
         this._dragPlaceholder = null;
         this._dragPlaceholderPos = -1;
@@ -503,13 +503,13 @@ const myDash = new Lang.Class({
 				return;
 		}
         let themeNode = this._container.get_theme_node();
-        let maxAllocation
+        let maxAllocation;
 		if (!this._settings.get_boolean('dock-horizontal')) {
 			maxAllocation = new Clutter.ActorBox({ x1: 0, y1: 0,
-				x2: 42, y2: this._maxHeight });
+				x2: 64, y2: this._maxHeight });
 		} else {
 			maxAllocation = new Clutter.ActorBox({ x1: 0, y1: 0,
-				x2: this._maxWidth, y2: 42});
+				x2: this._maxWidth, y2: 64});
 		}
         let maxContent = themeNode.get_content_box(maxAllocation);
         let availWidth, availHeight;
@@ -526,6 +526,7 @@ const myDash = new Lang.Class({
         let minWidth, natWidth, minHeight, natHeight;
 
         // Enforce the current icon size during the size request
+log('CURRENT SIZE '+this.iconSize);        
         firstIcon.setIconSize(this.iconSize);
         [minWidth, natWidth] = firstButton.get_preferred_width(-1);
 		[minHeight, natHeight] = firstButton.get_preferred_height(-1);
@@ -535,6 +536,7 @@ const myDash = new Lang.Class({
             return s * scaleFactor;
         });
 		let availSize;
+log('CURRENT SIZES '+iconSizes);  		
 		if (!this._settings.get_boolean('dock-horizontal')) {
 			// Subtract icon padding and box spacing from the available height
 			availHeight -= iconChildren.length * (natHeight - this.iconSize * scaleFactor) +
@@ -550,12 +552,17 @@ const myDash = new Lang.Class({
 		}
 
         let iconSizes = this._avaiableIconSize;
+log('AVAILABLE SIZES '+iconSizes);
+//        let newIconSize = this._avaiableIconSize[0];
+//let newIconSize = this._avaiableIconSize[this._avaiableIconSize.length];
+let newIconSize = this._settings.get_int('dash-max-icon-size');
 
-        let newIconSize = this._avaiableIconSize[0];
-        for (let i = 0; i < iconSizes.length; i++) {
-            if (iconSizes[i] < availSize)
-                newIconSize = Dash.baseIconSizes[i];
-        }
+log('newIconSize  '+newIconSize+'  availSize '+availSize);
+//        for (let i = 0; i < iconSizes.length; i++) {
+//            if (iconSizes[i] <= availSize) {
+//log('newIconSize forloop  '+newIconSize);				
+//                newIconSize = Dash.baseIconSizes[i];}//TODO: THIS TURNS ON THE SCROLL-WINDOW BUTTONS
+//        }
 
         if (newIconSize == this.iconSize)
             return;
@@ -737,12 +744,12 @@ const myDash = new Lang.Class({
         if( size>=Dash.baseIconSizes[0] ){
 
             this._avaiableIconSize = Dash.baseIconSizes.filter(
-                function(val){
+                function(val){				
                     return (val<=size);
                 }
             );
 
-        } else {
+        } else {			
             this._availableIconSize = [ Dash.baseIconSizes[0] ];
         }
 
