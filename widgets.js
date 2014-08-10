@@ -472,7 +472,7 @@ const myLinkTray = new Lang.Class({
 		this.menu_secondary.addMenuItem(itemAddTray);		
 	},
     
-    callHandler: function(conductor) {	
+    callHandler: function(conductor) {
 		switch (conductor) {
 			case 0:
 				this.myLinkBoxInstance.linksStorage.remove_empty_links_from_tray(this.id);
@@ -748,7 +748,116 @@ const myLinkTrayMenu = new Lang.Class({
 });
 
 Signals.addSignalMethods(myLinkTrayMenu.prototype);
+//SOURCE: IconGrid.BaseIcon
+//--------------------------------------------------------------------
+const myFileIcon = new Lang.Class({
+    Name: 'myFileIcon',
 
+    _init: function (filepath, size, menu, id) {
+		let existent = GLib.file_test(filepath, GLib.FileTest.EXISTS);
+		this.file = Gio.file_new_for_path(filepath);
+		
+		this.iconSize = size;
+		this.menu = menu;
+		this.id = id;
+
+        this.actor = new St.Button({ style_class: 'app-well-app',
+                                     reactive: true,
+                                     button_mask: St.ButtonMask.ONE | St.ButtonMask.TWO,
+                                     can_focus: true,
+                                     x_fill: true,
+                                     y_fill: true });
+		this.actor._delegate = this;
+        this.actor.connect('clicked', Lang.bind(this, function () {
+			this.menu.toggle();
+			let handler = this.file.query_default_handler (null);
+			let result = handler.launch ([this.file], null);
+		}));
+
+		let title;
+		if(existent)
+			title = this.file.get_basename();
+		else
+			title = filepath;
+			
+        let styleClass = 'overview-icon';
+            styleClass += ' overview-icon-with-label';
+
+        this.box = new St.BoxLayout({ vertical: true, style_class: styleClass });
+
+        this.icon = new St.Icon({ icon_name: 'emblem-important',
+									icon_size: this.iconSize,
+									style_class: 'show-apps-icon',
+									track_hover: true });
+									
+		this.box.add(this.icon);
+	
+		this.label = new St.Label({ text: title, x_align: Clutter.ActorAlign.CENTER });
+
+		this.box.add(this.label, { x_align: St.Align.MIDDLE });
+		this.actor.set_child(this.box);
+		this.box.width = 2.5*this.iconSize;
+
+		if(existent) {
+			let info = this.file.query_info('standard::icon,thumbnail::path', 0, null);
+					
+			if(info.get_file_type() == Gio.FileType.DIRECTORY) {
+				this.icon.icon_name = 'folder';
+			} else {
+				let gicon = null;
+				let thumbnail_path = info.get_attribute_as_string('thumbnail::path', 0, null);
+				if (thumbnail_path) {
+					gicon = Gio.icon_new_for_string(thumbnail_path);
+				} else {
+					let icon_internal = info.get_icon()
+					let icon_path = null;
+					if (icon_internal instanceof Gio.ThemedIcon) {
+						icon_path = icon_internal.get_names()[0];
+					} else if (icon_internal instanceof Gio.FileIcon) {
+						icon_path = icon.get_file().get_path();
+					}
+						gicon = Gio.icon_new_for_string(icon_path);
+				}
+				this.icon.set_gicon(gicon);
+			}
+		}
+		
+        this._draggable = DND.makeDraggable(this.actor);
+        this._draggable.connect('drag-begin', Lang.bind(this,
+            function () {
+                this.menu._removeMenuTimeout();
+				this.menu.fileIconDeletion.actor.show();
+            }));
+        this._draggable.connect('drag-cancelled', Lang.bind(this,
+            function () {
+				this.menu.fileIconDeletion.actor.hide();
+				this.menu.populate();			
+            }));
+        this._draggable.connect('drag-end', Lang.bind(this,
+            function () {
+				this.menu.fileIconDeletion.actor.hide();
+            }));           
+    },
+
+    acceptDrop : function(source, actor, x, y, time) {
+        let link;
+		if (source instanceof myFileIcon) {
+			link = source;		
+		} else {
+			link = null;
+			return false;
+		}
+
+		this.menu.linksStorage.move_link_in_tray(this.menu.trayId, source.id, this.id);
+		this.menu.close();
+		this.menu.populate();
+		this.menu.open();
+		
+		return true;
+    }    
+});
+//--------------------------------------------------------------------
+/*
 const myFileIcon = new Lang.Class({
     Name: 'myFileIcon',
 
@@ -851,7 +960,7 @@ const myFileIcon = new Lang.Class({
 		return true;
     }
 });
-
+*/
 const myFileIconBin = new Lang.Class({
     Name: 'myFileIconBin',
 
