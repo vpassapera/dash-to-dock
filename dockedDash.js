@@ -26,9 +26,10 @@ const PRESSURE_TIMEOUT = 1000;
 
 const SlideDirection = {
     LEFT: 0,
-    RIGHT: 1
+    RIGHT: 1,
+    TOP: 2,
+    BOTTOM: 3
 };
-
 
 /*
  * A simple Actor with one child whose allocation takes into account the
@@ -730,7 +731,7 @@ const dockedDash = new Lang.Class({
             fraction = 0.95;
 
         this.actor.height = Math.round( fraction * availableHeight);
-        this.actor.y = this._monitor.y + unavailableTopSpace + Math.round( (1-fraction)/2 * availableHeight);
+//        this.actor.y = this._monitor.y + unavailableTopSpace + Math.round( (1-fraction)/2 * availableHeight);
 
         if(extendHeight){
             this.dash._container.set_height(this.actor.height);
@@ -739,7 +740,15 @@ const dockedDash = new Lang.Class({
             this.dash._container.set_height(-1);
             this.actor.remove_style_class_name('extended');
         }
+//----------------------------------------------------------------------
+        this.actor.width = this._monitor.width;
+        this.actor.x = this._monitor.x;
+        this.actor.x_align = St.Align.MIDDLE;
 
+		this.actor.height = this._monitor.height;        
+		this.actor.y = this._monitor.y;
+		this.actor.y_align = St.Align.END;
+//----------------------------------------------------------------------
         this._updateStaticBox();
     },
 

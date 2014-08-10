@@ -166,7 +166,7 @@ const myDash = new Lang.Class({
         this._container.add_actor(this._showAppsIcon);
 
         this.actor = new St.Bin({ child: this._container,
-            y_align: St.Align.START });//+|TODO: add the x?
+            y_align: St.Align.START});//, x_align: St.Align.MIDDLE});//+|TODO: add the x_align?
         this.actor.connect('notify::height', Lang.bind(this,
             function() {
                 if (this._maxWidth !== this.actor.width)
