@@ -539,14 +539,23 @@ const myLinkTray = new Lang.Class({
 
 	/* The file link is added to the tray and LinksDB. */
     addLink: function(file) {
-		let item = new myPopupImageMenuItem(file, this.iconSize);
-		item.lid = Math.random().toString(36).substr(2, 5);		
-		this.menu.addMenuItem(item, 0);
-		item.connect('activate', Lang.bind(this, function () {
-			let handler = file.query_default_handler (null);
-			let result = handler.launch ([file], null);
-		}));
-		this.myLinkBoxInstance.linksStorage.add_link_to_tray(this.id, item.lid, file);		
+		let item = new myFileIcon(file.get_path(), this.iconSize, this.menu);
+		item.lid = Math.random().toString(36).substr(2, 5);
+
+		let nrow, ncol, div = 0;
+
+		div = (this.menu._table.get_n_children() % this.menu._table.get_column_count())
+		if (div == 0) {
+			nrow = this.menu._table.get_row_count(); 
+		} else {
+			nrow = this.menu._table.get_row_count()-1;
+		}
+		ncol = div;
+
+		this.menu._table.add(item, { row: nrow, col: ncol, x_fill: false, y_fill: false, 
+			x_align: St.Align.MIDDLE, y_align: St.Align.START});
+			
+		this.myLinkBoxInstance.linksStorage.add_link_to_tray(this.id, item.lid, file);
     },
 
     _removeMenuTimeout: function() {
@@ -568,7 +577,7 @@ const myLinkTray = new Lang.Class({
 		if (primary) {
 			this._removeMenuTimeout();
 			this.actor.fake_release();
-	        //this._draggable.fakeRelease();
+	        this._draggable.fakeRelease();
 			this.emit('menu-state-changed', true);
 			this.actor.set_hover(true);
 			this.menu_secondary.close();			
@@ -765,7 +774,7 @@ const myLinkTrayMenu = new Lang.Class({
 		this._scrollView.add_actor(this.abox);
 
 		// Calculating the (aesthetic) height for ScrollView
-		this._scrollView.height = (48+(2*mar))*4+12;		
+		this._scrollView.height = (this.iconSize+(2*mar))*4+12;		
 				
 		this.box.add(this._scrollView);
     },
@@ -786,6 +795,59 @@ log(':::|  '+this.box.get_children().length+'  '+this.box.height+'  ');
 });
 
 Signals.addSignalMethods(myLinkTrayMenu.prototype);
+
+const myFileIcon = new Lang.Class({
+    Name: 'myFileIcon',
+    Extends: St.BoxLayout,
+
+    _init: function (filepath, size, menu) {
+        this.parent({ vertical: true, clip_to_allocation: true });
+        this.iconSize = size;
+		let btn = new St.Button({ style_class: 'app-well-app',
+									reactive: true,
+									button_mask: St.ButtonMask.ONE | St.ButtonMask.TWO,
+									can_focus: true,
+									x_fill: true,
+									y_fill: true });
+		btn.file = Gio.file_new_for_path(filepath);
+
+		let icon = new St.Icon({ icon_size: this.iconSize, track_hover: true });
+					
+		let info = btn.file.query_info('standard::icon,thumbnail::path', 0, null);
+					
+		if(info.get_file_type() == Gio.FileType.DIRECTORY) {
+			icon.icon_name = 'folder';
+		} else {
+			let gicon = null;
+			let thumbnail_path = info.get_attribute_as_string('thumbnail::path', 0, null);
+			if (thumbnail_path) {
+				gicon = Gio.icon_new_for_string(thumbnail_path);
+			} else {
+				let icon_internal = info.get_icon()
+				let icon_path = null;
+				if (icon_internal instanceof Gio.ThemedIcon) {
+					icon_path = icon_internal.get_names()[0];
+				} else if (icon_internal instanceof Gio.FileIcon) {
+					icon_path = icon.get_file().get_path();
+				}
+					gicon = Gio.icon_new_for_string(icon_path);
+			}
+			icon.set_gicon(gicon);
+		}
+
+		btn.add_actor(icon);
+					
+		btn.connect('clicked', Lang.bind(this, function () {
+			menu.toggle();
+			let handler = btn.file.query_default_handler (null);
+			let result = handler.launch ([btn.file], null);
+		}));
+
+		this.add(btn);
+		let label = new St.Label({text: btn.file.get_basename(), x_align: St.Align.MIDDLE });
+		this.add(label, { x_align: St.Align.MIDDLE });
+    }
+});
 
 const myPopupImageMenuItem = new Lang.Class({
     Name: 'myPopupImageMenuItem',
