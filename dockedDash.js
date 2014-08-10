@@ -577,7 +577,7 @@ const dockedDash = new Lang.Class({
     },
    
     _animateIn: function(time, delay) {
-log('ANIMATE IN   ');  		
+ 		
         this._animStatus.queue(true);
         Tweener.addTween(this._slider,{
             slidex: 1,         
@@ -602,7 +602,7 @@ log('ANIMATE IN   ');
     },
 
     _animateOut: function(time, delay){
-log('ANIMATE OUT   '); 
+
         this._animStatus.queue(false);
         Tweener.addTween(this._slider,{
             slidex: 0,
@@ -774,10 +774,16 @@ log('ANIMATE OUT   ');
         let themeNode = this.dash._container.get_theme_node();
   
 		// Corner rounding
+        let borderColor = themeNode.get_border_color(St.Side.BOTTOM);
+        let borderWidth = themeNode.get_border_width(St.Side.BOTTOM);
         let borderRadius = themeNode.get_border_radius(St.Corner.TOPRIGHT);
 
-        let newStyle = 'border-bottom: none;' + 'border-radius: ' + borderRadius + 'px ' 
-			+ borderRadius + 'px 0 0;';// + 'background: ' + background + ';';
+//        let newStyle = 'border-bottom: none;' + 'border-radius: ' + borderRadius + 'px ' 
+//			+ borderRadius + 'px 0 0;';
+
+        let newStyle = 'border-bottom: none;' +
+            'border-radius: ' + borderRadius + 'px ' + borderRadius + 'px 0 0;' +
+            'border-left: ' + borderWidth + 'px solid ' + borderColor.to_string() + ';';
 
         this.dash._container.set_style(newStyle);
     },
