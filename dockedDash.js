@@ -890,7 +890,7 @@ const dockedDash = new Lang.Class({
 
 			this.actor.height = this._monitor.height;
 			this.actor.y = this._monitor.y;
-			this.actor.y_align = St.Align.END;
+			this.actor.y_align = St.Align.END;		
 		}
 
         this._updateStaticBox();

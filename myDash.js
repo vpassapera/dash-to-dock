@@ -1,6 +1,6 @@
 // -*- mode: js; js-indent-level: 4; indent-tabs-mode: nil -*-
 
-const Gtk = imports.gi.Gtk;//For scrollbar policy
+const Gtk = imports.gi.Gtk;
 
 const Clutter = imports.gi.Clutter;
 const GLib = imports.gi.GLib;
@@ -167,7 +167,7 @@ const myDashActor = new Lang.Class({
 
 				childBox.x1 = contentBox.x1;
 				childBox.x2 = contentBox.x1 + showAppsNatWidth;
-				showAppsButton.allocate(childBox, flags);
+				showAppsButton.allocate(childBox, flags);				
 			} else {
 				childBox.x1 = contentBox.x1;
 				childBox.y1 = contentBox.y1;
@@ -247,46 +247,45 @@ const myDash = new Lang.Class({
 		this._scrollView = new St.ScrollView({ x_expand: true, y_expand: true,
                                                x_fill: true, y_fill: false, reactive: true });
 
+		this._leftOrTopArrow = new St.Button();
+		this._rightOrBottomArrow = new St.Button();
+
         if (!dock_horizontal) {
 			this._scrollView.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
 			this._scrollView.vscroll.hide();
 
 			this._appsContainer = new St.BoxLayout({ vertical: true, clip_to_allocation: false });
 
-			let leftOrTopArrowIcon = new St.Icon({ icon_name: 'go-up-symbolic', icon_size: 24 });	
-			let leftOrTopArrow = new St.Button();
-			leftOrTopArrow.set_child(leftOrTopArrowIcon);
-			this._appsContainer.add_actor(leftOrTopArrow);
-			leftOrTopArrow.connect('clicked', Lang.bind(this, this._onScrollBtnLeftOrTop));		
+			this._leftOrTopArrowIcon = new St.Icon({ icon_name: 'go-up-symbolic', icon_size: 16 });
+			this._leftOrTopArrow.set_child(this._leftOrTopArrowIcon);
+			this._appsContainer.add_actor(this._leftOrTopArrow);
+			this._leftOrTopArrow.connect('clicked', Lang.bind(this, this._onScrollBtnLeftOrTop));		
 
 			this._scrollView.add_actor(this._box);
 			this._appsContainer.add_actor(this._scrollView);
 			
-			let rightOrBottomArrowIcon = new St.Icon({ icon_name: 'go-down-symbolic', icon_size: 24});
-			let rightOrBottomArrow = new St.Button();
-			rightOrBottomArrow.set_child(rightOrBottomArrowIcon);
-			this._appsContainer.add_actor(rightOrBottomArrow);
-			rightOrBottomArrow.connect('clicked', Lang.bind(this, this._onScrollBtnRightOrBottom));
+			this._rightOrBottomArrowIcon = new St.Icon({ icon_name: 'go-down-symbolic', icon_size: 16});
+			this._rightOrBottomArrow.set_child(this._rightOrBottomArrowIcon);
+			this._appsContainer.add_actor(this._rightOrBottomArrow);
+			this._rightOrBottomArrow.connect('clicked', Lang.bind(this, this._onScrollBtnRightOrBottom));
 		} else {
 			this._scrollView.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.NEVER);
 			this._scrollView.hscroll.hide();
 
 			this._appsContainer = new St.BoxLayout({ vertical: false, clip_to_allocation: false });
 
-			let leftOrTopArrowIcon = new St.Icon({ icon_name: 'go-previous-symbolic', icon_size: 24 });	
-			let leftOrTopArrow = new St.Button();
-			leftOrTopArrow.set_child(leftOrTopArrowIcon);
-			this._appsContainer.add_actor(leftOrTopArrow);
-			leftOrTopArrow.connect('clicked', Lang.bind(this, this._onScrollBtnLeftOrTop));		
+			this._leftOrTopArrowIcon = new St.Icon({ icon_name: 'go-previous-symbolic', icon_size: 16 });
+			this._leftOrTopArrow.set_child(this._leftOrTopArrowIcon);
+			this._appsContainer.add_actor(this._leftOrTopArrow);
+			this._leftOrTopArrow.connect('clicked', Lang.bind(this, this._onScrollBtnLeftOrTop));		
 
 			this._scrollView.add_actor(this._box);
 			this._appsContainer.add_actor(this._scrollView);
 			
-			let rightOrBottomArrowIcon = new St.Icon({ icon_name: 'go-next-symbolic', icon_size: 24});
-			let rightOrBottomArrow = new St.Button();
-			rightOrBottomArrow.set_child(rightOrBottomArrowIcon);
-			this._appsContainer.add_actor(rightOrBottomArrow);
-			rightOrBottomArrow.connect('clicked', Lang.bind(this, this._onScrollBtnRightOrBottom));			
+			this._rightOrBottomArrowIcon = new St.Icon({ icon_name: 'go-next-symbolic', icon_size: 16});
+			this._rightOrBottomArrow.set_child(this._rightOrBottomArrowIcon);
+			this._appsContainer.add_actor(this._rightOrBottomArrow);
+			this._rightOrBottomArrow.connect('clicked', Lang.bind(this, this._onScrollBtnRightOrBottom));			
 		}
 		this._container.add_actor(this._appsContainer);
 
@@ -555,14 +554,6 @@ const myDash = new Lang.Class({
 
         iconChildren.push(this._showAppsIcon);
 
-		/*if (!dock_horizontal) {
-			if (this._maxHeight == -1)
-				return;
-		} else {
-			if (this._maxWidth == -1)
-				return;
-		}*/
-
         if(!this._container.get_stage())
             return;
 	
@@ -789,6 +780,27 @@ const myDash = new Lang.Class({
         // Workaround for https://bugzilla.gnome.org/show_bug.cgi?id=692744
         // Without it, StBoxLayout may use a stale size cache
         this._box.queue_relayout();
+
+		// Hiding/showing the arrows if required
+		if(this._container.get_stage()) {
+			if (!dock_horizontal) {
+				if (this._scrollView.get_vscroll_bar().height > this._box.height) {
+					this._leftOrTopArrow.hide();
+					this._rightOrBottomArrow.hide();
+				} else {
+					this._leftOrTopArrow.show();
+					this._rightOrBottomArrow.show();					
+				}
+			} else {
+				if (this._scrollView.get_hscroll_bar().width > this._box.width) {
+					this._leftOrTopArrow.hide();
+					this._rightOrBottomArrow.hide();
+				} else {
+					this._leftOrTopArrow.show();
+					this._rightOrBottomArrow.show();					
+				}
+			}
+		}
     },
 
     setMaxIconSize: function(size) {
