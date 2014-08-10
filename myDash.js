@@ -57,39 +57,24 @@ const myDashActor = new Lang.Class({
 
         let childBox = new Clutter.ActorBox();
         if( this._settings.get_boolean('show-apps-at-top') ) {
-/*
-            childBox.x1 = contentBox.x1;
-            childBox.y1 = contentBox.y1 + showAppsNatHeight;
-            childBox.x2 = contentBox.x2;
-            childBox.y2 = contentBox.y2;
-            appIcons.allocate(childBox, flags);
-
-            childBox.y1 = contentBox.y1;
-            childBox.y2 = contentBox.y1 + showAppsNatHeight;
-            showAppsButton.allocate(childBox, flags);
-*/
-			childBox.x1 = contentBox.x1;
+			childBox.x1 = contentBox.x1 + showAppsNatWidth;
 			childBox.y1 = contentBox.y1;
-			childBox.x2 = contentBox.x2 - showAppsNatWidth;
+			childBox.x2 = contentBox.x2;
 			childBox.y2 = contentBox.y2;
 			appIcons.allocate(childBox, flags);
 
-			childBox.x1 = contentBox.x2 + showAppsNatWidth;
-			childBox.x2 = contentBox.x2;
-			showAppsButton.allocate(childBox, flags);            
+			childBox.x1 = contentBox.x1;
+			childBox.x2 = contentBox.x1 + showAppsNatWidth;
+			showAppsButton.allocate(childBox, flags);
+			
+			
+			
+			
+			
+			
+			
+			
         } else {
-/*
-            childBox.x1 = contentBox.x1;
-            childBox.y1 = contentBox.y1;
-            childBox.x2 = contentBox.x2;
-            childBox.y2 = contentBox.y2 - showAppsNatHeight;
-            appIcons.allocate(childBox, flags);
-
-            childBox.y1 = contentBox.y2 - showAppsNatHeight;
-            childBox.y2 = contentBox.y2;
-            showAppsButton.allocate(childBox, flags);
-*/
-			let childBox = new Clutter.ActorBox();
 			childBox.x1 = contentBox.x1;
 			childBox.y1 = contentBox.y1;
 			childBox.x2 = contentBox.x2 - showAppsNatWidth;
@@ -696,7 +681,7 @@ const myDash = new Lang.Class({
         let children = this._box.get_children();
         let numChildren = children.length;
         let boxWidth = this._box.width;
-        for (let i = 0; i < numChildren; i++) {
+        for (let i = 0; i < numChildren; i++) {tw
             boxWidth += children[i].width;
         }
 
