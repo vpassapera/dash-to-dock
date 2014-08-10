@@ -605,7 +605,7 @@ const WorkspaceSettingsWidget = new GObject.Class({// FIXME: Why call it this fu
 
 		/* SHOW DESKTOP APPLET */
 		
-		let ShowDesktopApplet = new Gtk.Box({margin_left:10, margin_top:10, margin_bottom:5, margin_right:10});
+		let ShowDesktopApplet = new Gtk.Box({margin_top:10, margin_right:10, margin_bottom:5, margin_left:10});
 
 		let ShowDesktopAppletLabel = new Gtk.Label({label: _("4. Show Desktop"), hexpand: true, halign: Gtk.Align.START});	
 		let ShowDesktopAppletSwitch = new Gtk.Switch({hexpand: true, halign: Gtk.Align.END});
@@ -633,28 +633,37 @@ const WorkspaceSettingsWidget = new GObject.Class({// FIXME: Why call it this fu
 					
 		/* ORDER OF APPLETS */
 		
-		let OrderOfApplets = new Gtk.Box({orientation:Gtk.Orientation.VERTICAL, 
-			margin_left:10, margin_top:10, margin_bottom:5, margin_right:10});
-/*
-		let OrderOfAppletsLabel = new Gtk.Label({label: _("Order of the applets: 1. 2. 3. 4. 5."), 
-			hexpand: true, halign: Gtk.Align.START});
-        let OrderOfAppletsEntry = new Gtk.Entry({halign: Gtk.Align.END});
-			OrderOfAppletsEntry.set_width_chars(5);
-			OrderOfAppletsEntry.set_text(this.settings.get_string('applets-order'));
-//			OrderOfAppletsEntry.connect('changed', Lang.bind (this, function(widget) {			
-//				this.settings.set_string('applets-order', widget.get_text());
-//			}));  
-*/       
-//----------------------------------------------------------------------------------------------
+		let OrderOfApplets = new Gtk.Box({ orientation:Gtk.Orientation.VERTICAL, 
+			margin_left:10, margin_top:10, margin_right:10, margin_bottom:5 });
+
+		let ordering = this.settings.get_string('applets-order');
+
 		let storeOrder = new Gtk.ListStore();
 			storeOrder.set_column_types ([GObject.TYPE_STRING, GObject.TYPE_STRING]);//FLOAT
-            storeOrder.set (storeOrder.append(), [0], ["Show Apps"]);
-            storeOrder.set (storeOrder.append(), [0], ["Favourite Apps"]);
-            storeOrder.set (storeOrder.append(), [0], ["Links Tray"]);
-            storeOrder.set (storeOrder.append(), [0], ["Show Desktop"]);
-            storeOrder.set (storeOrder.append(), [0], ["Recycling Bin"]);
-        
-		let treeOrder = new Gtk.TreeView({ model: storeOrder });
+            
+		for (let i = 0; i < ordering.length ;i++) {
+			switch (ordering[i]) {
+					case '1':
+						storeOrder.set (storeOrder.append(), [0, 1], ["Show Apps", 1]);
+						break;
+					case '2':
+						storeOrder.set (storeOrder.append(), [0, 1], ["Favourite Apps", 2]);
+						break;
+					case '3':
+						storeOrder.set (storeOrder.append(), [0, 1], ["Links Tray", 3]);
+						break;
+					case '4':
+						storeOrder.set (storeOrder.append(), [0, 1], ["Show Desktop", 4]);
+						break;
+					case '5':
+						storeOrder.set (storeOrder.append(), [0, 1], ["Recycling Bin", 5]);
+						break;
+					default:
+						break;
+			}
+		}            
+
+		let treeOrder = new Gtk.TreeView({ model: storeOrder, margin_right:10, margin_bottom:10, margin_left:10 });
 	
 		let normal = new Gtk.CellRendererText ();
 		let firstColumn = new Gtk.TreeViewColumn ({ title: _("Order of Applets") });
@@ -663,15 +672,24 @@ const WorkspaceSettingsWidget = new GObject.Class({// FIXME: Why call it this fu
 			treeOrder.insert_column (firstColumn, 0);
 			
 		let treeOrderSelection = treeOrder.get_selection();
-			treeOrderSelection.connect ('changed', Lang.bind (this, function() {
+		
+		let btnMoveAppletUp = new Gtk.Button({ label: "↑↓", halign: Gtk.Align.END });
+			btnMoveAppletUp.connect('clicked', Lang.bind (this, function(widget) {
 				//this.settings.set_string('applets-order', widget.get_text());
+				//let [ isSelected, model, iter ] = treeOrderSelection.get_selected();
+				//log("SELECTION CHANGED "+storeOrder.get_value (iter, 1));
+
 				let [ isSelected, model, iter ] = treeOrderSelection.get_selected();
-//storeOrder.get_value (iter, 0)
-log("SELECTION CHANGED "+storeOrder.get_value (iter, 0));
+				storeOrder.iter_next(iter);
+				let [ isSelected, model, iter2 ] = treeOrderSelection.get_selected();
+				
+				storeOrder.swap(iter, iter2);
+
+            //------------
 			}));
-//----------------------------------------------------------------------------------------------    
-//		OrderOfApplets.add(OrderOfAppletsLabel);
+
 		OrderOfApplets.add(treeOrder);
+		OrderOfApplets.add(btnMoveAppletUp);
 		
 		/* ADDING SETTINGS TO PAGE */
 		
