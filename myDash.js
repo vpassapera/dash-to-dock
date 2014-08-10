@@ -411,9 +411,9 @@ const myDash = new Lang.Class({
 
 		let item;
 		if (!this._settings.get_boolean('dock-horizontal')) {
-			item = new myDashItemContainer();
-		} else {
 			item = new Dash.DashItemContainer();
+		} else {
+			item = new myDashItemContainer();
 		}
 		
         item.setChild(appIcon.actor);
