@@ -538,20 +538,8 @@ const myLinkTray = new Lang.Class({
     addLink: function(file) {
 		let item = new myFileIcon(file.get_path(), this.iconSize, this.menu);
 		item.lid = Math.random().toString(36).substr(2, 5);
-
-		let nrow, ncol, div = 0;
-
-		div = (this.menu._table.get_n_children() % this.menu._table.get_column_count())
-		if (div == 0) {
-			nrow = this.menu._table.get_row_count(); 
-		} else {
-			nrow = this.menu._table.get_row_count()-1;
-		}
-		ncol = div;
-
-		this.menu._table.add(item.actor, { row: nrow, col: ncol, x_fill: false, y_fill: false, 
-			x_align: St.Align.MIDDLE, y_align: St.Align.START});
-			
+		
+		this.menu.add_link(item.actor);
 		this.myLinkBoxInstance.linksStorage.add_link_to_tray(this.id, item.lid, file);
     },
 
@@ -664,6 +652,9 @@ const myLinkTrayMenu = new Lang.Class({
         source.connect('destroy', Lang.bind(this, function () { this.actor.destroy(); }));
         Main.uiGroup.add_actor(this.actor);
         
+        this.icols = 0;
+        this.irows = 0;
+        
         this.populate();
     },
     
@@ -678,27 +669,28 @@ const myLinkTrayMenu = new Lang.Class({
     make_menu: function(files) {
 		this.box.remove_all_children();
 		
-		let icols;
+		this.icols = 0;
+        this.irows = 0;
+		
 		if (files.length > this.settings.get_int('applet-links-tray-to-grid'))
-			icols = 3
+			this.icols = 3
 		else
-			icols = 1;
+			this.icols = 1;
 		
 		this._table = new St.Table({ x_expand: true,  y_expand: true, homogeneous: true });
 		let appz = AppFavorites.getAppFavorites().getFavorites();
-		let div = files.length % icols;
-		let irows = 0;
+		let div = files.length % this.icols;
 		if (div == 0) {
-			irows = files.length / icols;			
+			this.irows = files.length / this.icols;			
 		} else {
-			irows = (files.length + div) / icols;		
+			this.irows = (files.length + div) / this.icols;		
 		}		
 		let i = 0;
-		for(let irow = 0 ; irow < irows ;irow++) {
-			for(let icol = 0 ; icol < icols ;icol++) {			
+		for(let irow = 0 ; irow < this.irows ;irow++) {
+			for(let icol = 0 ; icol < this.icols ;icol++) {			
 				let item = new myFileIcon(files[i].link, this.iconSize, this, files[i].id);
 				this._table.add(item.actor, { row: irow, col: icol, x_fill: false, y_fill: false, 
-					x_align: St.Align.MIDDLE, y_align: St.Align.START});
+					x_align: St.Align.MIDDLE, y_align: St.Align.START });
 
 				i++;
 				if(i == files.length)
@@ -728,8 +720,27 @@ const myLinkTrayMenu = new Lang.Class({
 		this.fileIconDeletion.actor.show();
 		
 		// Calculating the (aesthetic) height for ScrollView. 10 popup menu padding
-		if(icols > 1 && irows > 3)
-			this._scrollView.height = (this._scrollView.height/icols + 10)*3;
+		if(this.icols > 1 && this.irows > 3)
+			this._scrollView.height = (this._scrollView.height/this.icols + 10)*3;
+    },
+
+    add_link: function(actor) {
+		let nrow = 0;
+		let ncol = 0;
+		let div = 0;
+		
+		if(this._table.get_n_children() > 0) {
+			div = (this._table.get_n_children() % this._table.get_column_count())
+			if(div == 0) {
+				nrow = this._table.get_row_count(); 
+			} else {
+				nrow = this._table.get_row_count()-1;
+			}
+			ncol = div;
+		}
+		
+		this._table.add(actor, { row: nrow, col: ncol, x_fill: false, y_fill: false, 
+			x_align: St.Align.MIDDLE, y_align: St.Align.START });
     },
     
     _removeMenuTimeout: function() {
@@ -793,23 +804,7 @@ const myFileIcon = new Lang.Class({
 			this.icon.actor.get_child().get_first_child().get_first_child().set_gicon(gicon);
 		}
 		
-        this._draggable = DND.makeDraggable(this.actor); 
-/*              
-        this._draggable.connect('drag-begin', Lang.bind(this,
-            function () {
-                this.menu._removeMenuTimeout();
-//this.fileIconDeletion.actor.show();                
-//				Main.overview.beginItemDrag(this);
-            }));
-        this._draggable.connect('drag-cancelled', Lang.bind(this,
-            function () {
-//				Main.overview.cancelledItemDrag(this);
-            }));
-        this._draggable.connect('drag-end', Lang.bind(this,
-            function () {
-//				Main.overview.endItemDrag(this);
-            }));		
-*/
+        this._draggable = DND.makeDraggable(this.actor);
     },
 
     _createIcon: function(size) {
@@ -827,7 +822,7 @@ const myFileIcon = new Lang.Class({
 			link = null;
 			return false;
 		}
-
+log('DELETING LINK');
 		this.menu.linksStorage.move_link_in_tray(this.menu.trayId, source.id, this.id);
 		this.menu.close();
 		this.menu.populate();
