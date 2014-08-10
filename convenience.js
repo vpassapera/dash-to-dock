@@ -159,10 +159,12 @@ const LinksDB = new Lang.Class({
 		let fstream = null;
 		if (!GLib.file_test(path, GLib.FileTest.EXISTS)) {
 			fstream = file.create(Gio.FileCreateFlags.NONE, null);
-//			this.links_data = { "collection_id": 1, "links_array": [{"order": 1, "link": "/home/"}]};
+//			this.links_data = {"collection_id": 1, "links_array": [{"order": 1, "link": "/home/"}]};
 //			this.links_data = [{ "collection" : 1}];
-			this.links_data = {"col" :[{ "collection" : 1}]};
-
+//			this.links_data = {"col" :[{ "collection" : 1}]};
+//			this.links_data = {collection_id: 1, links_array: [{order: 1, link: "/home/"}]};
+//			this.links_data = {1: { collection_order: 1, links_array: [{order: 1, link: "/home/"}]}};
+			this.links_data = {folders: []};			
 
 			this.string_data = JSON.stringify(this.links_data);
 			fstream.write(this.string_data, null, this.string_data.length);
@@ -179,12 +181,7 @@ const LinksDB = new Lang.Class({
 				log(_("The file "+path+" is not a meaningful JSON database. Check it!"));
 				file.set_display_name((file.get_basename()+'.'+(Math.round(Math.random()*10000))), null); 
 			}
-
 		}
-//log(this.links_data.collection_id);			
-//log(this.links_data.links_array[0].order);
-//log(this.links_data.links_array[0].link);		
-log("data is "+this.string_data);		
 		fstream.close(null);
 	},
 	
@@ -205,9 +202,28 @@ log("data is "+this.string_data);
 
 
 //delete this.links_data.test[keyToDelete];
+//this.links_data.add( {"col" :[{ "collection" : 1}]} );
+//this.links_data.col = '[{ "collection" : 1}]';
+//delete this.links_data.col;
+//this.links_data.push( { "collection" : 2} );
 
-delete this.links_data.col;
 
+//this.links_data.folders.push( { collection_order: 1, links_array: [{order: 1, link: "/home/"}]} );//could be...
+
+//this.links_data.folders.push( { collection_order: 1, links_array: [{order: 1, link: "/home/1"}]} );
+//this.links_data.folders.push( { collection_order: 2, links_array: [{order: 2, link: "/home/2"}]} );
+//this.links_data.folders.push( { collection_order: 3, links_array: [{order: 3, link: "/home/3"}]} );
+//this.links_data.folders.push( { collection_order: 4, links_array: [{order: 4, link: "/home/4"}]} );
+
+//this.links_data.folderssplice[0] = '  ';
+//delete this.links_data.folders[0];
+
+
+//delete this.links_data.folders[0];
+//delete this.links_data.folders.pop();//only is there's one
+this.links_data.folders = this.links_data.folders.filter(function(n){ return n != null });//YEAH!!!
+
+		//check null?
 		this.string_data = JSON.stringify(this.links_data);
 	/*
 		log(string_data);
