@@ -40,7 +40,7 @@ const myDashActor = new Lang.Class({
 
     _init: function(settings) {
         this._settings = settings;
-        let layout = new Clutter.BoxLayout({ orientation: Clutter.Orientation.VERTICAL });
+        let layout = new Clutter.BoxLayout({ orientation: Clutter.Orientation.HORIZONTAL });
         this.parent({ name: 'dash',
                       layout_manager: layout,
                       clip_to_allocation: true });
@@ -53,10 +53,11 @@ const myDashActor = new Lang.Class({
         this.set_allocation(box, flags);
 
         let [appIcons, showAppsButton] = this.get_children();
-        let [showAppsMinHeight, showAppsNatHeight] = showAppsButton.get_preferred_height(availWidth);
+        let [showAppsMinWidth, showAppsNatWidth] = showAppsButton.get_preferred_width(availWidth);
 
         let childBox = new Clutter.ActorBox();
         if( this._settings.get_boolean('show-apps-at-top') ) {
+/*
             childBox.x1 = contentBox.x1;
             childBox.y1 = contentBox.y1 + showAppsNatHeight;
             childBox.x2 = contentBox.x2;
@@ -66,7 +67,18 @@ const myDashActor = new Lang.Class({
             childBox.y1 = contentBox.y1;
             childBox.y2 = contentBox.y1 + showAppsNatHeight;
             showAppsButton.allocate(childBox, flags);
+*/
+			childBox.x1 = contentBox.x1;
+			childBox.y1 = contentBox.y1;
+			childBox.x2 = contentBox.x2 - showAppsNatWidth;
+			childBox.y2 = contentBox.y2;
+			appIcons.allocate(childBox, flags);
+
+			childBox.x1 = contentBox.x2 + showAppsNatWidth;
+			childBox.x2 = contentBox.x2;
+			showAppsButton.allocate(childBox, flags);            
         } else {
+/*
             childBox.x1 = contentBox.x1;
             childBox.y1 = contentBox.y1;
             childBox.x2 = contentBox.x2;
@@ -76,24 +88,35 @@ const myDashActor = new Lang.Class({
             childBox.y1 = contentBox.y2 - showAppsNatHeight;
             childBox.y2 = contentBox.y2;
             showAppsButton.allocate(childBox, flags);
+*/
+			let childBox = new Clutter.ActorBox();
+			childBox.x1 = contentBox.x1;
+			childBox.y1 = contentBox.y1;
+			childBox.x2 = contentBox.x2 - showAppsNatWidth;
+			childBox.y2 = contentBox.y2;
+			appIcons.allocate(childBox, flags);
+
+			childBox.x1 = contentBox.x2 - showAppsNatWidth;
+			childBox.x2 = contentBox.x2;
+			showAppsButton.allocate(childBox, flags);            
         }
     },
 
-    vfunc_get_preferred_height: function(forWidth) {
+    vfunc_get_preferred_height: function(forHeight) {
         // We want to request the natural height of all our children
         // as our natural height, so we chain up to StWidget (which
         // then calls BoxLayout), but we only request the showApps
         // button as the minimum size
 
-        let [, natHeight] = this.parent(forWidth);
-
+        let [, natWidth] = this.parent(forHeight);
+        
         let themeNode = this.get_theme_node();
-        let adjustedForWidth = themeNode.adjust_for_width(forWidth);
+        let adjustedForHeight = themeNode.adjust_for_height(forHeight);
         let [, showAppsButton] = this.get_children();
-        let [minHeight, ] = showAppsButton.get_preferred_height(adjustedForWidth);
-        [minHeight, ] = themeNode.adjust_preferred_height(minHeight, natHeight);
+        let [minWidth, ] = showAppsButton.get_preferred_width(adjustedForHeight);
+        [minWidth, ] = themeNode.adjust_preferred_width(minWidth, natWidth);
 
-        return [minHeight, natHeight];
+        return [minWidth, natWidth];        
     }
 });
 
@@ -111,7 +134,7 @@ const myDash = new Lang.Class({
     Name: 'dashToDock.myDash',
 
     _init : function(settings) {
-        this._maxHeight = -1;
+        this._maxWidth = -1;
         this.iconSize = 64;
         this._avaiableIconSize = Dash.baseIconSizes;
         this._shownInitially = false;
@@ -127,7 +150,7 @@ const myDash = new Lang.Class({
         this._labelShowing = false;
 
         this._container = new myDashActor(settings);
-        this._box = new St.BoxLayout({ vertical: true,
+        this._box = new St.BoxLayout({ vertical: false,
                                        clip_to_allocation: true });
         this._box._delegate = this;
         this._container.add_actor(this._box);
@@ -143,12 +166,12 @@ const myDash = new Lang.Class({
         this._container.add_actor(this._showAppsIcon);
 
         this.actor = new St.Bin({ child: this._container,
-            y_align: St.Align.START });
+            y_align: St.Align.START });//+|TODO: add the x?
         this.actor.connect('notify::height', Lang.bind(this,
             function() {
-                if (this._maxHeight != this.actor.height)
+                if (this._maxWidth !== this.actor.width)
                     this._queueRedisplay();
-                this._maxHeight = this.actor.height;
+                this._maxWidth = this.actor.width;
             }));
 
         this._workId = Main.initializeDeferredWork(this._box, Lang.bind(this, this._redisplay));
@@ -376,36 +399,36 @@ const myDash = new Lang.Class({
 
         iconChildren.push(this._showAppsIcon);
 
-        if (this._maxHeight == -1)
+        if (this._maxWidth == -1)
             return;
 
         let themeNode = this._container.get_theme_node();
         let maxAllocation = new Clutter.ActorBox({ x1: 0, y1: 0,
-                                                   x2: 42 /* whatever */,
-                                                   y2: this._maxHeight });
+                                                   x2: this._maxWidth,
+                                                   y2: 42});
         let maxContent = themeNode.get_content_box(maxAllocation);
-        let availHeight = maxContent.y2 - maxContent.y1;
+        let availWidth = maxContent.x2 - maxContent.x1;
         let spacing = themeNode.get_length('spacing');
 
         let firstButton = iconChildren[0].child;
         let firstIcon = firstButton._delegate.icon;
 
-        let minHeight, natHeight;
+        let minWidth, natWidth;
 
         // Enforce the current icon size during the size request
         firstIcon.setIconSize(this.iconSize);
-        [minHeight, natHeight] = firstButton.get_preferred_height(-1);
+        [minWidth, natWidth] = firstButton.get_preferred_width(-1);
 
         let scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
         let iconSizes = Dash.baseIconSizes.map(function(s) {
             return s * scaleFactor;
         });
 
-        // Subtract icon padding and box spacing from the available height
-        availHeight -= iconChildren.length * (natHeight - this.iconSize * scaleFactor) +
-                       (iconChildren.length - 1) * spacing;
+        // Subtract icon padding and box spacing from the available width
+		availWidth -= iconChildren.length * (natWidth - this.iconSize * scaleFactor) +
+            (iconChildren.length - 1) * spacing;                       
 
-        let availSize = availHeight / iconChildren.length;
+        let availSize = availWidth / iconChildren.length;
 
         let iconSizes = this._avaiableIconSize;
 
@@ -672,7 +695,7 @@ const myDash = new Lang.Class({
 
         let children = this._box.get_children();
         let numChildren = children.length;
-        let boxHeight = 0;
+        let boxWidth = this._box.width;
         for (let i = 0; i < numChildren; i++) {
             boxHeight += children[i].height;
         }
@@ -681,13 +704,13 @@ const myDash = new Lang.Class({
         // the remove target has the same size as "normal" items, we don't
         // need to do the same adjustment there.
         if (this._dragPlaceholder) {
-            boxHeight -= this._dragPlaceholder.height;
+            boxWidth -= this._dragPlaceholder.width;
             numChildren--;
         }
 
         let pos;
         if (!this._emptyDropTarget){
-            pos = Math.floor(y * numChildren / boxHeight);
+            pos = Math.floor(x * numChildren / boxWidth);
             if (pos >  numChildren)
                 pos = numChildren;
         } else
@@ -714,8 +737,8 @@ const myDash = new Lang.Class({
             }
 
             this._dragPlaceholder = new Dash.DragPlaceholderItem();
-            this._dragPlaceholder.child.set_width (this.iconSize);
-            this._dragPlaceholder.child.set_height (this.iconSize / 2);
+            this._dragPlaceholder.child.set_width (this.iconSize / 2);
+            this._dragPlaceholder.child.set_height (this.iconSize);
             this._box.insert_child_at_index(this._dragPlaceholder,
                                             this._dragPlaceholderPos);
             this._dragPlaceholder.show(fadeIn);
@@ -883,10 +906,8 @@ const myAppIcon = new Lang.Class({
 
             if(modifiers & Clutter.ModifierType.CONTROL_MASK){
                 // Keep default behaviour: launch new window
-                // By calling the parent method I make it compatible
-                // with other extensions tweaking ctrl + click
-                this.parent(event);
-                return;
+                this.emit('launching');
+                this.app.open_new_window(-1);
 
             } else if (this._settings.get_boolean('minimize-shift') && modifiers & Clutter.ModifierType.SHIFT_MASK){
                 // On double click, minimize all windows in the current workspace
