@@ -683,42 +683,63 @@ const myLinkTrayMenu = new Lang.Class({
         this.populate();  
     },*/
 
-
-    _gridview: function(files) {		
-log('gridview switch');		
+    _gridview: function(files) {
 		this.removeAll();
-//---------------------------------------------------------------------------------------------------------------------		   
+		
 		this._table = new St.Table({ x_expand: true,  y_expand: true, homogeneous: true });
 		let appz = AppFavorites.getAppFavorites().getFavorites();
 		let mar = 5;
 		for(let i = 0 ; i < 3 ;i++) {
-			for(let j = 0 ; j < appz.length ;j++) {
+			for(let j = 0 ; j < files.length ;j++) {
 				let boxOfButton = new St.BoxLayout({ vertical: true, x_expand: false,
 					margin_top: mar, margin_right: mar, margin_bottom: mar, margin_left: mar });			
-				let icon = new St.Icon({ icon_name: 'user-desktop',
-                                        icon_size: 48,
-                                        style_class: 'show-apps-icon',
-                                        track_hover: true });
-                                        				
+                                                                               				
 				let btn = new St.Button({ style_class: 'app-well-app',
 											reactive: true,
 											button_mask: St.ButtonMask.ONE | St.ButtonMask.TWO,
 											can_focus: true,
 											x_fill: true,
-											y_fill: true });                                   
-				btn.add_actor(icon);
-				btn.connect('clicked', Lang.bind(this, function () { 
-					log('VVVVVVVVVVVVVVV> ');
-					this.toggle();
-				}));
-				boxOfButton.add(btn);
-				let label = new St.Label({text: appz[j].get_name(), x_align: St.Align.MIDDLE });
-				
-//				if ( label.width == 48*2 )
-//					label.width = 48*2;
+											y_fill: true });
+				btn.file = Gio.file_new_for_path(files[i].link);
 
+				let icon = new St.Icon({ icon_size: this.iconSize, track_hover: true });
+				
+				let info = btn.file.query_info('standard::icon,thumbnail::path', 0, null);
+				
+				if(info.get_file_type() == Gio.FileType.DIRECTORY) {
+					icon.icon_name = 'folder';
+				} else {
+					let gicon = null;
+					let thumbnail_path = info.get_attribute_as_string('thumbnail::path', 0, null);
+					if (thumbnail_path) {
+						gicon = Gio.icon_new_for_string(thumbnail_path);
+					} else {
+						let icon_internal = info.get_icon()
+						let icon_path = null;
+						if (icon_internal instanceof Gio.ThemedIcon) {
+							icon_path = icon_internal.get_names()[0];
+						} else if (icon_internal instanceof Gio.FileIcon) {
+							icon_path = icon.get_file().get_path();
+						}
+						gicon = Gio.icon_new_for_string(icon_path);
+					}
+					icon.set_gicon(gicon);
+				}
+
+				btn.add_actor(icon);
+				
+				btn.connect('clicked', Lang.bind(this, function () {
+					this.toggle();
+					let handler = btn.file.query_default_handler (null);
+					let result = handler.launch ([btn.file], null);
+				}));
+
+				boxOfButton.add(btn);
+				let label = new St.Label({text: btn.file.get_basename(), x_align: St.Align.MIDDLE });
 				boxOfButton.add(label, { x_align: St.Align.MIDDLE });
-									
+				
+//boxOfButton.add_style_class_name('show-apps');
+										
 				this._table.add(boxOfButton, { row: j, col:i, x_fill: false, y_fill: false, 
 					x_align: St.Align.MIDDLE, y_align: St.Align.START});
 			}
@@ -741,15 +762,6 @@ log('gridview switch');
 		this._scrollView.height = (48+(2*mar))*4+12;		
 				
 		this.box.add(this._scrollView);
-//---------------------------------------------------------------------------------------------------------------------       
-/*
-		let file = Gio.file_new_for_path(fileuri);
-		let item = new myPopupImageMenuItem(file, this.iconSize);
-		item.connect('activate', Lang.bind(this, function () {
-			let handler = file.query_default_handler (null);
-			let result = handler.launch ([file], null);
-		}));
-*/
     },
     
     _appendMenuItem: function(fileuri) {
