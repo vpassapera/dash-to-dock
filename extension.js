@@ -5,7 +5,6 @@ const Convenience = Me.imports.convenience;
 const Intellihide = Me.imports.intellihide;
 const DockedDash = Me.imports.dockedDash;
 const Lang = imports.lang;
-const Main = imports.ui.main;
 
 let settings;
 let intellihide;

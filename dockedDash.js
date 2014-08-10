@@ -61,6 +61,11 @@ const myMaxSizeBin = new Lang.Class({
 		} else {
 			if (boxW > maxW) {
 				let excessWidth = boxW - maxW;
+				
+log('HORIZONTAL  '+dock_horizontal);				
+adjustedBox.x1 = 0;
+adjustedBox.x2 = maxW;
+								
 				adjustedBox.x1 += Math.floor(excessWidth / 2);
 				adjustedBox.x2 -= Math.floor(excessWidth / 2);
 			}
