@@ -80,21 +80,21 @@ const myDashActor = new Lang.Class({
         }
     },
 
-    vfunc_get_preferred_height: function(forHeight) {
+    vfunc_get_preferred_height: function(forWidth) {
         // We want to request the natural height of all our children
         // as our natural height, so we chain up to StWidget (which
         // then calls BoxLayout), but we only request the showApps
         // button as the minimum size
 
-        let [, natWidth] = this.parent(forHeight);
-        
-        let themeNode = this.get_theme_node();
-        let adjustedForHeight = themeNode.adjust_for_height(forHeight);
-        let [, showAppsButton] = this.get_children();
-        let [minWidth, ] = showAppsButton.get_preferred_width(adjustedForHeight);
-        [minWidth, ] = themeNode.adjust_preferred_width(minWidth, natWidth);
+        let [, natHeight] = this.parent(forWidth);
 
-        return [minWidth, natWidth];        
+        let themeNode = this.get_theme_node();
+        let adjustedForWidth = themeNode.adjust_for_width(forWidth);
+        let [, showAppsButton] = this.get_children();
+        let [minHeight, ] = showAppsButton.get_preferred_height(adjustedForWidth);
+        [minHeight, ] = themeNode.adjust_preferred_height(minHeight, natHeight);
+
+        return [minHeight, natHeight];
     }
 });
 
@@ -193,7 +193,6 @@ const myDash = new Lang.Class({
         );
 
         this.setMaxIconSize(this._settings.get_int('dash-max-icon-size'));
-
     },
 
     destroy: function() {
@@ -674,7 +673,7 @@ const myDash = new Lang.Class({
         let children = this._box.get_children();
         let numChildren = children.length;
         let boxWidth = this._box.width;
-        for (let i = 0; i < numChildren; i++) {tw
+        for (let i = 0; i < numChildren; i++) {
             boxWidth += children[i].width;
         }
 

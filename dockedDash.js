@@ -80,7 +80,11 @@ const DashSlideContainer = new Lang.Class({
     },
 
     vfunc_allocate: function(box, flags) {
-
+//log('_____________________________________________________________________');
+let hideshow = 'UP';//true = 1 showing, false = 0 hiding, for slidex
+if (this._slidex == 0) hideshow = 'DOWN';
+//log('SlideDirection: '+this._direction+' Situation:    '+hideshow);
+//log('startbox [x1,y1 = '+box.x1+', '+box.y1+'] [x2,y2 =  '+box.x2+', '+box.y2+']');
         this.set_allocation(box, flags);
 
         if (this._child == null)
@@ -90,62 +94,15 @@ const DashSlideContainer = new Lang.Class({
         let availHeight = box.y2 - box.y1;
         let [minChildWidth, minChildHeight, natChildWidth, natChildHeight] =
             this._child.get_preferred_size();
-
+//log('SIZES minChildWidth='+minChildWidth+'    minChildHeight='+minChildHeight+'    natChildWidth='+natChildWidth+'    natChildHeight='+natChildHeight);
         let childWidth = natChildWidth;
         let childHeight = natChildHeight;
 
         let childBox = new Clutter.ActorBox();
 
         let slideoutWidth = this._slideoutWidth;
-log('_____________________________________________________________________');          
-log('SlideDirection: '+this._direction);
-log('startbox [x1,y1 = '+box.x1+', '+box.y2+'] [x2,y2 =  '+box.x2+', '+box.y2+']');
 
-//almost works
-//childBox.x1 = (this._slidex -1)*(childWidth - 1);
-//childBox.x2 = 1 + this._slidex*(childWidth - 1);
-//childBox.y1 = (this._slidex -1)*(childWidth - 1);
-//childBox.y2 = slideoutWidth + this._slidex*(childWidth - 1);
-
-//failed experiment
-//childBox.x1 = 0;//(this._slidex -1)*(childWidth - 1);
-//childBox.y1 = 0;//childHeight;//(this._slidex -1)*(childWidth - 1);
-//childBox.x2 = 0;//1 + this._slidex*(childWidth - 1);
-//childBox.y2 = childHeight;//slideoutWidth + this._slidex*(childWidth - 1);
-
-//anchor_point = Clutter.Gravity.NORTH;
-//this.move_anchor_point_from_gravity(anchor_point);
-//this.set_anchor_point(-(100),-(100));//x,y
-
-//log('SLIDEX IS: '+this._slidex);
-//childBox.x1 = 0;
-//childBox.x2 = slideoutWidth + (childWidth - slideoutWidth);
-//childBox.y1 = 0;
-//childBox.y2 = childBox.y1 + childHeight;
-
-//childBox.x1 = 0;
-//childBox.x2 = childBox.x1 + childWidth;//slideoutWidth + (childWidth - slideoutWidth);
-//childBox.y1 = 0;//childHeight-10;<-WISDOM IN THIS
-//childBox.y2 = (slideoutWidth + (childHeight - slideoutWidth));//childBox.y1 + childHeight;
-
-//childBox.x1 = 0;
-//childBox.x2 = childWidth;
-//childBox.y1 = 0;
-//childBox.y2 = childBox.y1 + childHeight;
-
-
-//this makes an animation = slide acordeon
-//let contentBox = this.get_content_box(box);
-//childBox.x1 = contentBox.x1;
-//childBox.y1 = contentBox.y1;
-//childBox.x2 = contentBox.x2;
-//childBox.y2 = contentBox.y2;
-
-//SLIDEX IS THE HIDER!!!! 0 is hidden, default left slide
-//childBox.x1 = (this._slidex -1)*(childWidth - slideoutWidth);
-//childBox.x2 = slideoutWidth + this._slidex*(childWidth - slideoutWidth);
-//childBox.y1 = 0;
-//childBox.y2 = childBox.y1 + childHeight;
+//log('prelmnry [x1,y1 = '+0+', '+(-1*(this._slidex -1)*childHeight)+'] [x2,y2 =  '+childWidth+', '+(-1*this._slidex*childHeight)+']');
 
 //acordeons and goes to the top
 //childBox.x1 = 0;//(this._slidex -1)*(childWidth - slideoutWidth);
@@ -153,15 +110,26 @@ log('startbox [x1,y1 = '+box.x1+', '+box.y2+'] [x2,y2 =  '+box.x2+', '+box.y2+']
 //childBox.y1 = (this._slidex -1)*(childHeight - slideoutWidth);//0;
 //childBox.y2 = slideoutWidth + this._slidex*(childHeight - slideoutWidth);//childBox.y1 + childHeight;
 
-childBox.x1 = 0;//(this._slidex -1)*(childWidth - slideoutWidth);
-childBox.x2 = childWidth;//slideoutWidth + this._slidex*(childWidth - slideoutWidth);
-childBox.y1 = -(this._slidex -1)*childHeight;//0;
-childBox.y2 = -this._slidex*childHeight;//childBox.y1 + childHeight;
+childBox.x1 = 0;
+childBox.x2 = childWidth;
 
-        this._child.allocate(childBox, flags);
-        this._child.set_clip(-childBox.x1, 0, -childBox.x1+availWidth, availHeight);//WTF?? //cuts off: A, offTop, C, D
-//this._child.set_clip_to_allocation(true);//+|Experimental..seemed to work at one time
-log('childBox [x1,y1 = '+childBox.x1+', '+childBox.y2+'] [x2,y2 =  '+childBox.x2+', '+childBox.y2+']');
+if ((-1*(this._slidex -1)*childHeight) < 1) {	
+	childBox.y1 = 1;	
+} else {
+	 childBox.y1 = -1*(this._slidex -1)*childHeight;
+}
+
+if ((-1*this._slidex*childHeight) < 1) {
+	childBox.y2 = 1;
+}else {
+	childBox.y2 = -1*this._slidex*childHeight;
+}	
+
+
+        this._child.allocate(childBox, flags);//<--WARNING SPAMMER TODO: fix this!! FIXME: there should be no warnings in the console
+        this._child.set_clip(-childBox.x1, 0, -childBox.x1+availWidth, availHeight);
+//log('childBox [x1,y1 = '+childBox.x1+', '+childBox.y1+'] [x2,y2 =  '+childBox.x2+', '+childBox.y2+']');
+//log('chldclip [xOff,yOff = '+-childBox.x1+', '+0+'] [x,y =  '+(-childBox.x1+availWidth)+', '+availHeight+']');
     },
 
 /* older code
@@ -201,18 +169,16 @@ log('childBox [x1,y1 = '+childBox.x1+', '+childBox.y2+'] [x2,y2 =  '+childBox.x2
 
     /* Just the child width but taking into account the slided out part 
     vfunc_get_preferred_width: function(forHeight) {
-        let [minWidth, natWidth ] = this._child.get_preferred_width(forHeight);
-        minWidth = (minWidth - this._slideoutWidth)*this._slidex + this._slideoutWidth;
-        natWidth = (natWidth - this._slideoutWidth)*this._slidex + this._slideoutWidth;
+        let [minWidth, natWidth ] = this._child.get_preferred_width(forHeight);     
         return [minWidth, natWidth];
-    },
- */
-    /* Just the child min height, no border, no positioning etc. 
+    },*/
+ 
+    /* Just the child min height, no border, no positioning etc.
     vfunc_get_preferred_height: function(forWidth) {
-        let [minHeight, natHeight] = this._child.get_preferred_height(forWidth);
+        let [minHeight, natHeight] = this._child.get_preferred_height(forWidth);    
         return [minHeight, natHeight];
-    },
-*/
+    },*/
+ 
     /* I was expecting it to be a virtual function... stil I don't understand
        how things work.
     */
@@ -295,7 +261,7 @@ const dockedDash = new Lang.Class({
         // This is the sliding actor whose allocation is to be tracked for input regions
         this._slider = new DashSlideContainer( {
 //            direction:this._rtl?SlideDirection.RIGHT:SlideDirection.LEFT}
-			direction:3}//+|
+			direction:SlideDirection.BOTTOM}//+|
         );
         // This is the actor whose hover status us tracked for autohide
         this._box = new St.BoxLayout({ name: 'dashtodockBox', reactive: true, track_hover:true } );
@@ -421,7 +387,7 @@ const dockedDash = new Lang.Class({
             this.actor.disconnect(this._realizeId);
             this._realizeId=0;
         }
-
+				
         // Set initial position
         this._resetPosition();
 
@@ -432,15 +398,18 @@ const dockedDash = new Lang.Class({
 
         // Now that the dash is on the stage and custom themes should be loaded
         // retrieve its background color
-        this._getBackgroundColor();
+        this._getBackgroundColor();     
         this._updateBackgroundOpacity();
 
         // Show 
         this.actor.set_opacity(255); //this.actor.show();
 
+		// Make dock have borders (-radius) top,right, and left, but not bottom
+		this._adjustBorders();
+
         // Setup pressure barrier (GS38+ only)
         this._updatePressureBarrier();
-        this._updateBarrier();
+        this._updateBarrier();      
     },
 
     destroy: function(){
@@ -649,51 +618,6 @@ const dockedDash = new Lang.Class({
         });
     },
 
-/*//simple-dock
-   _animateIn: function(time, delay) {
-        this._animStatus.queue(true);
-        Tweener.addTween(this._slider,{
-            y: this._monitor.y + this._monitor.height - this._box.height,
-            time: time,
-            delay: delay,
-            transition: 'easeOutQuad',
-
-            onStart:  Lang.bind(this, function() {
-                this._animStatus.start();
-            }),
-
-            onOverwrite : Lang.bind(this, function() {
-                this._animStatus.clear();
-            }),
-
-            onComplete: Lang.bind(this, function() {
-                this._animStatus.end();
-            })
-        });
-    },
-
-    _animateOut: function(time, delay) {
-        this._animStatus.queue(false);
-        Tweener.addTween(this._slider,{
-            y: this._monitor.y + this._monitor.height - 1,
-            time: time,
-            delay: delay,
-            transition: 'easeOutQuad',
-
-            onStart:  Lang.bind(this, function() {
-                this._animStatus.start();
-            }),
-
-            onOverwrite : Lang.bind(this, function() {
-                this._animStatus.clear();
-            }),
-
-            onComplete: Lang.bind(this, function() {
-                this._animStatus.end();
-            })
-        });
-    },
-*/
     _updatePressureBarrier: function() {
         this._canUsePressure = global.display.supports_extended_barriers();
         let pressureThreshold = this._settings.get_double('pressure-threshold');
@@ -830,7 +754,44 @@ const dockedDash = new Lang.Class({
     _onThemeChanged: function() {
         this.dash._queueRedisplay();
         this._getBackgroundColor();
-        this._updateBackgroundOpacity();
+        this._updateBackgroundOpacity();       
+    },
+
+	// This function was taken from an extension called simple-dock
+    _adjustBorders: function() {
+        // Prevent shell crash if the actor is not on the stage.
+        // It happens enabling/disabling repeatedly the extension
+        if (!this.dash._container.get_stage()) {
+            return;
+        }
+
+        // Remove prior style edits
+        this.dash._container.set_style(null);//NEEDED?
+
+        let themeNode = this.dash._container.get_theme_node();
+  
+//        let borderColor = themeNode.get_border_color(St.Side.BOTTOM);
+//        let borderWidth = themeNode.get_border_width(St.Side.BOTTOM);
+        let borderRadius = themeNode.get_border_radius(St.Corner.TOPRIGHT);
+let background = themeNode.get_background_color();
+
+        /* We're "swapping" bottom border and bottom-right corner styles
+         * to left and top-left corner
+         */
+//        let newStyle = 'border-bottom: none;' +
+//            'border-radius: ' + borderRadius + 'px ' + borderRadius + 'px 0 0;' +
+//            'border-left: ' + borderWidth + 'px solid ' + borderColor.to_string() + ';';
+            
+//        let newStyle = 'border-bottom: none;' +
+//            'border-radius: ' + borderRadius + 'px ' + borderRadius + 'px 0 0;' +
+//            'border-left: ' + borderWidth + 'px solid ' + ';';
+
+        let newStyle = 'border-bottom: none;' + 'border-radius: ' + borderRadius + 'px ' 
+			+ borderRadius + 'px 0 0;';// + 'background: ' + background + ';';
+
+        this.dash._container.set_style(newStyle);
+        
+//this._updateBackgroundOpacity();
     },
 
     _isPrimaryMonitor: function() {
@@ -840,31 +801,6 @@ const dockedDash = new Lang.Class({
 
     _updateYPosition: function() {
 /*
-        let unavailableTopSpace = 0;
-        let unavailableBottomSpace = 0;
-
-        let extendHeight = this._settings.get_boolean('extend-height');
-        let dockFixed = this._settings.get_boolean('dock-fixed');
-
-        // check if the dock is on the primary monitor
-        if (this._isPrimaryMonitor()){
-            if (!extendHeight || !dockFixed) {
-                unavailableTopSpace = Main.panel.actor.height;
-            }
-        }
-
-        let availableHeight = this._monitor.height - unavailableTopSpace - unavailableBottomSpace;
-
-        let fraction = this._settings.get_double('height-fraction');
-
-        if(extendHeight)
-            fraction = 1;
-        else if(fraction<0 || fraction >1)
-            fraction = 0.95;
-
-        this.actor.height = Math.round( fraction * availableHeight);
-        this.actor.y = this._monitor.y + unavailableTopSpace + Math.round( (1-fraction)/2 * availableHeight);
-
         if(extendHeight){
             this.dash._container.set_height(this.actor.height);
             this.actor.add_style_class_name('extended');
@@ -873,25 +809,16 @@ const dockedDash = new Lang.Class({
             this.actor.remove_style_class_name('extended');
         }
 */
-//----------------------------------------------------------------------
-/*
+
         this.actor.width = this._monitor.width;
         this.actor.x = this._monitor.x;
         this.actor.x_align = St.Align.MIDDLE;
 
-		this.actor.height = this._monitor.height;        
-		this.actor.y = this._monitor.y;
-		this.actor.y_align = St.Align.END;
-*/
-        this.actor.width = this._monitor.width;
-        this.actor.x = this._monitor.x;
-        this.actor.x_align = St.Align.MIDDLE;//TODO: return to MIDDLE OF SCREEEN
-
 		this.actor.height = this._monitor.height;
 		this.actor.y = this._monitor.y;
 		this.actor.y_align = St.Align.END;
-//----------------------------------------------------------------------
-        this._updateStaticBox();
+
+        this._updateStaticBox();     
     },
 
     // Shift panel position to extend the dash to the full monitor height
@@ -955,16 +882,9 @@ const dockedDash = new Lang.Class({
         } else {
             anchor_point = Clutter.Gravity.NORTH_WEST;
             position = this.staticBox.x1;
-        }
+        }   
 
-//Moving teh reveal position to the bottom of the screen
-//anchor_point = Clutter.Gravity.SOUTH;
-//anchor_point = Clutter.Gravity.CENTER;
-//log('POSSSSSSSSSSS :'+position);
-//this.actor.move_anchor_point_from_gravity(anchor_point);
-//this.actor.set_anchor_point(-(100),-(10));//x,y
-
-//        this.actor.move_anchor_point_from_gravity(anchor_point);
+        this.actor.move_anchor_point_from_gravity(anchor_point);
         this.actor.x = position;
 
         this._updateYPosition();
