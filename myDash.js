@@ -249,13 +249,13 @@ const myDash = new Lang.Class({
 		this._container.add_actor(this._activeFolder);
 */
 //------------------------------------------------------------------------
-		this._heapTray = new Widgets.myHeapTray(this.iconSize, this._settings);
-		this._heapTray.childScale = 1;
-		this._heapTray.childOpacity = 255;
-		this._heapTray.icon.setIconSize(this.iconSize);
-//		this._hookUpLabel(this._heapTray);
+		this._linkTray = new Widgets.myLinkTray(this.iconSize, this._settings);
+		this._linkTray.childScale = 1;
+		this._linkTray.childOpacity = 255;
+		this._linkTray.icon.setIconSize(this.iconSize);
+//		this._hookUpLabel(this._linkTray);
 
-		this._container.add_actor(this._heapTray.actor);
+		this._container.add_actor(this._linkTray.actor);
 //=========================================================================//
 //------ADDING WIDGETS HERE------------------------------------------------//
 
