@@ -136,7 +136,6 @@ const myLinkBox = new Lang.Class({
 		}
 
 let item = new myFileIconSPECIAL('/home/pc', this.iconSize);
-
 this._box.add(item.actor);		
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	},
@@ -802,29 +801,8 @@ const myFileIconSPECIAL = new Lang.Class({
     Name: 'myFileIconSPECIAL',
 
     _init: function (filepath, size) {
-/*		
-        this.iconSize = size;
-		this.actor = new St.Button({ style_class: 'show-apps',
-										reactive: true,
-										button_mask: St.ButtonMask.ONE | St.ButtonMask.TWO,
-										can_focus: true,
-										x_fill: true,
-										y_fill: true,
-										track_hover: true });
-		this.actor._delegate = this;	
+        this.iconSize = size;//filepath = '/home/pc/extensions_bak';
 		this.file = Gio.file_new_for_path(filepath);
-		this.actor.connect('clicked', Lang.bind(this, function () {
-			let handler = this.file.query_default_handler (null);
-			let result = handler.launch ([this.file], null);
-		}));
-
-		this.icon = new St.Icon({ icon_size: this.iconSize, 
-									style_class: 'show-apps',
-									track_hover: true });
-		
-		this.actor.set_child(this.icon);
-*/
-
 
         this.actor = new St.Button({ style_class: 'app-well-app',
                                      reactive: true,
@@ -832,21 +810,20 @@ const myFileIconSPECIAL = new Lang.Class({
                                      can_focus: true,
                                      x_fill: true,
                                      y_fill: true });
-
-        this.actor._delegate = this;
-        this.file = Gio.file_new_for_path(filepath);		
+		this.actor._delegate = this;
         this.actor.connect('clicked', Lang.bind(this, function () {
 			let handler = this.file.query_default_handler (null);
 			let result = handler.launch ([this.file], null);
 		}));
-        this.icon = new IconGrid.BaseIcon(this._labelText, { setSizeManually: true, 
-			showLabel: false, createIcon: Lang.bind(this, this._createIcon) });
-		
-		this.actor.set_child(this.icon.actor);
-		
-		
-		
 
+//		this.label = new St.Label({ text: "ssss", x_align: St.Align.MIDDLE }); //this.file.get_basename()
+
+        this.icon = new IconGrid.BaseIcon(this.file.get_basename(), { setSizeManually: true, 
+			showLabel: true, createIcon: Lang.bind(this, this._createIcon) });
+			
+        this.icon.setIconSize(this.iconSize);this.icon.actor.width = 2*this.iconSize;
+
+		this.actor.set_child(this.icon.actor);
 				
 		let info = this.file.query_info('standard::icon,thumbnail::path', 0, null);
 					
@@ -869,9 +846,6 @@ const myFileIconSPECIAL = new Lang.Class({
 			}
 //			this.icon.set_gicon(gicon);
 		}
-
-		let label = new St.Label({text: this.file.get_basename(), x_align: St.Align.MIDDLE });
-		//this.add_child(label, { x_align: St.Align.MIDDLE });
     },
 
     _createIcon: function(size) {
