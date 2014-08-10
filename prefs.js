@@ -7,7 +7,6 @@ const Gtk = imports.gi.Gtk;
 const Lang = imports.lang;
 const Mainloop = imports.mainloop;
 
-
 const Gettext = imports.gettext.domain('dashtodock');
 const _ = Gettext.gettext;
 const N_ = function(e) { return e };
@@ -16,8 +15,7 @@ const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
 const Convenience = Me.imports.convenience;
 
-
-const WorkspaceSettingsWidget = new GObject.Class({
+const WorkspaceSettingsWidget = new GObject.Class({//FIXME why call it this funny name?
     Name: 'WorkspaceIndicator.WorkspaceSettingsWidget',
     GTypeName: 'WorkspaceSettingsWidget',
     Extends: Gtk.Box,
@@ -28,20 +26,21 @@ const WorkspaceSettingsWidget = new GObject.Class({
 
     let notebook = new Gtk.Notebook();
 
-    /* MAIN DOCK SETTINGS */
+    /* MAIN */
 
     let dockSettings = new Gtk.Box({orientation:Gtk.Orientation.VERTICAL});
-    let dockSettingsTitle = new Gtk.Label({label: _("Main Settings")});
+    let dockSettingsTitle = new Gtk.Label({label: _("Main")});
 
-
-    let dockSettingsMain1 = new Gtk.Box({spacing:30,orientation:Gtk.Orientation.HORIZONTAL, homogeneous:true,
-                                         margin:10});
+    let dockSettingsMain1 = new Gtk.Box({orientation:Gtk.Orientation.HORIZONTAL, 
+		homogeneous:true, spacing:30, margin:10});
     indentWidget(dockSettingsMain1);
 
-	let dockSettingsPlacement = new Gtk.Box({spacing:30, margin_left:10, margin_top:10, margin_right:10});
+    /* DOCK PLACEMENT */
 
-    let dockPlacement = new Gtk.Box({margin_left:10, margin_top:10, margin_bottom:0, margin_right:10});
-	let dockPlacementLabel = new Gtk.Label({label: _("Dock placement: 0-Left, 1-Right, [No Top], 3-Bottom"), hexpand:true, xalign:0});
+	let dockSettingsPlacement = new Gtk.Box({spacing:30, margin_top:10, margin_right:10, margin_left:10});
+
+    let dockPlacement = new Gtk.Box({margin_top:10, margin_right:10, margin_bottom:0, margin_left:10});
+	let dockPlacementLabel = new Gtk.Label({label: _("Dock is placed in the display's"), hexpand:true, xalign:0});
     let dockPlacementCombo = new Gtk.ComboBoxText({halign:Gtk.Align.END});
 	dockPlacementCombo.append_text(_("0"));
 	dockPlacementCombo.append_text(_("1"));
@@ -52,7 +51,6 @@ const WorkspaceSettingsWidget = new GObject.Class({
 		active = 0;
         
 	dockPlacementCombo.set_active(active);
-
 	dockPlacementCombo.connect('changed', Lang.bind (this, function(widget) {
 		let active = widget.get_active();
 		if (active <= 0)
@@ -63,27 +61,100 @@ const WorkspaceSettingsWidget = new GObject.Class({
 
     dockPlacement.add(dockPlacementLabel);
     dockPlacement.add(dockPlacementCombo);
+
+    /* DOCK FIXED */
     
-    let dockSettingsControl1 = new Gtk.Box({spacing:30, margin_left:10, margin_top:10, margin_right:10});
-        
-    let alwaysVisibleLabel = new Gtk.Label({label: _("Dock is fixed and always visible"), use_markup: true,
-                                            xalign: 0, hexpand:true});
+    let dockFixed = new Gtk.Box({spacing:30, margin_top:10, margin_right:10, margin_left:10});
+    let alwaysVisibleLabel = new Gtk.Label({label: _("Dock is fixed and always visible"),
+		use_markup: true, xalign: 0, hexpand:true});
 
     let alwaysVisible =  new Gtk.Switch({halign:Gtk.Align.END});
         alwaysVisible.set_active(this.settings.get_boolean('dock-fixed'));
         alwaysVisible.connect('notify::active', Lang.bind(this, function(check){
             this.settings.set_boolean('dock-fixed', check.get_active());
-        }));
+		}));
    
-    dockSettingsControl1.add(alwaysVisibleLabel);
-    dockSettingsControl1.add(alwaysVisible);
+    dockFixed.add(alwaysVisibleLabel);
+    dockFixed.add(alwaysVisible);
 
-    /* TIMINGS SETTINGS */
+    /* DOCK PREFERRED MONITOR */
 
-    let dockSettingsGrid1= new Gtk.Grid({row_homogeneous:true,column_homogeneous:false});
+    let dockPreferredMonitor = new Gtk.Box({margin_top:10, margin_right:10, margin_bottom:0, margin_left:10});
+        let dockPreferredMonitorLabel = new Gtk.Label({label: _("Dock is shown on this (attached) monitor"), hexpand:true, xalign:0});
+        let dockPreferredMonitorCombo = new Gtk.ComboBoxText({halign:Gtk.Align.END});
+            dockPreferredMonitorCombo.append_text(_("Default"));
+            dockPreferredMonitorCombo.append_text(_("1"));
+            dockPreferredMonitorCombo.append_text(_("2"));
+            dockPreferredMonitorCombo.append_text(_("3"));
+            dockPreferredMonitorCombo.append_text(_("4"));
+            let active = this.settings.get_int('preferred-monitor');
+            if (active<0)
+                active = 0;
+                
+            dockPreferredMonitorCombo.set_active(active);
+            dockPreferredMonitorCombo.connect('changed', Lang.bind (this, function(widget) {
+                let active = widget.get_active();
+                if (active <=0)
+                    this.settings.set_int('preferred-monitor', -1);
+                else
+                    this.settings.set_int('preferred-monitor', active );
+            }));
 
-    let animationTimeLabel = new Gtk.Label({label: _("Animation time [ms]"), use_markup: true, xalign: 0,hexpand:true});
-    let animationTime = new Gtk.SpinButton({halign:Gtk.Align.END});
+    dockPreferredMonitor.add(dockPreferredMonitorLabel);
+    dockPreferredMonitor.add(dockPreferredMonitorCombo);
+
+    /* DOCK INTELLIHIDE */
+
+    let dockIntellihidePanel = new Gtk.Box({orientation:Gtk.Orientation.VERTICAL, homogeneous:true});
+
+    let dockIntellihideSwitchPanel = new Gtk.Box({margin_top:10, margin_right:10, margin_bottom:0, margin_left:10});
+
+    let intellihideLabel = new Gtk.Label({label: _("Intellihide"),  xalign: 0, hexpand:true, margin_right:10});
+    let intellihide =  new Gtk.Switch({halign:Gtk.Align.END});
+        intellihide.set_active(this.settings.get_boolean('intellihide'));
+        intellihide.connect('notify::active', Lang.bind(this, function(check){
+            this.settings.set_boolean('intellihide', check.get_active());
+        }));
+
+    dockIntellihideSwitchPanel.add(intellihideLabel);
+    dockIntellihideSwitchPanel.add(intellihide);
+	dockIntellihidePanel.add(dockIntellihideSwitchPanel);
+	
+    let dockIntellihide = new Gtk.Box({margin_top:10, margin_right:10, margin_bottom:0, margin_left:10});
+    indentWidget(dockIntellihide);
+    
+    let perAppIntellihide =  new Gtk.CheckButton({label: _("Application based intellihide"), hexpand:true});
+        perAppIntellihide.set_active(this.settings.get_boolean('intellihide-perapp'));
+        perAppIntellihide.connect('toggled', Lang.bind(this, function(check){
+            this.settings.set_boolean('intellihide-perapp', check.get_active());
+        }));
+
+	dockIntellihide.add(perAppIntellihide);
+	dockIntellihidePanel.add(dockIntellihide);	
+
+    /* DOCK AUTOHIDE */
+
+    let dockAutohidePanel = new Gtk.Box({orientation:Gtk.Orientation.VERTICAL, homogeneous:true});
+
+	let dockAutohideSwitchPanel = new Gtk.Box({margin_top:10, margin_right:10, margin_bottom:0, margin_left:10});
+
+    let autohideLabel = new Gtk.Label({label: _("Autohide"), xalign: 0, hexpand:true});
+    let autohide =  new Gtk.Switch({halign:Gtk.Align.END});
+        autohide.set_active(this.settings.get_boolean('autohide'));
+        autohide.connect('notify::active', Lang.bind(this, function(check){
+            this.settings.set_boolean('autohide', check.get_active());
+        }));
+
+	dockAutohideSwitchPanel.add(autohideLabel);
+	dockAutohideSwitchPanel.add(autohide);
+	dockAutohidePanel.add(dockAutohideSwitchPanel);
+	
+    /* TIMINGS */
+
+    let dockTimingsGrid= new Gtk.Grid({row_homogeneous:true,column_homogeneous:false, halign:Gtk.Align.END});
+
+    let animationTimeLabel = new Gtk.Label({label: _("Animation time [ms]"), use_markup: true, xalign: 0,hexpand:false, halign:Gtk.Align.END});
+    let animationTime = new Gtk.SpinButton({halign:Gtk.Align.END, margin_left:10});
             animationTime.set_sensitive(true);
             animationTime.set_range(0, 5000);
             animationTime.set_value(this.settings.get_double('animation-time')*1000);
@@ -93,8 +164,8 @@ const WorkspaceSettingsWidget = new GObject.Class({
                 this.settings.set_double('animation-time', s);
             }));
 
-    let showDelayLabel = new Gtk.Label({label: _("Show delay [ms]"), use_markup: true, xalign: 0, hexpand:true});
-    let showDelay = new Gtk.SpinButton({halign:Gtk.Align.END});
+    let showDelayLabel = new Gtk.Label({label: _("Show delay [ms]"), use_markup: true, xalign: 0, hexpand:false, halign:Gtk.Align.END});
+    let showDelay = new Gtk.SpinButton({halign:Gtk.Align.END, margin_left:10});
             showDelay.set_sensitive(true);
             showDelay.set_range(0, 5000);
             showDelay.set_value(this.settings.get_double('show-delay')*1000);
@@ -104,8 +175,8 @@ const WorkspaceSettingsWidget = new GObject.Class({
                 this.settings.set_double('show-delay', s);
             }));
 
-    let hideDelayLabel = new Gtk.Label({label: _("Hide delay [ms]"), use_markup: true, xalign: 0, hexpand:true});
-    let hideDelay = new Gtk.SpinButton({halign:Gtk.Align.END});
+    let hideDelayLabel = new Gtk.Label({label: _("Hide delay [ms]"), use_markup: true, xalign: 0, hexpand:false, halign:Gtk.Align.END});
+    let hideDelay = new Gtk.SpinButton({halign:Gtk.Align.END, margin_left:10});
             hideDelay.set_sensitive(true);
             hideDelay.set_range(0, 5000);
             hideDelay.set_value(this.settings.get_double('hide-delay')*1000);
@@ -115,66 +186,30 @@ const WorkspaceSettingsWidget = new GObject.Class({
                 this.settings.set_double('hide-delay', s);
             }));
 
-    /* INTELLIHIDE AUTOHIDE SETTINGS */
+    dockTimingsGrid.attach(animationTimeLabel, 0,0,1,1);
+    dockTimingsGrid.attach(animationTime, 1,0,1,1);
+    dockTimingsGrid.attach(showDelayLabel, 0,1,1,1);
+    dockTimingsGrid.attach(showDelay, 1,1,1,1);
+    dockTimingsGrid.attach(hideDelayLabel, 0,2,1,1);
+    dockTimingsGrid.attach(hideDelay, 1,2,1,1);
 
-    let dockSettingsGrid2= new Gtk.Grid({row_homogeneous:true,column_homogeneous:false});
-
-    let autohideLabel = new Gtk.Label({label: _("Autohide"), xalign: 0, hexpand:true});
-    let autohide =  new Gtk.Switch({halign:Gtk.Align.END});
-        autohide.set_active(this.settings.get_boolean('autohide'));
-        autohide.connect('notify::active', Lang.bind(this, function(check){
-            this.settings.set_boolean('autohide', check.get_active());
-        }));
-
-    let intellihideLabel = new Gtk.Label({label: _("Intellihide"),  xalign: 0, hexpand:true});
-    let intellihide =  new Gtk.Switch({halign:Gtk.Align.END});
-        intellihide.set_active(this.settings.get_boolean('intellihide'));
-        intellihide.connect('notify::active', Lang.bind(this, function(check){
-            this.settings.set_boolean('intellihide', check.get_active());
-        }));
-
-    dockSettingsGrid1.attach(animationTimeLabel, 0,0,1,1);
-    dockSettingsGrid1.attach(animationTime, 1,0,1,1);
-    dockSettingsGrid1.attach(showDelayLabel, 0,1,1,1);
-    dockSettingsGrid1.attach(showDelay, 1,1,1,1);
-    dockSettingsGrid1.attach(hideDelayLabel, 0,2,1,1);
-    dockSettingsGrid1.attach(hideDelay, 1,2,1,1);
-
-    dockSettingsGrid2.attach(autohideLabel, 0,0,1,1);
-    dockSettingsGrid2.attach(autohide, 1,0,1,1);
-    dockSettingsGrid2.attach(intellihideLabel, 0,1,1,1);
-    dockSettingsGrid2.attach(intellihide, 1,1,1,1);
-    dockSettingsGrid2.attach(new Gtk.Label(), 0,2,1,1);
-
-    dockSettingsMain1.add(dockSettingsGrid1);
-    dockSettingsMain1.add(dockSettingsGrid2);
+    dockSettingsMain1.add(dockTimingsGrid);
 
     this.settings.bind('dock-fixed', dockSettingsMain1, 'sensitive', Gio.SettingsBindFlags.INVERT_BOOLEAN);
 
-    let intellihideSubSettings = new Gtk.Box({margin_left:10, margin_top:10, margin_bottom:0, margin_right:10});
-    indentWidget(intellihideSubSettings);
+    /* PRESSURE */
 
-    let perappIntellihide =  new Gtk.CheckButton({label: _("Application based intellihide")});
-        perappIntellihide.set_active(this.settings.get_boolean('intellihide-perapp'));
-        perappIntellihide.connect('toggled', Lang.bind(this, function(check){
-            this.settings.set_boolean('intellihide-perapp', check.get_active());
-        }));
-
-    intellihideSubSettings.add(perappIntellihide);
-
-
-    /* PRESSURE SETTINGS */
-
-    let requirePressureControl = new Gtk.Box({margin_left:10, margin_top:0, margin_bottom:0, margin_right:10});
-    let requirePressureContainer = new Gtk.Box({margin_left:10, margin_top:0, margin_bottom:10, margin_right:10});
-    indentWidget(requirePressureControl);
-    indentWidget(requirePressureContainer);
+	let dockPressureControl = new Gtk.Box({orientation:Gtk.Orientation.HORIZONTAL, hexpand:false});
+	let dockPressureContainer = new Gtk.Box({halign:Gtk.Align.END, hexpand:true, 
+		margin_top:0, margin_right:10, margin_bottom:0, margin_left:0});
+    indentWidget(dockPressureControl);
 
 
     let requirePressureButton = new Gtk.CheckButton({
         label: _("Require pressure to show the dock"),
-        margin_left: 0,
-        margin_top: 0
+        margin_top: 0,
+        margin_left: 0
+        
     });
     requirePressureButton.set_active(this.settings.get_boolean('require-pressure-to-show'));
     requirePressureButton.connect('toggled', Lang.bind(this, function(check) {
@@ -182,16 +217,18 @@ const WorkspaceSettingsWidget = new GObject.Class({
     }));
 
     let pressureThresholdLabel = new Gtk.Label({
-        label: _("Pressure threshold (px)"),
+        label: _("Minimum pressure [px]"),
+        halign:Gtk.Align.END,
         use_markup: true,
         xalign: 0,
         margin_top: 0,
-        hexpand: true
+        hexpand: false
     });
 
     let pressureThresholdSpinner = new Gtk.SpinButton({
         halign: Gtk.Align.END,
-        margin_top: 0
+        margin_top: 0,
+        margin_left: 10
     });
     pressureThresholdSpinner.set_sensitive(true);
     pressureThresholdSpinner.set_range(10, 500);
@@ -202,57 +239,36 @@ const WorkspaceSettingsWidget = new GObject.Class({
         this.settings.set_double("pressure-threshold", s);
     }));
 
-    requirePressureControl.add(requirePressureButton);
-    requirePressureContainer.add(pressureThresholdLabel);
-    requirePressureContainer.add(pressureThresholdSpinner);
+    dockPressureControl.add(requirePressureButton);
+    dockPressureContainer.add(pressureThresholdLabel);
+    dockPressureContainer.add(pressureThresholdSpinner);
+    dockPressureControl.add(dockPressureContainer);
 
     this.settings.bind('require-pressure-to-show', pressureThresholdLabel, 'sensitive', Gio.SettingsBindFlags.DEFAULT);
     this.settings.bind('require-pressure-to-show', pressureThresholdSpinner, 'sensitive', Gio.SettingsBindFlags.DEFAULT);
 
+    this.settings.bind('dock-fixed', dockIntellihide, 'sensitive', Gio.SettingsBindFlags.INVERT_BOOLEAN);
+    this.settings.bind('dock-fixed', perAppIntellihide, 'sensitive', Gio.SettingsBindFlags.INVERT_BOOLEAN);
+    this.settings.bind('intellihide', dockIntellihide, 'sensitive', Gio.SettingsBindFlags.DEFAULT);
+    this.settings.bind('autohide', dockPressureControl, 'sensitive', Gio.SettingsBindFlags.DEFAULT);
+    this.settings.bind('autohide', dockPressureContainer, 'sensitive', Gio.SettingsBindFlags.DEFAULT);
 
+    /* SIZE */
 
-    this.settings.bind('dock-fixed', intellihideSubSettings, 'sensitive', Gio.SettingsBindFlags.INVERT_BOOLEAN);
-    this.settings.bind('dock-fixed', perappIntellihide, 'sensitive', Gio.SettingsBindFlags.INVERT_BOOLEAN);
-    this.settings.bind('intellihide', intellihideSubSettings, 'sensitive', Gio.SettingsBindFlags.DEFAULT);
-    this.settings.bind('autohide', requirePressureControl, 'sensitive', Gio.SettingsBindFlags.DEFAULT);
-    this.settings.bind('autohide', requirePressureContainer, 'sensitive', Gio.SettingsBindFlags.DEFAULT);
+    let dockDimensions = new Gtk.Box({orientation:Gtk.Orientation.HORIZONTAL, homogeneous:false,
+		margin_top:5, margin_right:10, margin_bottom:10, margin_left:10});
+    indentWidget(dockDimensions);
 
+    let extendSize =  new Gtk.CheckButton({label: _("Expand all the way"), hexpand:true});
+        extendSize.set_active(this.settings.get_boolean('extend-size'));
+        extendSize.connect('toggled', Lang.bind(this, function(check){
+            this.settings.set_boolean('extend-size', check.get_active());
+        }));    
 
-    /* POISITION AND SIZE */
-
-    let dockMonitor = new Gtk.Box({margin_left:10, margin_top:10, margin_bottom:0, margin_right:10});
-        let dockMonitorLabel = new Gtk.Label({label: _("Show the dock on following monitor (if attached)"), hexpand:true, xalign:0});
-        let dockMonitorCombo = new Gtk.ComboBoxText({halign:Gtk.Align.END});
-            dockMonitorCombo.append_text(_("Primary (default)"));
-            dockMonitorCombo.append_text(_("1"));
-            dockMonitorCombo.append_text(_("2"));
-            dockMonitorCombo.append_text(_("3"));
-            dockMonitorCombo.append_text(_("4"));
-            let active = this.settings.get_int('preferred-monitor');
-            if (active<0)
-                active = 0;
-            dockMonitorCombo.set_active(active);
-
-            dockMonitorCombo.connect('changed', Lang.bind (this, function(widget) {
-                let active = widget.get_active();
-                if (active <=0)
-                    this.settings.set_int('preferred-monitor', -1);
-                else
-                    this.settings.set_int('preferred-monitor', active );
-            }));
-
-    dockMonitor.add(dockMonitorLabel)
-    dockMonitor.add(dockMonitorCombo);
-
-    let dockSettingsMain2 = new Gtk.Box({orientation:Gtk.Orientation.VERTICAL, homogeneous:false,
-                                        margin_left:10, margin_top:5, margin_bottom:10, margin_right:10});
-    indentWidget(dockSettingsMain2);
-
-    let dockSizeMain = new Gtk.Box({spacing:30, orientation:Gtk.Orientation.HORIZONTAL, homogeneous:false,
-                                       margin:10});
-    indentWidget(dockSizeMain);
+	dockDimensions.add(extendSize);
+    
     let dockMaxSizeTimeout=0; // Used to avoid to continuosly update the dock height
-    let dockMaxSizeLabel = new Gtk.Label({label: _("Max height/width"), xalign: 0});
+    let dockMaxSizeLabel = new Gtk.Label({label: _("Max height/width"), xalign: 0, halign:Gtk.Align.END, margin_right:30});
     let dockMaxSize =  new Gtk.Scale({orientation: Gtk.Orientation.HORIZONTAL, valuePos: Gtk.PositionType.RIGHT});
         dockMaxSize.set_range(0, 100);
         dockMaxSize.set_value(this.settings.get_double('size-fraction')*100);
@@ -270,68 +286,40 @@ const WorkspaceSettingsWidget = new GObject.Class({
         }));
 
         dockMaxSize.connect('format-value', function(scale, value) {return value + '%'});
-    let extendSize =  new Gtk.CheckButton({label: _("Expand all the way")});
-        extendSize.set_active(this.settings.get_boolean('extend-size'));
-        extendSize.connect('toggled', Lang.bind(this, function(check){
-            this.settings.set_boolean('extend-size', check.get_active());
-        }));
 
-    dockSizeMain.add(dockMaxSizeLabel);
-    dockSizeMain.add(dockMaxSize);
-    dockSizeMain.add(extendSize);
+
+	dockDimensions.add(dockMaxSizeLabel);
+	dockDimensions.add(dockMaxSize);
 
     this.settings.bind('extend-size', dockMaxSizeLabel, 'sensitive', Gio.SettingsBindFlags.INVERT_BOOLEAN);
     this.settings.bind('extend-size', dockMaxSize, 'sensitive', Gio.SettingsBindFlags.INVERT_BOOLEAN);
-
-    dockSettingsMain2.add(dockSizeMain);
     
-	dockSettings.add(dockPlacement);
-    dockSettings.add(dockSettingsControl1);
-    dockSettings.add(dockSettingsMain1);
-    dockSettings.add(intellihideSubSettings);
-    dockSettings.add(requirePressureControl);
-    dockSettings.add(requirePressureContainer);
+    /* ICON SIZE */
 
-    dockSettings.add(dockMonitor);
-    dockSettings.add(dockSettingsMain2);
+    let iconSizeMain = new Gtk.Box({orientation:Gtk.Orientation.HORIZONTAL, homogeneous:true, hexpand:true,
+		margin_top:10, margin_right:10, margin_bottom:0, margin_left:10});
 
-    /*ICON SIZE*/
+    let allSizes  = [ 16, 20, 24, 28, 32, 36, 40, 44, 48, 52, 56, 60, 64 ];
 
-    let iconSizeMain = new Gtk.Box({orientation:Gtk.Orientation.VERTICAL, homogeneous:true,
-                                       margin_left:10, margin_top:10, margin_bottom:0, margin_right:10});
-
-    let allSizes  =[ 16, 24, 32, 48, 64 ];
-    let maximumIconSizeBox = new Gtk.Box({spacing:30,});
-
-    let maximumIconSizeLabel = new Gtk.Label({label: _("Maximum icon size"), use_markup: true,
-                                              xalign: 0, valign: Gtk.Align.END, margin_bottom:5,  hexpand:true});
-
-    let maximumIconSize =  new Gtk.ComboBoxText({halign:Gtk.Align.END});
-
-            maximumIconSize.append_text(_("16"));
-            maximumIconSize.append_text(_("24"));
-            maximumIconSize.append_text(_("32"));
-            maximumIconSize.append_text(_("48"));
-            maximumIconSize.append_text(_("64"));
-
-            maximumIconSize.set_size_request(100, -1);
-
-            maximumIconSize.set_active(allSizes.indexOf(this.settings.get_int('dash-max-icon-size')));
-
-            maximumIconSize.connect('changed', Lang.bind (this, function(widget) {
-                this.settings.set_int('dash-max-icon-size', allSizes[widget.get_active()]);
+    let IconSizeLabel = new Gtk.Label({label: _("Icon size"), use_markup: true,
+		xalign: 0, valign: Gtk.Align.END, margin_bottom:0, margin_left:0});
+    let IconSize = new Gtk.SpinButton({halign:Gtk.Align.END});
+            IconSize.set_sensitive(true);
+            IconSize.set_range(16, 64);
+            IconSize.set_value(this.settings.get_int('dash-max-icon-size'));
+            IconSize.set_increments(1, 2); 
+            IconSize.connect('value-changed', Lang.bind(this, function(button){
+                let s = button.get_value_as_int();
+                this.settings.set_int('dash-max-icon-size', s);
             }));
 
-    maximumIconSizeBox.add(maximumIconSizeLabel);
-    maximumIconSizeBox.add(maximumIconSize);
-
-    iconSizeMain.add(maximumIconSizeBox);
-    dockSettings.add(iconSizeMain);
+    iconSizeMain.add(IconSizeLabel);
+    iconSizeMain.add(IconSize);    
 
     /* SHOW FAVORITES/RUNNING */
 
     let showIcons = new Gtk.Box({orientation: Gtk.Orientation.VERTICAL,
-                                 margin_left:10, margin_top:5, margin_bottom:10, margin_right:10})
+		margin_top:5, margin_right:10, margin_bottom:10,  margin_left:10})
     indentWidget(showIcons);
 
     let showFavorites =  new Gtk.CheckButton({label: _("Show favorite application icons")});
@@ -353,7 +341,18 @@ const WorkspaceSettingsWidget = new GObject.Class({
     showIcons.add(showFavorites);
     showIcons.add(showRunning);
     showIcons.add(showAppsAtTop);
+
+	/* ADDING SETTINGS TO PAGE */
     
+	dockSettings.add(dockPlacement);
+    dockSettings.add(dockFixed);
+    dockSettings.add(dockPreferredMonitor);
+    dockSettings.add(dockIntellihidePanel);
+	dockSettings.add(dockAutohidePanel);    
+    dockSettings.add(dockSettingsMain1);
+    dockSettings.add(dockPressureControl);
+    dockSettings.add(dockDimensions);
+    dockSettings.add(iconSizeMain);    
     dockSettings.add(showIcons);
 
     notebook.append_page(dockSettings, dockSettingsTitle);
@@ -361,7 +360,7 @@ const WorkspaceSettingsWidget = new GObject.Class({
     /* CUSTOMIZATION PAGE */
 
     let customization = new Gtk.Box({orientation:Gtk.Orientation.VERTICAL});
-    let customizationTitle = new Gtk.Label({label: _("Optional features")});
+    let customizationTitle = new Gtk.Label({label: _("Optional")});
 
     /* CUSTOM THEME */
     let customThemeControl = new Gtk.Box({margin_left:10, margin_top:10, margin_bottom:5, margin_right:10});
@@ -464,7 +463,7 @@ const WorkspaceSettingsWidget = new GObject.Class({
         only1px.connect('toggled', Lang.bind(this, function(check){
             if(check.get_active()) this.settings.set_boolean('scroll-switch-workspace-whole', false);
         }));
-    let wholeArea = new Gtk.RadioButton({label: _("All the area of the dock is active"), group: only1px });
+    let wholeArea = new Gtk.RadioButton({label: _("All of the dock area active"), group: only1px });
         wholeArea.set_active(this.settings.get_boolean('scroll-switch-workspace-whole'));
         wholeArea.connect('toggled', Lang.bind(this, function(check){
             if(check.get_active()) this.settings.set_boolean('scroll-switch-workspace-whole', true);
@@ -511,9 +510,9 @@ const WorkspaceSettingsWidget = new GObject.Class({
         let clickActionLabel = new Gtk.Label({label: _("Action on clicking on running app"), hexpand:true, xalign:0});
         let clickActionCombo = new Gtk.ComboBoxText({halign:Gtk.Align.END});
             clickActionCombo.append_text(_("Do nothing (default)"));
-            clickActionCombo.append_text(_("Minimize"));
+            clickActionCombo.append_text(_("Minimize window(s)"));
             clickActionCombo.append_text(_("Launch new window"));
-            clickActionCombo.append_text(_("Cycle through application windows"));
+            clickActionCombo.append_text(_("Cycle the windows"));
 
             clickActionCombo.set_active(this.settings.get_enum('click-action'));
 
@@ -571,11 +570,7 @@ function buildPrefsWidget() {
 }
 
 
-/*
- * Add a margin to the widget:
- *  left margin in LTR
- *  right margin in RTL
- */
+/* Add a margin to the widget: left margin in LTR, right margin in RTL */
 function indentWidget(widget){
 
     let indent = 20;

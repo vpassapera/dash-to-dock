@@ -1100,7 +1100,7 @@ const dockedDash = new Lang.Class({
 
         // This was inspired by desktop-scroller@obsidien.github.com
         function onScrollEvent(actor, event) {
-log('SCROOOOOL IN THE DUNGEON!!!');
+
             let activeWs = global.screen.get_active_workspace();
             let direction = 0; // 0: do nothing; +1: up; -1:down.
 
