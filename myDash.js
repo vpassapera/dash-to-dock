@@ -837,6 +837,7 @@ const myDash = new Lang.Class({
 			} else
 				pos = 0; // always insert at the top when dash is empty
 		} else {
+/*			
 			boxWidth = this._box.width;
 			for (let i = 0; i < numChildren; i++) {
 				boxWidth += children[i].width;
@@ -856,6 +857,17 @@ const myDash = new Lang.Class({
 					pos = numChildren;
 			} else
 				pos = 0; // always insert at the top when dash is empty
+*/
+			boxWidth = this._box.width;
+			if (this._dragPlaceholder) {
+				boxWidth -= this._dragPlaceholder.width;
+				numChildren--;
+			}
+
+			if (!this._emptyDropTarget) {
+				pos = Math.floor(x * numChildren / boxWidth);
+			}
+ 
 		}
 
         if (pos != this._dragPlaceholderPos && pos <= numFavorites && this._animatingPlaceholdersCount == 0) {
