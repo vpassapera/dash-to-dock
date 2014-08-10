@@ -697,24 +697,7 @@ const myLinkTrayMenu = new Lang.Class({
 		let i = 0;
 		for(let irow = 0 ; irow < irows ;irow++) {
 			for(let icol = 0 ; icol < icols ;icol++) {
-				let item = new myFileIcon(files[i].link, this.iconSize, this);
-/*
-//-------------------------------
-        item._draggable.connect('drag-begin', Lang.bind(this,
-            function () {
-                this._removeMenuTimeout();
-				this._onDragBegin();
-            }));
-        item._draggable.connect('drag-cancelled', Lang.bind(this,
-            function () {
-				this._onDragCancelled();
-            }));
-        item._draggable.connect('drag-end', Lang.bind(this,
-            function () {
-				this._onDragEnd();
-            }));
-//-------------------------------
-*/										
+				let item = new myFileIcon(files[i].link, this.iconSize, this);									
 				this._table.add(item.actor, { row: irow, col: icol, x_fill: false, y_fill: false, 
 					x_align: St.Align.MIDDLE, y_align: St.Align.START});
 
@@ -745,64 +728,13 @@ const myLinkTrayMenu = new Lang.Class({
 				(this._scrollView.height/icols + 10)*3;//10 is from popup menu
     },
     
-//----------------------------------------------------------------------------------------------- 
     _removeMenuTimeout: function() {
         if (this._menuTimeoutId > 0) {
             Mainloop.source_remove(this._menuTimeoutId);
             this._menuTimeoutId = 0;
         }
     },
-/*       
-    _onDragBegin: function() {
-        this._dragCancelled = false;
-        this._dragMonitor = {
-            dragMotion: Lang.bind(this, this._onDragMotion)
-        };
-        DND.addDragMonitor(this._dragMonitor);
 
-        if (this._table.get_n_children() == 0) {
-            this._emptyDropTarget = new EmptyDropTargetItem();
-            this._table.insert_child_at_index(this._emptyDropTarget, 0);
-            this._emptyDropTarget.show(true);
-        }
-    },
-
-    _onDragCancelled: function() {
-        this._dragCancelled = true;
-        this._endDrag();
-    },
-
-    _onDragEnd: function() {
-        if (this._dragCancelled)
-            return;
-
-        this._endDrag();
-    },
-
-    _endDrag: function() {
-        this._clearDragPlaceholder();
-        this._clearEmptyDropTarget();
-        DND.removeDragMonitor(this._dragMonitor);
-    },
-
-    _onDragMotion: function(dragEvent) {
-        let app;
-		if (source instanceof myFileIcon) {
-			tray = source;		
-		} else {
-			tray = null;
-			return false;
-		}
-        
-        if (app == null)
-            return DND.DragMotionResult.CONTINUE;
-
-        if (!this._table.contains(dragEvent.targetActor))
-            this._clearDragPlaceholder();
-
-        return DND.DragMotionResult.CONTINUE;
-    },
-*/
     _clearDragPlaceholder: function() {
         if (this._dragPlaceholder) {
             this._animatingPlaceholdersCount++;
@@ -838,43 +770,50 @@ const myLinkTrayMenu = new Lang.Class({
         let links = this._table.get_children();
         let numLinks = links.length;
 
-        let linkPos = links.indexOf(link);
+        let linkPos = links.indexOf(source.actor);
 
+
+/**/
+this._dragPlaceholder = new Dash.DragPlaceholderItem();
+this._dragPlaceholder.child.set_width (this.iconSize);
+this._dragPlaceholder.child.set_height (this.iconSize);
+//this._table.insert_child_at_index(this._dragPlaceholder, 0);//THIS COULD WORK if a redisplay ques up
+this._table.add(this._dragPlaceholder, { row: 5, col: 0, x_fill: false, y_fill: false, 
+					x_align: St.Align.MIDDLE, y_align: St.Align.START});
+this._dragPlaceholder.show(true);
+
+
+
+log('HOVERING '+source.file.get_path() );
+
+
+
+/*
         let children = this._table.get_children();
         let numChildren = children.length;
 
 		let pos, boxHeight, boxWidth
-		if (!dock_horizontal) {
-			boxHeight = 0;
-			for (let i = 0; i < numChildren; i++) {
-				boxHeight += children[i].height;
-			}
-
-			// Keep the placeholder out of the index calculation; assuming that
-			// the remove target has the same size as "normal" items, we don't
-			// need to do the same adjustment there.
-			if (this._dragPlaceholder) {
-				boxHeight -= this._dragPlaceholder.height;
-				numChildren--;
-			}
-
-			if (!this._emptyDropTarget) {
-				pos = Math.floor(y * numChildren / boxHeight);
-				if (pos >  numChildren)
-					pos = numChildren;
-			} else
-				pos = 0; // always insert at the top when dash is empty
-		} else {
-			boxWidth = this._table.width;
-			if (this._dragPlaceholder) {
-				boxWidth -= this._dragPlaceholder.width;
-				numChildren--;
-			}
-
-			if (!this._emptyDropTarget) {
-				pos = Math.floor(x * numChildren / boxWidth);
-			}
+		boxHeight = 0;
+		for (let i = 0; i < numChildren; i++) {
+			boxHeight += children[i].height;
 		}
+
+		// Keep the placeholder out of the index calculation; assuming that
+		// the remove target has the same size as "normal" items, we don't
+		// need to do the same adjustment there.
+		if (this._dragPlaceholder) {
+			boxHeight -= this._dragPlaceholder.height;
+			numChildren--;
+		}
+
+		if (!this._emptyDropTarget) {
+			pos = Math.floor(y * numChildren / boxHeight);
+			if (pos >  numChildren)
+				pos = numChildren;
+		} else
+			pos = 0; // always insert at the top when dash is empty
+
+log('PINGER '+(pos != this._dragPlaceholderPos && pos <= numLinks && this._animatingPlaceholdersCount == 0));
 
         if (pos != this._dragPlaceholderPos && pos <= numLinks && this._animatingPlaceholdersCount == 0) {
             this._dragPlaceholderPos = pos;
@@ -897,16 +836,16 @@ const myLinkTrayMenu = new Lang.Class({
             }
 
             this._dragPlaceholder = new Dash.DragPlaceholderItem();
-			if (!dock_horizontal) {
-				this._dragPlaceholder.child.set_width (this.iconSize);
-				this._dragPlaceholder.child.set_height (this.iconSize / 2);
+			this._dragPlaceholder.child.set_width (this.iconSize);
+			this._dragPlaceholder.child.set_height (this.iconSize / 2);
+//            this._table.insert_child_at_index(this._dragPlaceholder,
+//                                            this._dragPlaceholderPos);
 
-			} else {
-				this._dragPlaceholder.child.set_width (this.iconSize / 2);
-				this._dragPlaceholder.child.set_height (this.iconSize);
-			}
-            this._table.insert_child_at_index(this._dragPlaceholder,
-                                            this._dragPlaceholderPos);
+
+this._table.add(this._dragPlaceholder, { row: 0, col: 0, x_fill: false, y_fill: false, 
+					x_align: St.Align.MIDDLE, y_align: St.Align.START});
+
+
             this._dragPlaceholder.show(fadeIn);
         }
 
@@ -917,6 +856,33 @@ const myLinkTrayMenu = new Lang.Class({
 
         if (!this._dragPlaceholder)
             return DND.DragMotionResult.NO_DROP;
+*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/*
+let cc;
+for(let i = 0 ; i < links.length ;i++) {
+if ( links[i] == actor)
+	log('yes');
+
+log('links '+i+'  '+links[i]+'  '+actor);
+}
+
+log('dropped0 '+linkPos+'  numCH '+links.length);
+*/
+
 
         if (linkPos != -1)
             return DND.DragMotionResult.MOVE_DROP;
@@ -924,14 +890,21 @@ const myLinkTrayMenu = new Lang.Class({
         return DND.DragMotionResult.COPY_DROP;
     },
 
-    // Draggable target interface
     acceptDrop : function(source, actor, x, y, time) {
-log('dropped1 '+this._table.get_children().length+' '+(!this._dragPlaceholder));		
-		
-        // No drag placeholder means we don't wan't to add tray
-        // and we are dragging it to its original position
-//        if (!this._dragPlaceholder)
-//            return false;		
+
+				log('ACCEPT '+source.file.get_path() );
+				let links = this._table.get_children();
+				for(let i = 0 ; i < links.length ;i++) {
+				if ( links[i] == actor)
+					log('yes');
+
+				log('links '+i+'  '+links[i]+'  '+actor);
+				}
+
+
+
+				//let pickedActor = global.stage.get_actor_at_pos(Clutter.PickMode.REACTIVE, x, y);
+				//log('dropped1 '+this._table.get_children().length+'  '+pickedActor+' '+pickedActor.get_parent() );
 		
         let link;
 		if (source instanceof myFileIcon) {
@@ -943,24 +916,21 @@ log('dropped1 '+this._table.get_children().length+' '+(!this._dragPlaceholder));
 
 		let links = this._table.get_children();
 
-        let linkPos = 0;
-
-        let children = this._table.get_children();
-        
-        for (let i = 0; i < this._dragPlaceholderPos; i++) {
-            if (this._dragPlaceholder && children[i] == this._dragPlaceholder)
-                continue;
-
-			linkPos++;
-        }
+        let linkPos = links.indexOf(link);
 
 //		link.actor.unparent();
-//		this._table.replace_child(this._dragPlaceholder, link.actor);
-//		this.linksStorage.move_link(link.id, linkPos);
+//		this._table.replace_child(this._dragPlaceholder, link.actor);//replace both of them
+//		this.linksStorage.move_link_in_tray(link.id, linkPos);
 //		this._clearDragPlaceholder();
 
 
+actor.unparent();
+this._table.replace_child(this._dragPlaceholder, link.actor);
+
 log('dropped2 '+this._table.get_children().length+'  linkpos '+linkPos);	
+
+//		return false;
+
 		return true;
     }         
 });

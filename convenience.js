@@ -187,7 +187,6 @@ const LinksDB = new Lang.Class({
 		this.string_data = JSON.stringify(this.links_data);
 	
 		try {
-log(this.string_data+'<');
 			let path = ExtensionUtils.getCurrentExtension().path+'/data/'+'links_tray_db.json';
 			let file = Gio.file_new_for_path(path);
 			//let fstream = file.open_readwrite(null).get_output_stream();
