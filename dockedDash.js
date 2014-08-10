@@ -26,6 +26,9 @@ const PRESSURE_TIMEOUT = 1000;
 
 let dock_horizontal = true;
 let dock_placement = 3;
+let dock_width = -1;
+let dock_height = -1;
+let size_fraction = 1;
 
 const SlideDirection = {
     LEFT: 0,
@@ -37,36 +40,39 @@ const SlideDirection = {
 const myMaxSizeBin = new Lang.Class({
     Name: 'myMaxSizeBin',
     Extends: St.Bin,
-    
+
     vfunc_allocate: function(box, flags) {
 		let maxW = Main.layoutManager.primaryMonitor.width;
-		let maxH = Main.layoutManager.primaryMonitor.height;
+		let panelHeight =  Main.panel.actor.height;
+		let maxH = Main.layoutManager.primaryMonitor.height - panelHeight;
         let boxW = box.x2 - box.x1;
         let boxH = box.y2 - box.y1;
         let adjustedBox = box;
 
-		//maxW = 600;//Testing
-		//maxH = 600;
-
-		if (!dock_horizontal) {
-			if (boxH > maxH) {
-				let excessHeight = boxH - maxH;
-				
-				adjustedBox.y1 = 0;
-				adjustedBox.y2 = maxH;
-				
-				adjustedBox.y1 += Math.floor(excessHeight / 2);
-				adjustedBox.y2 -= Math.floor(excessHeight / 2);
+		if (!dock_horizontal) {		
+			if (boxH > Math.floor(maxH * size_fraction)) {
+				let excess = maxH - (maxH * size_fraction);
+				adjustedBox.y1 = Math.floor(excess / 2) + panelHeight;
+				adjustedBox.y2 = Math.floor(excess / 2) + panelHeight + (maxH * size_fraction);
+			} else if (size_fraction == 1) {
+				adjustedBox.y1 = panelHeight;
+				adjustedBox.y2 = panelHeight + maxH;			
+			} else {
+				let lack = maxH - dock_height;
+				adjustedBox.y1 = Math.floor(lack / 2) + panelHeight;
+				adjustedBox.y2 = Math.floor(lack / 2) + panelHeight + dock_height;
+log('ZZZZZAAAAAAAP  lack '+lack+' adj.y1 '+adjustedBox.y1+' adj.y2 '+adjustedBox.y2+' size='+(adjustedBox.y2-adjustedBox.y1)+'='+dock_height);
 			}
 		} else {
 			if (boxW > maxW) {
-				let excessWidth = excessWidth = boxW - maxW;
+log('TRIPWIRE SNAAAAAP! horizontal');
+				let excessWidth = boxW - maxW;
 
 				adjustedBox.x1 = 0;
 				adjustedBox.x2 = maxW;
 			
 				adjustedBox.x1 += Math.floor(excessWidth / 2);
-				adjustedBox.x2 -= Math.floor(excessWidth / 2);				
+				adjustedBox.x2 -= Math.floor(excessWidth / 2);
 			}
 		}
         this.parent(adjustedBox, flags);     
@@ -297,7 +303,7 @@ const dockedDash = new Lang.Class({
         // This is the actor whose hover status us tracked for autohide
         this._dockBox = new St.BoxLayout({ name: 'dashtodockBox', reactive: true, track_hover:true });
                 
-		this._myMaxSize = new myMaxSizeBin({ x_fill: true, y_fill: true, child: this._dockBox });
+		this._myMaxSize = new myMaxSizeBin({ x_fill: true, y_fill: true, child: this._dockBox }, this);
         
         this._dockBox.connect("notify::hover", Lang.bind(this, this._hoverChanged));
 
@@ -849,9 +855,11 @@ const dockedDash = new Lang.Class({
     },
 
     _updatePosition: function() {
-		if (!dock_horizontal) {			
+		if (!dock_horizontal) {
+			dock_width = this.actor.width;
+			dock_height = this.actor.height;
+			
 			let unavailableTopSpace = 0;
-			let unavailableBottomSpace = 0;
 			
 			let fraction = this._settings.get_double('size-fraction');
 			let extendSize = this._settings.get_boolean('extend-size');
@@ -864,25 +872,24 @@ const dockedDash = new Lang.Class({
 				}
 			}
 
-			let availableHeight = this._monitor.height - unavailableTopSpace - unavailableBottomSpace;
-
+			let availableHeight = this._monitor.height - unavailableTopSpace;
+			
 			if(extendSize)
 				fraction = 1;
 			else if(fraction<0 || fraction >1)
 				fraction = 0.95;
 
-			this.actor.height = Math.round( fraction * availableHeight);
-//			this.actor.y = this._monitor.y + unavailableTopSpace + Math.round( (1-fraction)/2 * availableHeight);
-//this.actor._dockBox = Math.round( fraction * availableHeight);
-this.actor.y_align = St.Align.MIDDLE;
+			size_fraction = fraction;
 
-			if(extendHeight){
-				this.dash._container.set_height(this.actor.height);
-				this.actor.add_style_class_name('extended');
+			if(extendSize) {			
+				this.dash._container.set_height(availableHeight);
+				this._dockBox.set_height(availableHeight);
+				//this.actor.add_style_class_name('extended');
 			} else {
 				this.dash._container.set_height(-1);
-				this.actor.remove_style_class_name('extended');
-			}
+				this._dockBox.set_height(-1);
+				//this.actor.remove_style_class_name('extended');
+			}	
 		} else {
 			let fraction = this._settings.get_double('size-fraction');
 			let extendSize = this._settings.get_boolean('extend-size');
@@ -892,7 +899,7 @@ this.actor.y_align = St.Align.MIDDLE;
 			else if(fraction<0 || fraction >1)
 				fraction = 0.95;
 			
-			this._dockBox.width = this._monitor.width*fraction;
+//			this._dockBox.width = this._monitor.width*fraction;
 
 			this.actor.width = this._monitor.width;
 			this.actor.x = this._monitor.x;
