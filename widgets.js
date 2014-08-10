@@ -137,7 +137,6 @@ const myLinkBox = new Lang.Class({
 	},
 
     destroy: function() {
-log('supposed to save this tray BOX ' );	
         this.actor._delegate = null;            
         this.actor.destroy();
         this.emit('destroy');
@@ -156,15 +155,12 @@ log('supposed to save this tray BOX ' );
 		let id = Math.random().toString(36).substr(2, 5);
 		this.linksStorage.add_tray(id);
 		this.loadTray(id);
-		this.linksStorage.save_db();
     },
 
     removeTray: function(id) {
 		if (this.linksStorage.links_data.folders.length > 1) {
 			this.linksStorage.remove_tray(id);
 		}
-		
-		this.linksStorage.save_db();
     },
      	
 	_onScrollEvent: function(actor, event) {
@@ -424,10 +420,6 @@ const myLinkTray = new Lang.Class({
             }));
 	},
 
-    getid: function() {
-		return this._id;
-	},
-
     destroy: function() {	
         this.actor._delegate = null;
 
@@ -481,7 +473,7 @@ const myLinkTray = new Lang.Class({
     callHandler: function(conductor) {
 		switch (conductor) {
 			case 0:
-				new ConfirmFreeContentsDialog(Lang.bind(this, this.freeContents)).open();
+				new ConfirmFreeContentsDialog(this.menu, this._id, this._myLinkBoxInstance.linksStorage).open();
                 break;
             case 1:
 				new ConfirmRemoveTrayDialog( this._myLinkBoxInstance, this._id, this ).open();
@@ -561,10 +553,6 @@ const myLinkTray = new Lang.Class({
 		//TODO: add to LinkDB
     },
 
-    freeContents: function() {
-
-    },
-    
     _removeMenuTimeout: function() {
         if (this._menuTimeoutId > 0) {
             Mainloop.source_remove(this._menuTimeoutId);
@@ -1139,7 +1127,7 @@ const ConfirmFreeContentsDialog = new Lang.Class({
 	Name: 'ConfirmFreeContentsDialog',
     Extends: ModalDialog.ModalDialog,
 
-	_init: function(givenMethod) {
+	_init: function(menu, id, linksStorage) {
 		this.parent({ styleClass: null });
 		
 		let mainContentBox = new St.BoxLayout({ style_class: 'polkit-dialog-main-layout',
@@ -1173,7 +1161,9 @@ const ConfirmFreeContentsDialog = new Lang.Class({
 			label: _("Clear"),
 			action: Lang.bind(this, function() {
 				this.close();
-				givenMethod();
+				linksStorage.free_tray_contents(id);
+				menu.removeAll();
+				menu.populate();
 			})
 		}
 		]);

@@ -138,7 +138,7 @@ const LinksDB = new Lang.Class({
 		this.links_data = null;
 		this.string_data = null;
 		this.check_or_make_directory();
-//		this.save_db();
+//		this.save_db();//TODO: problems
 	},
 
 	check_or_make_directory: function() {
@@ -201,14 +201,24 @@ log(this.string_data+'<');
 	
 	add_tray: function(id) {
 		this.links_data.folders.push( { collection_id: id, links_array: []} );
-		log(  JSON.stringify(this.links_data)  );
+		this.save_db();
 	},
 
 	remove_tray: function(id) {
 		for(let i = 0; i < this.links_data.folders.length ;i++) {
 			if (id == this.links_data.folders[i].collection_id) {
 				delete this.links_data.folders[i];
+				this.save_db();
 			}
 		}
-	}	
+	},
+	
+	free_tray_contents: function(id) {
+		for(let i = 0; i < this.links_data.folders.length ;i++) {
+			if (id == this.links_data.folders[i].collection_id) {
+				this.links_data.folders[i].links_array = [];
+				this.save_db();
+			}
+		}
+	}		
 });
