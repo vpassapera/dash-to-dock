@@ -549,7 +549,7 @@ const myLinkTray = new Lang.Class({
 		}
 		ncol = div;
 
-		this.menu._table.add(item, { row: nrow, col: ncol, x_fill: false, y_fill: false, 
+		this.menu._table.add(item.actor, { row: nrow, col: ncol, x_fill: false, y_fill: false, 
 			x_align: St.Align.MIDDLE, y_align: St.Align.START});
 			
 		this.myLinkBoxInstance.linksStorage.add_link_to_tray(this.id, item.lid, file);
@@ -714,10 +714,10 @@ const myLinkTrayMenu = new Lang.Class({
         vscroll.connect('scroll-stop', Lang.bind(this, function() {
             this.passEvents = false;
         }));
-        
+                
 		this.abox = new St.BoxLayout({ vertical: true, x_expand: true});		
 		this.abox.add(this._table);
-				
+		
 		this._scrollView.add_actor(this.abox);
 		
 		this.box.add(this._scrollView);
@@ -725,7 +725,7 @@ const myLinkTrayMenu = new Lang.Class({
 		// This is the bin icon that allows link deletion
 		this.fileIconDeletion = new myFileIconBin(this.iconSize, this);
 		this.box.add(this.fileIconDeletion.actor);
-		this.fileIconDeletion.actor.hide();
+		this.fileIconDeletion.actor.show();
 		
 		// Calculating the (aesthetic) height for ScrollView. 10 popup menu padding
 		if(icols > 1 && irows > 3)
@@ -793,20 +793,23 @@ const myFileIcon = new Lang.Class({
 			this.icon.actor.get_child().get_first_child().get_first_child().set_gicon(gicon);
 		}
 		
-        this._draggable = DND.makeDraggable(this.actor);       
+        this._draggable = DND.makeDraggable(this.actor); 
+/*              
         this._draggable.connect('drag-begin', Lang.bind(this,
             function () {
                 this.menu._removeMenuTimeout();
-				Main.overview.beginItemDrag(this);
+//this.fileIconDeletion.actor.show();                
+//				Main.overview.beginItemDrag(this);
             }));
         this._draggable.connect('drag-cancelled', Lang.bind(this,
             function () {
-				Main.overview.cancelledItemDrag(this);
+//				Main.overview.cancelledItemDrag(this);
             }));
         this._draggable.connect('drag-end', Lang.bind(this,
             function () {
-				Main.overview.endItemDrag(this);
+//				Main.overview.endItemDrag(this);
             }));		
+*/
     },
 
     _createIcon: function(size) {
@@ -815,24 +818,7 @@ const myFileIcon = new Lang.Class({
 								style_class: 'show-apps-icon',
 								track_hover: true });
     },
-    
-    handleDragOver : function(source, actor, x, y, time) {
-        let link;
-		if (source instanceof myFileIcon) {
-			link = source;
-		} else {
-			link = null;
-		}
-
-		this.menu.fileIconDeletion.actor.show();
-
-        // Don't allow favoriting of transient apps
-        if (link == null)
-            return DND.DragMotionResult.NO_DROP;
-
-        return DND.DragMotionResult.COPY_DROP;
-    },    
-    
+  
     acceptDrop : function(source, actor, x, y, time) {
         let link;
 		if (source instanceof myFileIcon) {
@@ -847,7 +833,7 @@ const myFileIcon = new Lang.Class({
 		this.menu.populate();
 		this.menu.open();
 		
-		return false;
+		return true;
     }
 });
 
@@ -862,26 +848,11 @@ const myFileIconBin = new Lang.Class({
 								icon_size: size,
 								style_class: 'show-apps-icon',
 								track_hover: true,
-								margin_top: 100 });
+								margin_top: 10 });
                                      
 		this.actor._delegate = this;
     },
-    
-    handleDragOver : function(source, actor, x, y, time) {
-        let link;
-		if (source instanceof myFileIcon) {
-			link = source;
-		} else {
-			link = null;
-		}
-
-        // Don't allow favoriting of transient apps
-        if (link == null)
-            return DND.DragMotionResult.NO_DROP;
-
-        return DND.DragMotionResult.COPY_DROP;
-    },    
-    
+   
     acceptDrop : function(source, actor, x, y, time) {
         let link;
 		if (source instanceof myFileIcon) {
@@ -1066,8 +1037,8 @@ const myRecyclingBin = new Lang.Class({
 		
 		this.actor.set_child(this.icon.actor);
 
-        this.recycling_bin_path = '~/.local/share/Trash/files';
-        this.recycling_bin_file = Gio.file_new_for_uri(this.recycling_bin_path);
+		this.trash_path = 'trash:///';
+		this.trash_file = Gio.file_new_for_uri(this.trash_path);
     
 		this.menuManager = new PopupMenu.PopupMenuManager(this);
 		
@@ -1122,10 +1093,6 @@ const myRecyclingBin = new Lang.Class({
 	},
  
     setupWatch: function() {
-		log(1);
-		
-		this.trash_path = 'trash:///';
-        this.trash_file = Gio.file_new_for_uri(this.trash_path);
 		this.binMonitor = this.trash_file.monitor_directory(0, null, null);
         this.binMonitor.connect('changed', Lang.bind(this, this.binChange));
     },
@@ -1138,22 +1105,15 @@ const myRecyclingBin = new Lang.Class({
 		let file_info = null;
 		while ((file_info = binItems.next_file(null, null)) != null) {
 			count++;
-		}
-//if(this.icon_actor_access != null) {		
+		}	
 		if (count > 0) {
 			this.icon_actor_access.set_icon_name('user-trash-full');
 		} else {
 			this.icon_actor_access.set_icon_name('user-trash');
 		}
-//}
     },
 
     openBin: function() {
-		//let app = Gio.app_info_create_from_commandline("gvfs-open trash:///", 
-			//null, Gio.AppInfoCreateFlags.NONE).launch([],null);
-
-		this.trash_path = 'trash:///';
-		this.trash_file = Gio.file_new_for_uri(this.trash_path);
 		Gio.app_info_launch_default_for_uri(this.trash_path, null);
     },
 
