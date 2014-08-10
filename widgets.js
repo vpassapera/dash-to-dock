@@ -92,9 +92,9 @@ const myShowAppsIcon = new Lang.Class({
 const myLinkTray = new Lang.Class({
     Name: 'myLinkTray',
                         
-    _init: function(iconSize, settings) {
+    _init: function(iconSize, settings, ii) {
 //		this._labelText = _("Links Tray");		
-		this._labelText = 'k'+Math.round(Math.random()*10000);
+		this._labelText = 'k'+ii;
 		this.label = new St.Label({ style_class: 'dash-label'});
 		this.label.hide();
 		Main.layoutManager.addChrome(this.label);
@@ -418,7 +418,7 @@ const myLinkBox = new Lang.Class({
 		
 		
 		for (let i = 0; i < 5 ;i++) {
-			this._linkTray = new myLinkTray(iconSize, settings);
+			this._linkTray = new myLinkTray(iconSize, settings, i);
 			this._linkTray.childScale = 1;
 			this._linkTray.childOpacity = 255;
 			this._linkTray.icon.setIconSize(iconSize);
@@ -549,26 +549,24 @@ log('_clearEmptyDropTarget');
     },
 
     handleDragOver : function(source, actor, x, y, time) {
-log('handleDragOver'); 
-        // Don't allow to add favourites if they are not displayed
         if( !this._settings.get_boolean('applet-links-tray-visible') )
             return DND.DragMotionResult.NO_DROP;
 
-        let app;
+        let tray;
 		if (source instanceof myLinkTray) {
-			app = source;
+			tray = source;
 		} else {
-			app = null;
+			tray = null;
 		}
 
         // Don't allow favoriting of transient apps
-        if (app == null)
+        if (tray == null)
             return DND.DragMotionResult.NO_DROP;
 
-        let favorites = this._box.get_children();
-        let numFavorites = favorites.length;
+        let trays = this._box.get_children();
+        let numTrays = trays.length;
 
-        let favPos = favorites.indexOf(app);
+        let trayPos = trays.indexOf(tray);
 
         let children = this._box.get_children();
         let numChildren = children.length;
@@ -604,14 +602,13 @@ log('handleDragOver');
 			if (!this._emptyDropTarget) {
 				pos = Math.floor(x * numChildren / boxWidth);
 			}
- 
 		}
 
-        if (pos != this._dragPlaceholderPos && pos <= numFavorites && this._animatingPlaceholdersCount == 0) {
+        if (pos != this._dragPlaceholderPos && pos <= numTrays && this._animatingPlaceholdersCount == 0) {
             this._dragPlaceholderPos = pos;
 
             // Don't allow positioning before or after self
-            if (favPos != -1 && (pos == favPos || pos == favPos + 1)) {
+            if (trayPos != -1 && (pos == trayPos || pos == trayPos + 1)) {
                 this._clearDragPlaceholder();
                 return DND.DragMotionResult.CONTINUE;
             }
@@ -643,83 +640,99 @@ log('handleDragOver');
 
         // Remove the drag placeholder if we are not in the
         // "favorites zone"
-        if (pos > numFavorites)
+        if (pos > numTrays)
             this._clearDragPlaceholder();
 
         if (!this._dragPlaceholder)
             return DND.DragMotionResult.NO_DROP;
 
-        let srcIsFavorite = (favPos != -1);
-
-        if (srcIsFavorite)
+        if (trayPos != -1)
             return DND.DragMotionResult.MOVE_DROP;
 
         return DND.DragMotionResult.COPY_DROP;
-        
-log('handleDragOver_ended');         
     },
 
     // Draggable target interface
-    acceptDrop : function(source, actor, x, y, time) {		
-log('acceptDrop '+source);
-        // Don't allow to add favourites if they are not displayed
+    acceptDrop : function(source, actor, x, y, time) {
         if( !this._settings.get_boolean('applet-links-tray-visible') )
             return true;
 
-        let app;
+        let tray;
 		if (source instanceof myLinkTray) {
-			app = source;
+			tray = source;
 		} else {
-			app = null;
+			tray = null;
 			return true;
 		}
 
-
-//let running = Shell.AppSystem.get_default().get_running();
-//log("::::::::::::> "+running[0]+'  '+running[0].get_id() );
-		
-//        let id = app.get_id();
-
-
-let id = app.id;
-log('_______app__________ '+app+' '+id);
-
-//        let favorites = AppFavorites.getAppFavorites().getFavoriteMap();
 		let trays = this._box.get_children();
 
-//        let srcIsTray = (id in trays);
-
         let trayPos = 0;
-/*
+
         let children = this._box.get_children();
+        
         for (let i = 0; i < this._dragPlaceholderPos; i++) {
-            if (this._dragPlaceholder &&
-                children[i] == this._dragPlaceholder)
+            if (this._dragPlaceholder && children[i] == this._dragPlaceholder)
                 continue;
 
-            let childId = children[i].child._delegate.app.get_id();
-            if (childId == id)
+            if (tray.id == children[i].id)
                 continue;
-            if (childId in favorites)
-                trayPos++;
+
+			trayPos++;
         }
-*/
+
         // No drag placeholder means we don't wan't to add tray
         // and we are dragging it to its original position
         if (!this._dragPlaceholder)
             return true;
+
 /*
-        Meta.later_add(Meta.LaterType.BEFORE_REDRAW, Lang.bind(this,
-            function () {
-                let appFavorites = AppFavorites.getAppFavorites();
-                if (srcIsTray)
-                    appFavorites.moveFavoriteToPos(id, trayPos);
-                else
-                    appFavorites.addFavoriteAtPos(id, trayPos);
-                return false;
-            }));
+log('accFrop new position '+id+' trayPos '+trayPos+'  however '+this._box.get_children().length);
+children.splice(trayPos, 0, app);
+
+log("......> "+app);
+for (let i = 0; i < children.length ;i++) {
+//log("......----> "+i+'  '+children[i]);
+
+log("......----> "+(app == this._box.get_child_at_index(trayPos) ));
+
+}
 */
-        return true;
+
+//this._box.insert_child_at_index
+//this._box.replace_child(this._dragPlaceholder, tray);
+
+//this._box.replace_child(
+//this._box.get_child_at_index(trayPos),
+//tray);
+
+//this._box.insert_child_at_index(tray.actor, 1);
+
+//-------------------------------------------------------------------------------
+//        if (trayPos == -1)
+//             this._box.push(tray);
+//        else
+//             this._box.splice(trayPos, 0, tray);
+//-------------------------------------------------------------------------------
+
+
+log('aaaaaaaaaaaaa '+this._box.get_children().length+'  trayPos='+trayPos);
+//this._box.splice(trayPos, 0, tray);
+
+
+//this._box.remove_child(this._dragPlaceholder);
+
+//this._box.insert_child_at_index(tray.actor, trayPos);//'child->priv->parent == NULL' failed
+
+log(tray.actor.get_parent() );//
+
+tray.actor.unparent();
+
+this._box.replace_child (this._dragPlaceholder, tray.actor);
+
+
+return true;//removes from par
+//		return false;//always add to the end
     }	
 });
 
