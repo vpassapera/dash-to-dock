@@ -695,7 +695,8 @@ log('gridview switch');
 		let appz = AppFavorites.getAppFavorites().getFavorites();
 		for(let i = 0 ; i < 4 ;i++) {
 			for(let j = 0 ; j < appz.length ;j++) {
-				let boxOfButton = new St.BoxLayout({vertical: true, pack_start: false});
+				let boxOfButton = new St.BoxLayout({ vertical: true, x_expand: false,
+					margin_top: 3, margin_right: 3, margin_bottom: 3, margin_left: 3 });			
 				let icon = new St.Icon({ icon_name: 'user-desktop',
                                         icon_size: 48,
                                         style_class: 'show-apps-icon',
@@ -706,17 +707,18 @@ log('gridview switch');
 											button_mask: St.ButtonMask.ONE | St.ButtonMask.TWO,
 											can_focus: true,
 											x_fill: true,
-											y_fill: true });
-log(00000000000);                                     
+											y_fill: true });                                   
 				btn.add_actor(icon);
 				btn.connect('clicked', Lang.bind(this, function () { log('VVVVVVVVVVVVVVV> '); }));
-log(11111111111);				
-				//boxOfButton.add(icon);
 				boxOfButton.add(btn);
-				let label = new St.Label({text: appz[j].get_name()});
-				boxOfButton.add(label);
-log(22222222222);
-				this._table.add(boxOfButton, { row: j, col:i, x_fill: false, y_fill: false,x_align: St.Align.MIDDLE, y_align: St.Align.START});
+				let label = new St.Label({text: appz[j].get_name(), x_align: St.Align.MIDDLE });
+				
+				if ( label.width == 48*2 )
+					label.width = 48*2;
+
+				boxOfButton.add(label, { x_align: St.Align.MIDDLE });
+				this._table.add(boxOfButton, { row: j, col:i, x_fill: false, y_fill: false, 
+					x_align: St.Align.MIDDLE, y_align: St.Align.START});
 			}
 		}
 		
@@ -793,7 +795,7 @@ const myPopupImageMenuItem = new Lang.Class({
 		//this.box.set_style('background-color: yellow;');//Debugging
 		this.box.width = 2*size;
 		this.box.add(this._icon, { x_align: St.Align.MIDDLE });
-		this.box.add(this._label, { icon_size: size, x_align: St.Align.MIDDLE });
+		this.box.add(this._label, { x_align: St.Align.MIDDLE });		
 		this.actor.add(this.box, { x_align: St.Align.MIDDLE });
     },
 
