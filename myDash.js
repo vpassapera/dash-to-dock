@@ -149,7 +149,7 @@ const myDash = new Lang.Class({
         if (!dock_horizontal) {
 			this._box = new St.BoxLayout({ vertical: true, clip_to_allocation: false });
 		} else {
-			this._box = new St.BoxLayout({ vertical: false, clip_to_allocation: true });//FIXME: EXPERIMENTALLLL TROUBLE
+			this._box = new St.BoxLayout({ vertical: false, clip_to_allocation: false });
 		}
 		this._box._delegate = this;
 
@@ -197,13 +197,27 @@ const myDash = new Lang.Class({
 			this._rightOrBottomArrow.connect('clicked', Lang.bind(this, this._onScrollBtnRightOrBottom));			
 		}
 
-		// Init applet variables
+		// Init Show Apps applet
+		if (!dock_horizontal) {
+			this._linksBox = new St.BoxLayout({ vertical: true, clip_to_allocation: false });
+		} else {
+			this._linksBox = new St.BoxLayout({ vertical: false, clip_to_allocation: false });
+		}
+		this._linksBox._delegate = this;
 		this.showAppsButton = new St.Button({ toggle_mode: true });
 		this._showAppsIcon = null;
+		
+		// Init applets
 		this._linkTray = null;
 		this._showDesktop = null;
 		this._recyclingBin = null;
 
+		// Init applets direction
+		if (!dock_horizontal)
+			Widgets.dock_horizontal = false;
+		else
+			Widgets.dock_horizontal = true;
+						
 		this.make_dock();
 
         this.actor = new St.Bin({ child: this._container, y_align: St.Align.START });
@@ -262,40 +276,49 @@ const myDash = new Lang.Class({
 				let pos = parseInt(position[i]);
 				switch (pos) {
 					case 1:
- 						this._showAppsIcon = new Widgets.myShowAppsIcon();
-						this._showAppsIcon.childScale = 1;
-						this._showAppsIcon.childOpacity = 255;
-						this._showAppsIcon.icon.setIconSize(this.iconSize);
-						this._hookUpLabel(this._showAppsIcon);
-						this.showAppsButton = this._showAppsIcon.toggleButton;
-						this._container.add_actor(this._showAppsIcon);				
+						if (this._settings.get_boolean('applet-show-apps-visible')) {
+							this._showAppsIcon = new Widgets.myShowAppsIcon();
+							this._linksBox.add_actor(this._showAppsIcon);
+							this._showAppsIcon.childScale = 1;
+							this._showAppsIcon.childOpacity = 255;
+							this._showAppsIcon.icon.setIconSize(this.iconSize);
+							this._hookUpLabel(this._showAppsIcon);
+							this.showAppsButton = this._showAppsIcon.toggleButton;
+							this._container.add_actor(this._linksBox);
+						}
 						break;
 					case 2:
 						this._container.add_actor(this._appsContainer);
-						break;			
+						break;
 					case 3:
-						this._linkTray = new Widgets.myLinkTray(this.iconSize, this._settings);
-						this._linkTray.childScale = 1;
-						this._linkTray.childOpacity = 255;
-						this._linkTray.icon.setIconSize(this.iconSize);
-						this._hookUpLabelForApplets(this._linkTray);					
-						this._container.add_actor(this._linkTray.actor);
+						if (this._settings.get_boolean('applet-links-tray-visible')) {
+							this._linkTray = new Widgets.myLinkTray(this.iconSize, this._settings);
+							this._linkTray.childScale = 1;
+							this._linkTray.childOpacity = 255;
+							this._linkTray.icon.setIconSize(this.iconSize);
+							this._hookUpLabelForApplets(this._linkTray);					
+							this._container.add_actor(this._linkTray.actor);
+						}
 						break;
 					case 4:
-						this._showDesktop = new Widgets.myShowDesktop(this.iconSize, this._settings);
-						this._showDesktop.childScale = 1;
-						this._showDesktop.childOpacity = 255;
-						this._showDesktop.icon.setIconSize(this.iconSize);
-						this._hookUpLabelForApplets(this._showDesktop);					
-						this._container.add_actor(this._showDesktop.actor);
+						if (this._settings.get_boolean('applet-show-desktop-visible')) {
+							this._showDesktop = new Widgets.myShowDesktop(this.iconSize, this._settings);
+							this._showDesktop.childScale = 1;
+							this._showDesktop.childOpacity = 255;
+							this._showDesktop.icon.setIconSize(this.iconSize);
+							this._hookUpLabelForApplets(this._showDesktop);					
+							this._container.add_actor(this._showDesktop.actor);
+						}
 						break;
 					case 5:
-						this._recyclingBin = new Widgets.myRecyclingBin(this.iconSize, this._settings);
-						this._recyclingBin.childScale = 1;
-						this._recyclingBin.childOpacity = 255;
-						this._recyclingBin.icon.setIconSize(this.iconSize);	
-						this._hookUpLabelForApplets(this._recyclingBin);
-						this._container.add_actor(this._recyclingBin.actor);
+						if (this._settings.get_boolean('applet-recycling-bin-visible')) {
+							this._recyclingBin = new Widgets.myRecyclingBin(this.iconSize, this._settings);
+							this._recyclingBin.childScale = 1;
+							this._recyclingBin.childOpacity = 255;
+							this._recyclingBin.icon.setIconSize(this.iconSize);	
+							this._hookUpLabelForApplets(this._recyclingBin);
+							this._container.add_actor(this._recyclingBin.actor);
+						}
 						break;												
 					default:
 						break;
