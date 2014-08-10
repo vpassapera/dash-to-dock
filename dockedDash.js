@@ -99,7 +99,7 @@ const DashSlideContainer = new Lang.Class({
         let slideoutWidth = this._slideoutWidth;
 log('_____________________________________________________________________');          
 log('SlideDirection: '+this._direction);
-log('COORDS1: childBox x = '+childBox.x1+' -> '+childBox.x2+' | y =  '+childBox.y1+' -> '+childBox.y2);
+log('COORDS1: childBox [x1,y1 = '+childBox.x1+', '+childBox.y2+'] [x2,y2 =  '+childBox.x2+', '+childBox.y2+']');
 /*
         if (this._direction == SlideDirection.LEFT) {
             childBox.x1 = (this._slidex -1)*(childWidth - slideoutWidth);
@@ -125,16 +125,33 @@ log('COORDS2: childBox x = '+childBox.x1+' -> '+childBox.x2+' | y =  '+childBox.
 //        childBox.y1 = 0;
 //        childBox.y2 = childHeight;
 
+//almost works
+//childBox.x1 = (this._slidex -1)*(childWidth - 1);
+//childBox.x2 = 1 + this._slidex*(childWidth - 1);
+//childBox.y1 = (this._slidex -1)*(childWidth - 1);
+//childBox.y2 = slideoutWidth + this._slidex*(childWidth - 1);
+
+//failed experiment
+//childBox.x1 = 0;//(this._slidex -1)*(childWidth - 1);
+//childBox.y1 = 0;//childHeight;//(this._slidex -1)*(childWidth - 1);
+//childBox.x2 = 0;//1 + this._slidex*(childWidth - 1);
+//childBox.y2 = childHeight;//slideoutWidth + this._slidex*(childWidth - 1);
 
 childBox.x1 = (this._slidex -1)*(childWidth - 1);
-childBox.x2 = 1 + this._slidex*(childWidth - 1);    
+childBox.x2 = 1 + this._slidex*(childWidth - 1);
 childBox.y1 = (this._slidex -1)*(childWidth - 1);
-childBox.y2 = slideoutWidth + this._slidex*(childWidth - 1);   
+childBox.y2 = slideoutWidth + this._slidex*(childWidth - 1);
+
+anchor_point = Clutter.Gravity.NORTH;
+this.move_anchor_point_from_gravity(anchor_point);
+//this.actor.set_anchor_point(-(100),-(10));//x,y
+
         
         this._child.allocate(childBox, flags);
-        this._child.set_clip(-childBox.x1, 0, -childBox.x1+availWidth, availHeight);//WTF??
+//        this._child.set_clip(-childBox.x1, 0, -childBox.x1+availWidth, availHeight);//WTF??
+this._child.set_clip_to_allocation(true);//+|Experimental
 //this._child.set_clip(0, 0, -childBox.x1+availWidth, availHeight);//cuts off: A, offTop, C, D
-log('COORDS2: childBox x = '+childBox.x1+' -> '+childBox.x2+' | y =  '+childBox.y1+' -> '+childBox.y2);//COMPARE WITH SIMPLE DOCK
+log('COORDS2: childBox [x1,y1 = '+childBox.x1+', '+childBox.y2+'] [x2,y2 =  '+childBox.x2+', '+childBox.y2+']');
 
     },
 
@@ -887,7 +904,6 @@ const dockedDash = new Lang.Class({
 //anchor_point = Clutter.Gravity.SOUTH;
 //this.actor.move_anchor_point_from_gravity(anchor_point);
 //this.actor.set_anchor_point(-(100),-(10));//x,y
-//this.actor.x = this.staticBox.x2/2;
 
         this._updateYPosition();
     },
