@@ -113,7 +113,7 @@ const DashSlideContainer = new Lang.Class({
         this._child.set_clip(-childBox.x1, 0, -childBox.x1+availWidth, availHeight);
     },
 */
-
+/*
     vfunc_allocate: function(box, flags) {
 log('_____________________________________________________________________');
 let hideshow = 'IN';//true = 1 showing, false = 0 hiding, for slidex
@@ -129,7 +129,7 @@ log('startbox [x1,y1 = '+box.x1+', '+box.y1+'] [x2,y2 =  '+box.x2+', '+box.y2+']
         let availHeight = box.y2 - box.y1;
         let [minChildWidth, minChildHeight, natChildWidth, natChildHeight] =
             this._child.get_preferred_size();
-//log('SIZES minChildWidth='+minChildWidth+'    minChildHeight='+minChildHeight+'    natChildWidth='+natChildWidth+'    natChildHeight='+natChildHeight);
+log('SIZES minChildWidth='+minChildWidth+'    minChildHeight='+minChildHeight+'    natChildWidth='+natChildWidth+'    natChildHeight='+natChildHeight);
         let childWidth = natChildWidth;
         let childHeight = natChildHeight;
 
@@ -137,84 +137,37 @@ log('startbox [x1,y1 = '+box.x1+', '+box.y1+'] [x2,y2 =  '+box.x2+', '+box.y2+']
 
         let slideoutWidth = this._slideoutWidth;
 
-//log('prelmnry [x1,y1 = '+0+', '+(-1*(this._slidex -1)*childHeight)+'] [x2,y2 =  '+childWidth+', '+(-1*this._slidex*childHeight)+']');
-
-//acordeons and goes to the top
-//childBox.x1 = 0;//(this._slidex -1)*(childWidth - slideoutWidth);
-//childBox.x2 = childBox.x1 + childWidth;//slideoutWidth + this._slidex*(childWidth - slideoutWidth);
-//childBox.y1 = (this._slidex -1)*(childHeight - slideoutWidth);//0;
-//childBox.y2 = slideoutWidth + this._slidex*(childHeight - slideoutWidth);//childBox.y1 + childHeight;
-/*
 childBox.x1 = 0;
-childBox.x2 = childWidth;
+childBox.x2 = childWidth; 
 
-if ((-1*(this._slidex -1)*childHeight) < 1) {	
-	childBox.y1 = 1;	
-} else {
-	 childBox.y1 = -1*(this._slidex -1)*childHeight;
+
+//if (this._slidex == 0) {
+//childHeight = -1*childHeight;
+//}
+
+childBox.y1 = slideoutWidth + (this._slidex - 1)*childHeight;
+childBox.y2 = slideoutWidth + this._slidex*childHeight;
+
+if (childHeight < 0 || childBox.y1 < 0 || childBox.y2 < 0 && this._slidex == 0) {
+log('-----------------------------> '+childHeight+'   '+childBox.y1+'   '+childBox.y2);
+
+if (childHeight < 0 ) childHeight = Math.abs(childHeight);
+
+if (childBox.y1 < 0 ) childBox.y1 = Math.abs(childBox.y1);
+
+if (childBox.y2 < 0 ) childBox.y2 = Math.abs(childBox.y2);
 }
 
-if ((-1*this._slidex*childHeight) < 1) {
-	childBox.y2 = 1;
-}else {
-	childBox.y2 = -1*this._slidex*childHeight;
-}	
-*/
-
-//FchildBox.x1 = 0;//(this._slidex -1)*(childWidth - slideoutWidth);
-//FchildBox.x2 = childWidth;//slideoutWidth + this._slidex*(childWidth - slideoutWidth);
-//FchildBox.y1 = 0;//0;
-//FchildBox.y2 = childHeight;//childBox.y1 + childHeight;
-
-//childBox.x1 = 0;//(this._slidex -1)*(childWidth - slideoutWidth);
-//childBox.x2 = box.x2;//slideoutWidth + this._slidex*(childWidth - slideoutWidth);
-//childBox.y1 = 0;//0;
-//childBox.y2 = box.y2;//childBox.y1 + childHeight;
-//==========================================================================
-//childBox.x1 = (this._slidex -1)*(childWidth - slideoutWidth);
-//childBox.x2 = slideoutWidth + this._slidex*(childWidth - slideoutWidth);
-//childBox.y1 = 0;
-//childBox.y2 = childBox.y1 + childHeight; 
-
-/*
-childBox.x1 = 0;
-childBox.x2 = childBox.x1 + childWidth; 
-childBox.y1 = (this._slidex -1)*(childHeight- slideoutWidth)*-1;
-childBox.y2 = slideoutWidth + this._slidex*(childHeight - slideoutWidth);
-
-
-if ( childBox.y1 < 1) {
-log('BOOOOOOOOOOOM Y1 '+childBox.y1);	
-	childBox.y1 = 1;
-}
-
-if ( childBox.y2 < 1) {
-log('BOOOOOOOOOOOM Y2 '+childBox.y2);		
-	childBox.y2 = 1;
-}
-*/
-
-
-childBox.x1 = 0;
-childBox.x2 = childBox.x1 + childWidth; 
-
-childBox.y1 = (this._slidex -1)*(childHeight- slideoutWidth);
-childBox.y2 = slideoutWidth + this._slidex*(childHeight - slideoutWidth);
-
-//==========================================================================
-//IS THIS ONE OF THOSE ACTOR.Y POSITIONAL MOVEMENTS?
 
         this._child.allocate(childBox, flags);//<--WARNING SPAMMER TODO: fix this!! FIXME: there should be no warnings in the console
         this._child.set_clip(-childBox.x1, 0, -childBox.x1+availWidth, availHeight);
 log('childBox [x1,y1 = '+childBox.x1+', '+childBox.y1+'] [x2,y2 =  '+childBox.x2+', '+childBox.y2+']');
     },
-
-
+*/    
 
     /* Just the child width but taking into account the slided out part */
     vfunc_get_preferred_width: function(forHeight) {
-        let [minWidth, natWidth ] = this._child.get_preferred_width(forHeight);   
-log("PING vfunc_get_preferred_width: for "+forHeight+'  min '+minWidth+' nat '+natWidth);          
+        let [minWidth, natWidth ] = this._child.get_preferred_width(forHeight);       
         return [minWidth, natWidth];
     },
  
