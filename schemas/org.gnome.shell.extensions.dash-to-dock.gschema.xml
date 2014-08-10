@@ -159,6 +159,10 @@
       <default>5</default>
       <summary>More than this number of icons means switch to a grid</summary>
     </key>
+    <key type="i" name="applet-links-number-of-columns">
+      <default>3</default>
+      <summary>Number of columns in grid mode</summary>
+    </key>
     <key type="b" name="applet-show-desktop-visible">
       <default>false</default>
       <summary>Shows the Show Desktop Button Applet</summary>

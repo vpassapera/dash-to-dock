@@ -652,7 +652,6 @@ const myLinkTrayMenu = new Lang.Class({
         Main.uiGroup.add_actor(this.actor);
         
         this.icols = 0;
-        this.irows = 0;
         
         this.populate();
     },
@@ -672,7 +671,7 @@ const myLinkTrayMenu = new Lang.Class({
         this.irows = 0;
 		
 		if (files.length > this.settings.get_int('applet-links-tray-to-grid'))
-			this.icols = 3
+			this.icols = this.settings.get_int('applet-links-number-of-columns');
 		else
 			this.icols = 1;
 		
@@ -689,7 +688,7 @@ const myLinkTrayMenu = new Lang.Class({
 			if (this.icols == 1) {
 				nrow++;
 			} else {
-				if (ncol == this.icols) {
+				if (ncol == (this.icols - 1)) {
 					ncol = 0;
 					nrow++;
 				} else {
@@ -721,9 +720,9 @@ const myLinkTrayMenu = new Lang.Class({
 		this.box.add(this.fileIconDeletion.actor);
 		this.fileIconDeletion.actor.hide();
 		
-		// Calculating the (aesthetic) height for ScrollView. 10 popup menu padding
-		if(this.icols > 1 && this.irows > 3)
-			this._scrollView.height = (this._scrollView.height/this.icols + 10)*3;
+		// Calculating the (aesthetic) height for ScrollView. 10 popup menu padding		
+		if(this.icols > 1 && nrow > this.icols)
+			this._scrollView.height = 300;
     },
 
     _removeMenuTimeout: function() {

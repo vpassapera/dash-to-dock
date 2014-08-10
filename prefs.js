@@ -633,8 +633,27 @@ const WorkspaceSettingsWidget = new GObject.Class({// FIXME: Why call it this fu
 		LinksTraySwitchToGridContainer.add(LinksTraySwitchToGridLabel);
 		LinksTraySwitchToGridContainer.add(LinksTraySwitchToGrid);
 
+		let LinksTrayNumberOfColumnsContainer = new Gtk.Box({orientation:Gtk.Orientation.HORIZONTAL, spacing:30, 
+			homogeneous:false, margin_bottom:5});
+		indentWidget(LinksTrayNumberOfColumnsContainer);
+		
+		let LinksTrayNumberOfColumnsLabel = new Gtk.Label({label: _("No. icons to show before switching to grid layout"),
+			use_markup: true, xalign: 0, hexpand:true});
+		let LinksTrayNumberOfColumns = new Gtk.SpinButton({halign:Gtk.Align.END});
+			LinksTrayNumberOfColumns.set_sensitive(true);
+			LinksTrayNumberOfColumns.set_range(1, 20);
+			LinksTrayNumberOfColumns.set_value(this.settings.get_int('applet-links-number-of-columns'));
+			LinksTrayNumberOfColumns.set_increments(1, 2);
+			LinksTrayNumberOfColumns.connect('value-changed', Lang.bind(this, function(button){
+					let s = button.get_value_as_int();
+					this.settings.set_int('applet-links-number-of-columns', s);
+				}));
+		LinksTrayNumberOfColumnsContainer.add(LinksTrayNumberOfColumnsLabel);
+		LinksTrayNumberOfColumnsContainer.add(LinksTrayNumberOfColumns);
+
 		LinksTrayApplet.add(LinksTrayAppletContainer);
 		LinksTrayApplet.add(LinksTraySwitchToGridContainer);
+		LinksTrayApplet.add(LinksTrayNumberOfColumnsContainer);
 
 		/* SHOW DESKTOP APPLET */
 		
