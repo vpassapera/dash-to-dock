@@ -231,10 +231,6 @@ const dockedDash = new Lang.Class({
         this._settings = settings;
         this._bindSettingsChanges();
 
-//        this._rtl = Clutter.get_default_text_direction() == Clutter.TextDirection.RTL;
-//log("RTL    "+this._rtl);
-//this._rtl = Clutter.get_default_text_direction() == Clutter.TextDirection.RTL;
-
 		dock_placement = this._settings.get_int('dock-placement');	
         if (dock_placement == 0 || dock_placement == 1)
 			dock_horizontal = false;
@@ -289,10 +285,8 @@ const dockedDash = new Lang.Class({
         this.actor._delegate = this;
 
         // This is the sliding actor whose allocation is to be tracked for input regions
-        this._slider = new DashSlideContainer( { direction: dock_placement }, this._settings
-//            direction:this._rtl?SlideDirection.RIGHT:SlideDirection.LEFT}, this._settings
-			
-        );
+        this._slider = new DashSlideContainer({ direction: dock_placement }, this._settings);
+        
         // This is the actor whose hover status us tracked for autohide
         this._dockBox = new St.BoxLayout({ name: 'dashtodockBox', reactive: true, track_hover:true });
                 
@@ -920,10 +914,8 @@ const dockedDash = new Lang.Class({
     },
 
     _updateStaticBox: function() {
-//		let dock_placement_question = (dock_placement === 1);
         this.staticBox.init_rect(
-//            this._monitor.x + (this._rtl?(this._monitor.width - this._dockBox.width):0),
-			this._monitor.x + ((dock_placement === 1) ? (this._monitor.width - this._dockBox.width):0),
+			this._monitor.x + ((dock_placement == 1) ? (this._monitor.width - this._dockBox.width):0),
             this.actor.y + this._slider.y + this._dockBox.y,
             this._dockBox.width,
             this._dockBox.height
@@ -1183,13 +1175,9 @@ const dockedDash = new Lang.Class({
 
     _updateCustomTheme: function() {
         if (this._settings.get_boolean('apply-custom-theme')) {
-			if (!dock_horizontal) {
-				this.actor.add_style_class_name('dashtodock');
-			} else this.actor.add_style_class_name('dashtodockHorizontal');
+			this.actor.add_style_class_name('dashtodock');
         } else {
-			if (!dock_horizontal) {
-				this.actor.remove_style_class_name('dashtodock');
-			} else this.actor.remove_style_class_name('dashtodockHorizontal');
+			this.actor.remove_style_class_name('dashtodock');
 		}
 
         this._onThemeChanged();

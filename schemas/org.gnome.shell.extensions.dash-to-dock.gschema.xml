@@ -57,11 +57,6 @@
       <summary>Pressure threshold</summary>
       <description>Sets how much pressure is needed to show the dash.</description>
     </key>
-    <key type="b" name="dock-horizontal">
-      <default>true</default>
-      <summary>Dock horizontal</summary>
-      <description>Dock is horizontal</description>
-    </key>
     <key type="i" name="dock-placement">
       <default>3</default>
       <summary>Dock placement</summary>

@@ -25,6 +25,7 @@ function resetDockOrientation() {
     dock.destroy();
     dock=null;
     intellihide=null;
+    settings=null;
     settings = Convenience.getSettings('org.gnome.shell.extensions.dash-to-dock');
     settings.connect('changed::dock-placement', Lang.bind(this, this.resetDockOrientation));
     dock = new DockedDash.dockedDash(settings);
