@@ -159,11 +159,6 @@ const LinksDB = new Lang.Class({
 		let fstream = null;
 		if (!GLib.file_test(path, GLib.FileTest.EXISTS)) {
 			fstream = file.create(Gio.FileCreateFlags.NONE, null);
-//			this.links_data = {"collection_id": 1, "links_array": [{"order": 1, "link": "/home/"}]};
-//			this.links_data = [{ "collection" : 1}];
-//			this.links_data = {"col" :[{ "collection" : 1}]};
-//			this.links_data = {collection_id: 1, links_array: [{order: 1, link: "/home/"}]};
-//			this.links_data = {1: { collection_order: 1, links_array: [{order: 1, link: "/home/"}]}};
 			this.links_data = {folders: []};			
 
 			this.string_data = JSON.stringify(this.links_data);
@@ -186,52 +181,10 @@ const LinksDB = new Lang.Class({
 	},
 	
 	save_db: function() {
-		//this.links_data.push( { collection_id: "2", "links_array": [{"order": 2, "link": "/home/2"}]} );
-		//delete this.links_data[0] = "";
-		//this.links_data[0] = "[]";
-//		this.links_data.push( { "collection" : 2} );//WORKS:adds
+		this.links_data.folders = this.links_data.folders
+			.filter(function(n){ return n != null });
 
-		//this.links_data.push( { "collection" : 2} );
-		//this.links_data.push( { "collection" : 3} );
-		//this.links_data.push( { "collection" : 4} );
-
-//this.links_data.pop( { "collection" : 1} );//only the last
-//delete this.links_data.pull( { "collection" : 4} );		
-//delete this.links_data[0];
-//log('sssssss '+this.links_data[1]);
-
-
-//delete this.links_data.test[keyToDelete];
-//this.links_data.add( {"col" :[{ "collection" : 1}]} );
-//this.links_data.col = '[{ "collection" : 1}]';
-//delete this.links_data.col;
-//this.links_data.push( { "collection" : 2} );
-
-
-//this.links_data.folders.push( { collection_order: 1, links_array: [{order: 1, link: "/home/"}]} );//could be...
-
-//this.links_data.folders.push( { collection_order: 1, links_array: [{order: 1, link: "/home/1"}]} );
-//this.links_data.folders.push( { collection_order: 2, links_array: [{order: 2, link: "/home/2"}]} );
-//this.links_data.folders.push( { collection_order: 3, links_array: [{order: 3, link: "/home/3"}]} );
-//this.links_data.folders.push( { collection_order: 4, links_array: [{order: 4, link: "/home/4"}]} );
-
-//this.links_data.folderssplice[0] = '  ';
-//delete this.links_data.folders[0];
-
-
-//delete this.links_data.folders[0];
-//delete this.links_data.folders.pop();//only is there's one
-this.links_data.folders = this.links_data.folders.filter(function(n){ return n != null });//YEAH!!!
-
-		//check null?
 		this.string_data = JSON.stringify(this.links_data);
-	/*
-		log(string_data);
-		if (string_data == '[null]') {
-			log('TROUBLE');
-			string_data = '[]'
-		}
-	*/
 	
 		try {
 log(this.string_data+'<');
@@ -243,6 +196,19 @@ log(this.string_data+'<');
 			fstream.close(null);
 		} catch (e) {
 			log("Error when saving file  "+e.message);
+		}
+	},
+	
+	add_tray: function(id) {
+		this.links_data.folders.push( { collection_id: id, links_array: []} );
+		log(  JSON.stringify(this.links_data)  );
+	},
+
+	remove_tray: function(id) {
+		for(let i = 0; i < this.links_data.folders.length ;i++) {
+			if (id == this.links_data.folders[i].collection_id) {
+				delete this.links_data.folders[i];
+			}
 		}
 	}	
 });
