@@ -55,7 +55,7 @@ const showHoverLabelTop = function() {
     let yOffset = node.get_length('-x-offset');
 
     let y = stageY - labelHeight - yOffset;
-log('yOLD '+Math.round(stageY)+' '+labelHeight+' '+yOffset);
+
     let itemWidth = this.allocation.x2 - this.allocation.x1;
     let xOffset = Math.floor((itemWidth - labelWidth) / 2);
 
@@ -223,33 +223,26 @@ const myDash = new Lang.Class({
         this._hookUpLabel(this._showAppsIcon);
 
         this.showAppsButton = this._showAppsIcon.toggleButton;
-
-//------ADDING WIDGETS HERE------------------------------------------------//
-//		this._container.add_actor(this._showAppsIcon);
-//		this._container.add_actor(this._appsContainer);
-//=========================================================================//
 //------------------------------------------------------------------------
 		this._linkTray = new Widgets.myLinkTray(this.iconSize, this._settings);
 		this._linkTray.childScale = 1;
 		this._linkTray.childOpacity = 255;
-		this._linkTray.icon.set_icon_size(this.iconSize);
+		this._linkTray.icon.setIconSize(this.iconSize);
 		this._hookUpLabelForApplets(this._linkTray);
 //-------------->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 		this._showDesktop = new Widgets.myShowDesktop(this.iconSize, this._settings);
 		this._showDesktop.childScale = 1;
 		this._showDesktop.childOpacity = 255;
 		this._showDesktop.icon.setIconSize(this.iconSize);
-//		this._hookUpLabel(this._showDesktop);
-this._hookUpLabelForApplets(this._showDesktop);
+		this._hookUpLabelForApplets(this._showDesktop);
 //-------------->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 		this._recyclingBin = new Widgets.myRecyclingBin(this.iconSize, this._settings);
 		this._recyclingBin.childScale = 1;
 		this._recyclingBin.childOpacity = 255;
-		this._recyclingBin.icon.set_icon_size(this.iconSize);	
+		this._recyclingBin.icon.setIconSize(this.iconSize);	
 		this._hookUpLabelForApplets(this._recyclingBin);		
 //-------------->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 		this.make_dock();	
-//=========================================================================//
 //------ADDING WIDGETS HERE------------------------------------------------//
 
         this.actor = new St.Bin({ child: this._container, y_align: St.Align.START });
@@ -314,15 +307,13 @@ this._hookUpLabelForApplets(this._showDesktop);
 						this._container.add_actor(this._appsContainer);
 						break;			
 					case 3:
-						//this._container.add_actor(this._linkTray.actor);
-						this._container.add_actor(this._linkTray);
+						this._container.add_actor(this._linkTray.actor);
 						break;
 					case 4:
 						this._container.add_actor(this._showDesktop.actor);
 						break;
 					case 5:
-						//this._container.add_actor(this._recyclingBin.actor);
-						this._container.add_actor(this._recyclingBin);					
+						this._container.add_actor(this._recyclingBin.actor);
 						break;												
 					default:
 						break;

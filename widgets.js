@@ -37,11 +37,8 @@ let dock_horizontal = true;
 
 const myLinkTray = new Lang.Class({
     Name: 'myLinkTray',
-    Extends: St.Widget,
                         
-    _init: function(iconSize, settings) {
-		this.parent({ style_class: 'dash-item-container' });
-			
+    _init: function(iconSize, settings) {			
 		this._labelText = _("Links Tray");
 		this.label = new St.Label({ style_class: 'dash-label'});
 		this.label.hide();
@@ -50,28 +47,25 @@ const myLinkTray = new Lang.Class({
 		
 		this._settings = settings;
 		this.iconSize = iconSize;
-		
-        this.btn = new St.Button({ style_class: 'app-well-app',
+
+        this.actor = new St.Button({ style_class: 'app-well-app',
                                      reactive: true,
                                      button_mask: St.ButtonMask.ONE | St.ButtonMask.TWO,
                                      can_focus: true,
                                      x_fill: true,
                                      y_fill: true });
-        this.btn._delegate = this;                                     
-		this.btn.connect('button_release_event', Lang.bind(this, this.buttonPressed));
-		this.lt = Gio.icon_new_for_string(Me.path + "/media/links-tray.svg");
-		this.icon = new St.Icon({ gicon: this.lt,
-									icon_size: this.iconSize,
-									style_class: 'show-apps-icon',
-									track_hover: true });                                       
-        this.btn.add_actor(this.icon);
-        this.add_actor(this.btn);
-		this.actor = this.btn;
+        this.actor._delegate = this;		
+        this.actor.connect('button_release_event', Lang.bind(this, this.buttonPressed));
+        this.icon = new IconGrid.BaseIcon(this._labelText, { setSizeManually: true, 
+			showLabel: false, createIcon: Lang.bind(this, this._createIcon) });
+			
+		this.actor.set_child(this.icon.actor);
+		
 		this.menuManager = new PopupMenu.PopupMenuManager(this);
 
 		this.menu = new myLinkTrayMenu(this.actor, iconSize);
 		this.menu.actor.hide();
-		this.menu_secondary = new PopupMenu.PopupMenu(this, 0.5, St.Side.BOTTOM, 0);
+		this.menu_secondary = new PopupMenu.PopupMenu(this.actor, 0.5, St.Side.BOTTOM, 0);
 		this.populate_menu_secondary();
 		this.menu_secondary.actor.add_style_class_name('app-well-menu');
 		Main.uiGroup.add_actor(this.menu_secondary.actor);
@@ -95,6 +89,14 @@ const myLinkTray = new Lang.Class({
         this.actor.destroy();
         this.emit('destroy');
     },
+
+    _createIcon: function(size) {
+		let lt = Gio.icon_new_for_string(Me.path + "/media/links-tray.svg");
+        return new St.Icon({ gicon: lt,
+								icon_size: size,
+								style_class: 'show-apps-icon',
+								track_hover: true });
+    },  
 
 	populate_menu_secondary: function() {
 		this.menu_secondary.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
@@ -125,7 +127,6 @@ const myLinkTray = new Lang.Class({
 		itemAddTray.actor.add_child(labelAddTray);
 		this.menu_secondary.addMenuItem(itemAddTray);		
 	},
-    
     
     callHandler: function(conductor) {
 		if (conductor == 0) {
@@ -170,8 +171,7 @@ const myLinkTray = new Lang.Class({
 				
 				let file = Gio.file_new_for_path(array[i]);
 				if (GLib.file_test(array[i], GLib.FileTest.EXISTS)) {
-					//log(">>>>>>>>>>>> "+'YES IT EXISTS');
-					//Now we add to menu options
+					//Now we add the files as a suggested entries
 					this.addSuggestedLink(file);
 				}
 			}
@@ -265,8 +265,6 @@ const myLinkTray = new Lang.Class({
 		this.label.opacity = 0;
 		this.label.show();
 
-//		let [stageX, stageY] = this.actor.get_transformed_position();//works
-//		let [stageX, stageY] = this.icon.get_transformed_position();//works
 		let [stageX, stageY] = this.actor.get_transformed_position();
 
 		let labelHeight = this.label.get_height();
@@ -274,14 +272,10 @@ const myLinkTray = new Lang.Class({
 
 		let node = this.label.get_theme_node();
 		let yOffset = node.get_length('-x-offset');
-
-//		let y = stageY - labelHeight - yOffset;
 		let y = stageY - labelHeight - yOffset;
-log('yNEW '+Math.round(stageY)+' '+labelHeight+' '+yOffset);
-		//let itemWidth = this.allocation.x2 - this.allocation.x1;
-		let itemWidth = this.icon.allocation.x2 - this.icon.allocation.x1;
+		
+		let itemWidth = this.actor.allocation.x2 - this.actor.allocation.x1;
 		let xOffset = Math.floor((itemWidth - labelWidth) / 2);
-
 		let x = stageX + xOffset;
 
 		this.label.set_position(x, y);
@@ -301,8 +295,8 @@ log('yNEW '+Math.round(stageY)+' '+labelHeight+' '+yOffset);
                            onComplete: Lang.bind(this, function() {
                                this.label.hide();
                            })
-                         });
-    }  
+		});
+    } 
 });
 
 Signals.addSignalMethods(myLinkTray.prototype);
@@ -429,11 +423,11 @@ const myShowDesktop = new Lang.Class({
                     
     _init: function(iconSize, settings) {
 		
-this._labelText = _("Show Desktop#2");
-this.label = new St.Label({ style_class: 'dash-label'});
-this.label.hide();
-Main.layoutManager.addChrome(this.label);
-this.label_actor = this.label;		
+		this._labelText = _("Show Desktop");
+		this.label = new St.Label({ style_class: 'dash-label'});
+		this.label.hide();
+		Main.layoutManager.addChrome(this.label);
+		this.label_actor = this.label;		
 		
 		this._settings = settings;
 		this.iconSize = iconSize;	
@@ -451,9 +445,8 @@ this.label_actor = this.label;
         this.desktopShown = false;
         this.alreadyMinimizedWindows = [];
         
-        this.icon = new IconGrid.BaseIcon(_("Show Desktop"),
-                                           { setSizeManually: true, showLabel: false,
-                                             createIcon: Lang.bind(this, this._createIcon) });
+        this.icon = new IconGrid.BaseIcon(this._labelText, { setSizeManually: true, 
+			showLabel: false, createIcon: Lang.bind(this, this._createIcon) });
 		this.actor.set_child(this.icon.actor);
 	},
 
@@ -520,8 +513,6 @@ this.label_actor = this.label;
 		this.label.opacity = 0;
 		this.label.show();
 
-//		let [stageX, stageY] = this.actor.get_transformed_position();//works
-//		let [stageX, stageY] = this.icon.get_transformed_position();//works
 		let [stageX, stageY] = this.actor.get_transformed_position();
 
 		let labelHeight = this.label.get_height();
@@ -529,14 +520,10 @@ this.label_actor = this.label;
 
 		let node = this.label.get_theme_node();
 		let yOffset = node.get_length('-x-offset');
-
-	//	let y = stageY - labelHeight - yOffset;
 		let y = stageY - labelHeight - yOffset;
-	log('yNEW '+Math.round(stageY)+' '+labelHeight+' '+yOffset);
-		//let itemWidth = this.allocation.x2 - this.allocation.x1;
+		
 		let itemWidth = this.actor.allocation.x2 - this.actor.allocation.x1;
 		let xOffset = Math.floor((itemWidth - labelWidth) / 2);
-
 		let x = stageX + xOffset;
 
 		this.label.set_position(x, y);
@@ -556,7 +543,7 @@ this.label_actor = this.label;
                            onComplete: Lang.bind(this, function() {
                                this.label.hide();
                            })
-                         });
+		});
     } 
 });
 
@@ -567,38 +554,30 @@ Signals.addSignalMethods(myShowDesktop.prototype);
  */
 const myRecyclingBin = new Lang.Class({
     Name: 'myRecyclingBin',
-    Extends: St.Widget,
                     
-    _init: function(iconSize, settings) {	
-		this.parent({ style_class: 'dash-item-container' });
-			
+    _init: function(iconSize, settings) {				
 		this._labelText = _("Recycling Bin");
 		this.label = new St.Label({ style_class: 'dash-label'});
 		this.label.hide();
 		Main.layoutManager.addChrome(this.label);
 		this.label_actor = this.label;
-		
+
 		this._settings = settings;
 		this.iconSize = iconSize;
-		
-        this.btn = new St.Button({ style_class: 'app-well-app',
+
+        this.actor = new St.Button({ style_class: 'app-well-app',
                                      reactive: true,
                                      button_mask: St.ButtonMask.ONE | St.ButtonMask.TWO,
                                      can_focus: true,
                                      x_fill: true,
                                      y_fill: true });
-        this.btn._delegate = this;                                     
-		this.btn.connect('clicked', Lang.bind(this, this.popupMenu));
-		this.icon = new St.Icon({ icon_name: 'user-trash',
-									icon_size: this.iconSize,
-									style_class: 'show-apps-icon',
-									track_hover: true });                                       
-        this.btn.add_actor(this.icon);
-        this.add_actor(this.btn);
-		this.actor = this.btn;
-this.actor.add_style_class_name('app-well-app');
-this.icon.add_style_class_name('app-well-app');
-this.btn.add_style_class_name('app-well-app');
+        this.actor._delegate = this;		
+        this.actor.connect('clicked', Lang.bind(this, this.popupMenu));
+        this.icon = new IconGrid.BaseIcon(this._labelText, { setSizeManually: true, 
+			showLabel: false, createIcon: Lang.bind(this, this._createIcon) });
+			
+		this.actor.set_child(this.icon.actor);
+
         //this.recycling_bin_path = 'trash:///';//FIXME: BUG in Ubuntu cannot access trash:/// gvfs fuse
         this.recycling_bin_path = '~/.local/share/Trash/files';
         this.recycling_bin_file = Gio.file_new_for_uri(this.recycling_bin_path);
@@ -629,6 +608,13 @@ this.btn.add_style_class_name('app-well-app');
         this.actor.destroy();
         this.emit('destroy');
     },
+    
+    _createIcon: function(size) {
+        return new St.Icon({ icon_name: 'user-trash',
+                                        icon_size: size,
+                                        style_class: 'show-apps-icon',
+                                        track_hover: true });
+    },    
     
     _removeMenuTimeout: function() {
         if (this._menuTimeoutId > 0) {
@@ -706,9 +692,9 @@ this.btn.add_style_class_name('app-well-app');
 
     popupMenu: function() {
         this._removeMenuTimeout();
-		this.btn.fake_release();
+		this.actor.fake_release();
         this.emit('menu-state-changed', true);
-        this.btn.set_hover(true);
+		this.actor.set_hover(true);
         this.menu.toggle();
         this.menuManager.ignoreRelease();
 
@@ -724,23 +710,17 @@ this.btn.add_style_class_name('app-well-app');
 		this.label.opacity = 0;
 		this.label.show();
 
-//		let [stageX, stageY] = this.actor.get_transformed_position();//works
-		let [stageX, stageY] = this.icon.get_transformed_position();//works
-//		let [stageX, stageY] = this.actor.get_transformed_position();
+		let [stageX, stageY] = this.actor.get_transformed_position();
 
 		let labelHeight = this.label.get_height();
 		let labelWidth = this.label.get_width();
 
 		let node = this.label.get_theme_node();
 		let yOffset = node.get_length('-x-offset');
-
-//		let y = stageY - labelHeight - yOffset;
 		let y = stageY - labelHeight - yOffset;
-log('yNEW '+Math.round(stageY)+' '+labelHeight+' '+yOffset);
-		//let itemWidth = this.allocation.x2 - this.allocation.x1;
-		let itemWidth = this.icon.allocation.x2 - this.icon.allocation.x1;
+		
+		let itemWidth = this.actor.allocation.x2 - this.actor.allocation.x1;
 		let xOffset = Math.floor((itemWidth - labelWidth) / 2);
-
 		let x = stageX + xOffset;
 
 		this.label.set_position(x, y);
@@ -760,8 +740,8 @@ log('yNEW '+Math.round(stageY)+' '+labelHeight+' '+yOffset);
                            onComplete: Lang.bind(this, function() {
                                this.label.hide();
                            })
-                         });
-    }  
+		});
+    }
 });
 
 Signals.addSignalMethods(myRecyclingBin.prototype);
