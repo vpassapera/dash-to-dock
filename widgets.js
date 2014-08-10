@@ -670,20 +670,14 @@ const myLinkTrayMenu = new Lang.Class({
 	populate: function() {
 		for(let i = 0; i < this.linksStorage.links_data.folders.length ;i++) {		
 			if (this.trayId == this.linksStorage.links_data.folders[i].collection_id) {
-log('bMER ');
-log( JSON.stringify( this.linksStorage.links_data.folders[i].links_array ) );
-
-//log('populate: '+this.linksStorage.links_data.folders);
-//log('REAL2 '+this.linksStorage.links_data.folders[i].links_array);				
-				
 				this.make_menu(this.linksStorage.links_data.folders[i].links_array);
 			}
 		}
 	},
 
     make_menu: function(files) {
-		this.removeAll();
-
+//this.removeAll();
+this.box.remove_all_children();
 		let icols;
 		if (files.length > this.settings.get_int('applet-links-tray-to-grid'))
 			icols = 3
@@ -841,16 +835,12 @@ const myFileIcon = new Lang.Class({
 			return false;
 		}
 
-//		link.actor.unparent();
-//		this._table.replace_child(this._dragPlaceholder, link.actor);//replace both of them
-//		this.linksStorage.move_link_in_tray(link.id, linkPos);
-
 		this.menu.linksStorage.move_link_in_tray(this.menu.trayId, source.id, this.id);
 		this.menu.close();
 		this.menu.populate();
+		this.menu.open();
 		
-//		return false;
-		return true;
+		return false;
     }       
     
 });

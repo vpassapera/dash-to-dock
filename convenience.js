@@ -267,20 +267,6 @@ const LinksDB = new Lang.Class({
 				}
 			}
 		}
-/*		
-		log( JSON.stringify( this.links_data.folders[trayIndex] ) );
-		let cache_new = this.links_data.folders[trayIndex].links_array[new_lid_position];
-		let cache_old = this.links_data.folders[trayIndex].links_array[old_lid_position];
-		this.links_data.folders[new_lid_position] = cache_old;
-		this.links_data.folders[old_lid_position] = cache_new;
-log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')		
-		log( JSON.stringify( this.links_data.folders[trayIndex] ) );
-*/
-
-
-//log( JSON.stringify( this.links_data.folders[trayIndex].links_array ) );
-//log();
-//log('populate1: '+this.links_data.folders);
 
 		let cache = this.links_data.folders[trayIndex].links_array[old_lid_position];
 		this.links_data.folders[trayIndex].links_array[old_lid_position] = this.links_data.folders[trayIndex].links_array[new_lid_position];
@@ -288,10 +274,6 @@ log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
 
 		this.links_data.folders[trayIndex].links_array = this.links_data
 			.folders[trayIndex].links_array.filter(function(n){ return n != null });
-
-//log('populate1: '+this.links_data.folders);
-//log( JSON.stringify( this.links_data.folders[trayIndex].links_array ) );
-
 		
 		this.save_db();
 	},
