@@ -633,19 +633,45 @@ const WorkspaceSettingsWidget = new GObject.Class({// FIXME: Why call it this fu
 					
 		/* ORDER OF APPLETS */
 		
-		let OrderOfApplets = new Gtk.Box({margin_left:10, margin_top:10, margin_bottom:5, margin_right:10});
-
-		let OrderOfAppletsLabel = new Gtk.Label({label: _("Order of the applets: 12345"), 
+		let OrderOfApplets = new Gtk.Box({orientation:Gtk.Orientation.VERTICAL, 
+			margin_left:10, margin_top:10, margin_bottom:5, margin_right:10});
+/*
+		let OrderOfAppletsLabel = new Gtk.Label({label: _("Order of the applets: 1. 2. 3. 4. 5."), 
 			hexpand: true, halign: Gtk.Align.START});
         let OrderOfAppletsEntry = new Gtk.Entry({halign: Gtk.Align.END});
 			OrderOfAppletsEntry.set_width_chars(5);
 			OrderOfAppletsEntry.set_text(this.settings.get_string('applets-order'));
-			OrderOfAppletsEntry.connect('changed', Lang.bind (this, function(widget) {			
-				this.settings.set_string('applets-order', widget.get_text());
-			}));        
+//			OrderOfAppletsEntry.connect('changed', Lang.bind (this, function(widget) {			
+//				this.settings.set_string('applets-order', widget.get_text());
+//			}));  
+*/       
+//----------------------------------------------------------------------------------------------
+		let storeOrder = new Gtk.ListStore();
+			storeOrder.set_column_types ([GObject.TYPE_STRING, GObject.TYPE_STRING]);//FLOAT
+            storeOrder.set (storeOrder.append(), [0], ["Show Apps"]);
+            storeOrder.set (storeOrder.append(), [0], ["Favourite Apps"]);
+            storeOrder.set (storeOrder.append(), [0], ["Links Tray"]);
+            storeOrder.set (storeOrder.append(), [0], ["Show Desktop"]);
+            storeOrder.set (storeOrder.append(), [0], ["Recycling Bin"]);
         
-		OrderOfApplets.add(OrderOfAppletsLabel);
-		OrderOfApplets.add(OrderOfAppletsEntry);
+		let treeOrder = new Gtk.TreeView({ model: storeOrder });
+	
+		let normal = new Gtk.CellRendererText ();
+		let firstColumn = new Gtk.TreeViewColumn ({ title: _("Order of Applets") });
+			firstColumn.pack_start (normal, true);
+			firstColumn.add_attribute (normal, "text", 0);
+			treeOrder.insert_column (firstColumn, 0);
+			
+		let treeOrderSelection = treeOrder.get_selection();
+			treeOrderSelection.connect ('changed', Lang.bind (this, function() {
+				//this.settings.set_string('applets-order', widget.get_text());
+				let [ isSelected, model, iter ] = treeOrderSelection.get_selected();
+//storeOrder.get_value (iter, 0)
+log("SELECTION CHANGED "+storeOrder.get_value (iter, 0));
+			}));
+//----------------------------------------------------------------------------------------------    
+//		OrderOfApplets.add(OrderOfAppletsLabel);
+		OrderOfApplets.add(treeOrder);
 		
 		/* ADDING SETTINGS TO PAGE */
 		
