@@ -156,13 +156,11 @@ const DashSlideContainer = new Lang.Class({
  
     /* Just the child min height, no border, no positioning etc. */
     vfunc_get_preferred_height: function(forWidth) {
-        let [minHeight, natHeight] = this._child.get_preferred_height(forWidth);  
-//		log("PING vfunc_get_preferred_heightA: for "+forWidth+'  min '+minHeight+' nat '+natHeight);
+        let [minHeight, natHeight] = this._child.get_preferred_height(forWidth);
 		if (this._settings.get_boolean('dock-horizontal')) {
 			minHeight = (minHeight - this._slideoutWidth)*this._slidex + this._slideoutWidth;
 			natHeight = (natHeight - this._slideoutWidth)*this._slidex + this._slideoutWidth;
-		}
-//		log("PING vfunc_get_preferred_heightB: for "+forWidth+'  min '+minHeight+' nat '+natHeight);       
+		} 
         return [minHeight, natHeight];
     },
  
@@ -748,12 +746,12 @@ const dockedDash = new Lang.Class({
         this.dash._queueRedisplay();
         this._getBackgroundColor();
         this._updateBackgroundOpacity();
-	this._adjustBorders();               
+		this._adjustBorders();               
     },
 
 	// Re-themes the corners and borders. SOURCE: simple-dock extension.
     _adjustBorders: function() {
-		if (this._settings.get_boolean('dock-horizontal')) {
+		if (this._settings.get_boolean('dock-horizontal') && !this._settings.get_boolean('apply-custom-theme')) {
 			// Prevent shell crash if the actor is not on the stage.
 			// It happens enabling/disabling repeatedly the extension
 			if (!this.dash._container.get_stage()) {
@@ -1117,10 +1115,22 @@ const dockedDash = new Lang.Class({
     },
 
     _updateCustomTheme: function() {
-        if(this._settings.get_boolean('apply-custom-theme'))
+/*		
+        if (this._settings.get_boolean('apply-custom-theme'))
             this.actor.add_style_class_name('dashtodock');
         else
            this.actor.remove_style_class_name('dashtodock');
+*/
+
+        if (this._settings.get_boolean('apply-custom-theme')) {
+			if (!this._settings.get_boolean('dock-horizontal')) {
+				this.actor.add_style_class_name('dashtodock');
+			} else this.actor.add_style_class_name('dashtodockHorizontal');
+        } else {
+			if (!this._settings.get_boolean('dock-horizontal')) {
+				this.actor.remove_style_class_name('dashtodock');
+			} else this.actor.remove_style_class_name('dashtodockHorizontal');
+		}
 
         this._onThemeChanged();
     },

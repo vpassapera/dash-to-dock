@@ -82,3 +82,91 @@
 #dashtodockContainer.dashtodock #dash {
     background: rgba(0,0,0,0.9);
 }
+
+/* HORIZONTAL DOCK --------------------------------------
+ * Q: Why use png's not svg's for the horizontal dock?
+ * A: Inkscape does not save them properly and they are 
+ *    invisible. If you can fix it, and the dots for the
+ *    running apps in the horizontal dock appear then 
+ *    make a bugfix patch/proposal.
+ * 
+ * */
+
+/* Shrink the dash by reducing padding and border radius */
+#dashtodockContainer.dashtodockHorizontal #dash {
+    padding: 1px 0px;
+border-bottom: none;    
+    border-radius: 6px 6px 0px 0px;
+}
+
+#dashtodockContainer.dashtodockHorizontal #dash:ttb {
+    border-radius: 0px 0px 6px 6px;
+}
+
+#dashtodockContainer.dashtodockHorizontal .dash-item-container > StButton {
+    transition-duration: 250;
+    background-size: contain;
+}
+
+#dashtodockContainer.dashtodockHorizontal .dash-item-container > StButton {
+   padding: 1px 2px;
+}
+
+/* Dash height extended to the whole available vertical space */
+#dashtodockContainer.dashtodockHorizontal.extendedHorizontal #dash {
+    background: rgba(0,0,0,1);
+    border:0;
+    border-radius: 0;
+}
+
+/* Running and focused application style */
+
+#dashtodockContainer.dashtodockHorizontal .app-well-app.running > .overview-icon {
+	background-image:none;
+}
+
+#dashtodockContainer.dashtodockHorizontal .app-well-app.focused > .overview-icon {
+background: #f2f00;
+    transition-duration: 250;
+    background-gradient-start: rgba(255, 255, 255, .05);
+    background-gradient-end: rgba(255, 255, 255, .15);
+    background-gradient-direction: horizontal;
+    border-radius: 4px;
+    box-shadow: inset 0px 1px 2px 0px rgba(0, 0, 0, 1);
+}
+
+#dashtodockContainer.dashtodockHorizontal .running1 {
+    background-image: url('./media/one_btt.png');
+}
+
+#dashtodockContainer.dashtodockHorizontal:ttb .running1 {
+    background-image: url('./media/one_ttb.png');
+}
+
+#dashtodockContainer.dashtodockHorizontal .running2 {
+    background-image: url('./media/two_btt.png');
+}
+
+#dashtodockContainer.dashtodockHorizontal:ttb .running2 {
+    background-image: url('./media/two_ttb.png');
+}
+
+#dashtodockContainer.dashtodockHorizontal .running3 {
+   background-image: url('./media/three_btt.png');
+}
+
+#dashtodockContainer.dashtodockHorizontal:ttb .running3 {
+    background-image: url('./media/three_ttb.png');
+}
+
+#dashtodockContainer.dashtodockHorizontal .running4 {
+    background-image: url('./media/four_btt.png');
+}
+
+#dashtodockContainer.dashtodockHorizontal:ttb .running4 {
+    background-image: url('./media/four_ttb.png');
+}
+
+#dashtodockContainer.dashtodockHorizontal #dash {
+    background: rgba(0,0,0,0.9);
+}

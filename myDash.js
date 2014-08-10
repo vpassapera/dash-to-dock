@@ -233,8 +233,8 @@ const myDash = new Lang.Class({
 		} else {
 			this._box = new St.BoxLayout({ vertical: false, clip_to_allocation: true });
 		}
-			this._box._delegate = this;
-			this._container.add_actor(this._box);
+		this._box._delegate = this;
+		this._container.add_actor(this._box);
 
 		if (!this._settings.get_boolean('dock-horizontal')) {
 			this._showAppsIcon = new Dash.ShowAppsIcon();
@@ -1066,6 +1066,7 @@ const myAppIcon = new Lang.Class({
     },
 
     _onFocusAppChanged: function() {
+
         if(tracker.focus_app == this.app)
             this.actor.add_style_class_name('focused');
         else
