@@ -77,7 +77,7 @@ const DashSlideContainer = new Lang.Class({
         this._direction = localParams.direction;
         this._slideoutWidth = 1; // minimum width when slided out
     },
-
+/*
     vfunc_allocate: function(box, flags) {
 		if (!this._settings.get_boolean('dock-horizontal')) {
 			this.set_allocation(box, flags);
@@ -109,7 +109,7 @@ const DashSlideContainer = new Lang.Class({
 			childBox.y2 = childBox.y1 + childHeight;
 			this._child.allocate(childBox, flags);
 			this._child.set_clip(-childBox.x1, 0, -childBox.x1+availWidth, availHeight);
-		} else {		
+		} else {
 			this.set_allocation(box, flags);
 
 			if (this._child == null)
@@ -127,18 +127,23 @@ const DashSlideContainer = new Lang.Class({
 
 			let slideoutWidth = this._slideoutWidth;
 
-			childBox.y1 = 0;
-			childBox.y2 = slideoutWidth + this._slidex*(childHeight - slideoutWidth);
+			// Future code for top placement
+			//if (this._direction == SlideDirection.TOP) {
+				//childBox.x1 = 0;
+				//childBox.x2 = childWidth;
+			//} else if (this._direction == SlideDirection.BOTTOM || ) {
+				childBox.x1 = (this._slidex -1)*(childHeight - slideoutWidth);
+				childBox.x2 = slideoutWidth + this._slidex*(childHeight - slideoutWidth);
+			//}			
 			
 			childBox.x1 = 0;
 			childBox.x2 = childBox.x1 + childWidth;
-			
 			this._child.allocate(childBox, flags);
-			this._child.set_clip(-childBox.x1, 0, -childBox.x1+availWidth, availHeight);			
+			this._child.set_clip(-childBox.x1, 0, -childBox.x1+availWidth, availHeight);
+
 		}
     },
-
-
+*/
     /* Just the child width but taking into account the slided out part */
     vfunc_get_preferred_width: function(forHeight) {
 		let [minWidth, natWidth ] = this._child.get_preferred_width(forHeight);   
@@ -191,7 +196,7 @@ const dockedDash = new Lang.Class({
     _init: function(settings) {
 
         this._rtl = Clutter.get_default_text_direction() == Clutter.TextDirection.RTL;
-
+        
         // Load settings
         this._settings = settings;
         this._bindSettingsChanges();
@@ -200,12 +205,12 @@ const dockedDash = new Lang.Class({
         this._autohideStatus = this._settings.get_boolean('autohide') && !this._settings.get_boolean('dock-fixed');
 
         // initialize animation status object
-        this._animStatus = new animationStatus(true);
+        this._animStatus = new animationStatus(true);        
 
         /* status variable: true when the overview is shown through the dash
          * applications button.
          */
-        this.forcedOverview = false;
+//        this.forcedOverview = false;
 
         // Put dock on the primary monitor
         this._monitor = Main.layoutManager.primaryMonitor;
@@ -236,11 +241,9 @@ const dockedDash = new Lang.Class({
 
         // This is the vertical centering actor
 		if (!this._settings.get_boolean('dock-horizontal')) {
-			this.actor = new St.Bin({ name: 'dashtodockContainer',reactive: false,
-            y_align: St.Align.MIDDLE})
+			this.actor = new St.Bin({ name: 'dashtodockContainer',reactive: false});
 		} else {
-			this.actor = new St.Bin({ name: 'dashtodockContainer',reactive: false,
-			x_align: St.Align.MIDDLE})
+			this.actor = new St.Bin({ name: 'dashtodockContainer',reactive: false});
 		}
 
         this.actor._delegate = this;
@@ -249,16 +252,26 @@ const dockedDash = new Lang.Class({
         this._slider = new DashSlideContainer( {
             direction:this._rtl?SlideDirection.RIGHT:SlideDirection.LEFT}, this._settings
         );
-        // This is the actor whose hover status us tracked for autohide
+        // This is the actor whose hover status is tracked for autohide
         this._box = new St.BoxLayout({ name: 'dashtodockBox', reactive: true, track_hover:true } );
         this._box.connect("notify::hover", Lang.bind(this, this._hoverChanged));
 
+//if (!this._settings.get_boolean('dock-horizontal')) {
         // Create and apply height constraint to the dash. It's controlled by this.actor height
         this.actor.height = Main.overview.viewSelector.actor.height; // Guess initial reasonable height.
         this.constrainHeight = new Clutter.BindConstraint({ source: this.actor,
                                                             coordinate: Clutter.BindCoordinate.HEIGHT });
         this.dash.actor.add_constraint(this.constrainHeight);
-
+//}
+/*
+else {
+        // Create and apply height constraint to the dash. It's controlled by this.actor height
+        this.actor.width = Main.overview.viewSelector.actor.width; // Guess initial reasonable height.
+        this.constrainWidth = new Clutter.BindConstraint({ source: this.actor,
+                                                            coordinate: Clutter.BindCoordinate.WIDTH });
+		this.dash.actor.add_constraint(this.constrainWidth);
+}
+*/
         // Connect global signals
         this._signalHandler = new Convenience.globalSignalHandler();
         this._signalHandler.push(
@@ -364,11 +377,10 @@ const dockedDash = new Lang.Class({
         // pretend this._slider is isToplevel child so that fullscreen is actually tracked
         let index = Main.layoutManager._findActor(this._slider);
         Main.layoutManager._trackedActors[index].isToplevel = true ;
-
     },
 
     _initialize: function(){
-
+ 
         if(this._realizeId>0){
             this.actor.disconnect(this._realizeId);
             this._realizeId=0;
@@ -388,7 +400,10 @@ const dockedDash = new Lang.Class({
         this._updateBackgroundOpacity();
 
         // Show 
-        this.actor.set_opacity(255); //this.actor.show();
+        this.actor.set_opacity(255);//this.actor.show();
+//this.actor.x = -1*this.actor.x;
+
+//this.emit('allocation-changed');
 
 		// Make dock have borders (-radius) top,right, and left, but not bottom
 		this._adjustBorders();
@@ -478,19 +493,14 @@ const dockedDash = new Lang.Class({
     },
 
     _hoverChanged: function() {
-
-//making a crash
 //global = null;// a defacto breakpoint
-
-//log('_hoverChanged '+this._canUsePressure+'   '+this._settings.get_boolean('require-pressure-to-show') +'   '+this._barrier+'  ');
-
         // Ignore hover if pressure barrier being used but pressureSensed not triggered
         if (this._canUsePressure && this._settings.get_boolean('require-pressure-to-show') && this._barrier) {
             if (this._pressureSensed == false) {
                 return;
             }
         }
-//log('_hoverChanged');
+
         // Skip if dock is not in autohide mode for instance because it is shown
         // by intellihide. Delay the hover changes check while switching
         // workspace: the workspaceSwitcherPopup steals the hover status and it
@@ -503,15 +513,16 @@ const dockedDash = new Lang.Class({
                 }));
         } else if(this._settings.get_boolean('autohide') && this._autohideStatus) {
             if( this._box.hover ) {
+log('SHOWIN......');	
                 this._show();
             } else {
+log('HIDING......');
                 this._hide();
             }
         }
     },
 
-    _show: function() {  
-
+    _show: function() {
         var anim = this._animStatus;
 
         if( this._autohideStatus && ( anim.hidden() || anim.hiding() ) ){
@@ -635,7 +646,7 @@ const dockedDash = new Lang.Class({
         this._pressureSensed = true;
       
         // NOTE: We could have called this._hoverChanged() instead but hover processing not required.
-        if(this._settings.get_boolean('autohide') && this._autohideStatus){			
+        if(this._settings.get_boolean('autohide') && this._autohideStatus){				
             this._show();
         }
     },
@@ -676,16 +687,13 @@ const dockedDash = new Lang.Class({
 				if (this._rtl) {
 					x = this._monitor.x + this._monitor.width;
 					direction = Meta.BarrierDirection.NEGATIVE_X;
-				} else {				
+				} else {			
 					x = this._monitor.x;
 					direction = Meta.BarrierDirection.POSITIVE_X;
-				}
-				this._barrier = new Meta.Barrier({display: global.display,
+					this._barrier = new Meta.Barrier({display: global.display,
 									x1: x, x2: x,
 									y1: (this.staticBox.y1), y2: (this.staticBox.y2),
 									directions: direction});
-				if (this._pressureBarrier) {
-					this._pressureBarrier.addBarrier(this._barrier);
 				}
             } else {				
 				y = this._monitor.y;
@@ -693,11 +701,11 @@ const dockedDash = new Lang.Class({
 				this._barrier = new Meta.Barrier({display: global.display,
 									x1: (this.staticBox.x1), x2: (this.staticBox.x2),
 									y1: y, y2: y,
-									directions: direction});
-									
-				if (this._pressureBarrier) {
-					this._pressureBarrier.addBarrier(this._barrier);
-				}	
+									directions: direction});	
+			}
+												
+			if (this._pressureBarrier) {
+				this._pressureBarrier.addBarrier(this._barrier);
 			}
         }
 
@@ -801,6 +809,7 @@ const dockedDash = new Lang.Class({
 
     _updateYPosition: function() {
 		if (!this._settings.get_boolean('dock-horizontal')) {
+/*			
 			let unavailableTopSpace = 0;
 			let unavailableBottomSpace = 0;
 
@@ -832,7 +841,27 @@ const dockedDash = new Lang.Class({
 			} else {
 				this.dash._container.set_height(-1);
 				this.actor.remove_style_class_name('extended');
-			}			
+			}
+
+//------------------------------------------------------------------------------------
+*/
+			let extendHeight = this._settings.get_boolean('extend-height');
+			
+//			this.actor.width = this._monitor.width;
+//			this.actor.x = this._monitor.x;
+//			this.actor.x_align = St.Align.START;
+
+			this.actor.height = this._monitor.height;
+			this.actor.y = this._monitor.y;
+			this.actor.y_align = St.Align.MIDDLE;
+			
+			if(extendHeight){
+				this.dash._container.set_height(this.actor.height);
+				this.actor.add_style_class_name('extended');
+			} else {
+				this.dash._container.set_height(-1);
+				this.actor.remove_style_class_name('extended');
+			}						
 		} else {
 			this.actor.width = this._monitor.width;
 			this.actor.x = this._monitor.x;
@@ -861,10 +890,10 @@ const dockedDash = new Lang.Class({
             }
         } else {
             this._revertMainPanel();
-        }
+        }      
     },
 
-    _revertMainPanel: function() {
+    _revertMainPanel: function() {		
         let panelActor = Main.panel.actor;
         panelActor.set_width(this._monitor.width);
         panelActor.set_margin_right(0);
@@ -872,7 +901,7 @@ const dockedDash = new Lang.Class({
     },
 
     _updateStaticBox: function() {
-
+	
         this.staticBox.init_rect(
             this._monitor.x + (this._rtl?(this._monitor.width - this._box.width):0),
             this.actor.y + this._slider.y + this._box.y,
@@ -896,6 +925,7 @@ const dockedDash = new Lang.Class({
 
     // 'Hard' reset dock positon: called on start and when monitor changes
     _resetPosition: function() {
+
         this._monitor = this._getMonitor();
         this._updateStaticBox();
 
@@ -911,7 +941,6 @@ const dockedDash = new Lang.Class({
 
         this.actor.move_anchor_point_from_gravity(anchor_point);
         this.actor.x = position;
-
 
         this._updateYPosition();
     },
