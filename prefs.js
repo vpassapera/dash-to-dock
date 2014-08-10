@@ -15,9 +15,9 @@ const ExtensionUtils = imports.misc.extensionUtils;
 const Me = ExtensionUtils.getCurrentExtension();
 const Convenience = Me.imports.convenience;
 
-const WorkspaceSettingsWidget = new GObject.Class({// FIXME: Why call it this funny name?
-    Name: 'WorkspaceIndicator.WorkspaceSettingsWidget',
-    GTypeName: 'WorkspaceSettingsWidget',
+const myDashToDockPrefs = new GObject.Class({
+    Name: 'myDashToDockPrefs',
+    GTypeName: 'myDashToDockPrefs',
     Extends: Gtk.Box,
 
     _init: function(params) {
@@ -784,7 +784,7 @@ function init() {
 }
 
 function buildPrefsWidget() {
-    let widget = new WorkspaceSettingsWidget({orientation: Gtk.Orientation.VERTICAL, spacing:5, border_width:5});
+    let widget = new myDashToDockPrefs({orientation: Gtk.Orientation.VERTICAL, spacing:5, border_width:5});
     widget.show_all();
 
     return widget;
