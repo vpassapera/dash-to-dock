@@ -828,9 +828,9 @@ const dockedDash = new Lang.Class({
 			let borderWidth = themeNode.get_border_width(St.Side.BOTTOM);		
 			let borderRadius = themeNode.get_border_radius(St.Corner.TOPRIGHT);
 
-			let newStyle = 'border-bottom: none;' +
-				'border-radius: ' + borderRadius + 'px ' + borderRadius + 'px 0 0;' +
-				'border-left: ' + borderWidth + 'px solid ' + borderColor.to_string() + ';';
+			let newStyle = 'border-bottom: none;' + 'border-radius: ' + borderRadius 
+				+ 'px ' + borderRadius + 'px 0 0;' + 'border-left: ' + borderWidth 
+				+ 'px solid ' + borderColor.to_string() + ';';
 
 			this.dash._container.set_style(newStyle);
 		}
@@ -1175,9 +1175,46 @@ const dockedDash = new Lang.Class({
 
     _updateCustomTheme: function() {
         if (this._settings.get_boolean('apply-custom-theme')) {
-			this.actor.add_style_class_name('dashtodock');
+			switch (dock_placement) {
+				case 0:
+					this.actor.add_style_class_name('dashtodockLTR');
+log('CASE   '+0+'   '+dock_placement);					
+					break;
+				case 1:
+					this.actor.add_style_class_name('dashtodockRTL');
+log('CASE   '+1+'   '+dock_placement);					
+					break;			
+				case 2:
+					this.actor.add_style_class_name('dashtodockTTB');
+log('CASE   '+2+'   '+dock_placement);						
+					break;
+				case 3:
+					this.actor.add_style_class_name('dashtodockBTT');
+log('CASE   '+3+'   '+dock_placement);						
+					break;								
+				default:
+					this.actor.add_style_class_name('dashtodockBTT');
+log('CASE   '+'DEF'+'   '+dock_placement);						
+					break;
+			}
         } else {
-			this.actor.remove_style_class_name('dashtodock');
+			switch (dock_placement) {
+				case 0:
+					this.actor.remove_style_class_name('dashtodockLTR');
+					break;
+				case 1:
+					this.actor.remove_style_class_name('dashtodockRTL');	
+					break;			
+				case 2:
+					this.actor.remove_style_class_name('dashtodockTTB');
+					break;
+				case 3:
+					this.actor.remove_style_class_name('dashtodockBTT');
+					break;								
+				default:
+					this.actor.remove_style_class_name('dashtodockBTT');
+					break;
+			}
 		}
 
         this._onThemeChanged();

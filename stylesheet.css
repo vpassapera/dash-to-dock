@@ -1,54 +1,47 @@
-#dashtodockBox:ltr {
-	padding-right:1px;
-}
-
-#dashtodockBox:rtl {
-	padding-left:1px;
-}
-
-#dashtodockBox:btt {
-	padding-bottom:1px;
-}
-
-#dashtodockBox:ttb {
-	padding-top:1px;
-}
-
 /* Shrink the dash by reducing padding and border radius */
-#dashtodockContainer.dashtodock #dash {
-    padding: 1px 0px;
+#dashtodockContainer.dashtodockLTR #dash {
+    border-left: none;
     border-radius: 0px 6px 6px 0px;
 }
 
-#dashtodockContainer.dashtodock #dash:rtl {
+#dashtodockContainer.dashtodockRTL #dash {
+	border-right: none;
     border-radius: 6px 0px 0px 6px;
 }
 
-#dashtodockContainer.dashtodock #dash:btt {
-    padding: 1px;
-    border-left: 1px;    
-	border-bottom: none;    
-    border-radius: 6px 6px 0px 0px;
-}
-
-#dashtodockContainer.dashtodock #dash:ttb {
-    padding: 1px;
+#dashtodockContainer.dashtodockTTB #dash {
     border-left: 1px;
 	border-top: none;
     border-radius: 0px 0px 6px 6px;
 }
 
-#dashtodockContainer.dashtodock .dash-item-container > StButton {
+#dashtodockContainer.dashtodockBTT #dash {
+    border-left: 1px;
+	border-bottom: none;
+    border-radius: 6px 6px 0px 0px;
+}
+
+#dashtodockContainer.dashtodockLTR .dash-item-container > StButton,
+#dashtodockContainer.dashtodockRTL .dash-item-container > StButton,
+#dashtodockContainer.dashtodockTTB .dash-item-container > StButton,
+#dashtodockContainer.dashtodockBTT .dash-item-container > StButton {
     transition-duration: 250;
     background-size: contain;
 }
 
-#dashtodockContainer.dashtodock .dash-item-container > StButton {
+#dashtodockContainer.dashtodockLTR .dash-item-container > StButton,
+#dashtodockContainer.dashtodockRTL .dash-item-container > StButton,
+#dashtodockContainer.dashtodockTTB .dash-item-container > StButton,
+#dashtodockContainer.dashtodockBTT .dash-item-container > StButton {
    padding: 1px 2px;
 }
 
 /* Dash height extended to the whole available vertical space */
-#dashtodockContainer.dashtodock.extended #dash {
+#dashtodockContainer.dashtodockLTR.extended,
+#dashtodockContainer.dashtodockRTL.extended,
+#dashtodockContainer.dashtodockTTB.extended,
+#dashtodockContainer.dashtodockBTT.extended,
+#dash {
     background: rgba(0,0,0,1);
     border:0;
     border-radius: 0;
@@ -56,11 +49,17 @@
 
 /* Running and focused application style */
 
-#dashtodockContainer.dashtodock .app-well-app.running > .overview-icon {
+#dashtodockContainer.dashtodockLTR .app-well-app.running > .overview-icon,
+#dashtodockContainer.dashtodockRTL .app-well-app.running > .overview-icon,
+#dashtodockContainer.dashtodockTTB .app-well-app.running > .overview-icon,
+#dashtodockContainer.dashtodockBTT .app-well-app.running > .overview-icon {
 	background-image:none;
 }
 
-#dashtodockContainer.dashtodock .app-well-app.focused > .overview-icon {
+#dashtodockContainer.dashtodockLTR .app-well-app.focused > .overview-icon,
+#dashtodockContainer.dashtodockRTL .app-well-app.focused > .overview-icon,
+#dashtodockContainer.dashtodockTTB .app-well-app.focused > .overview-icon,
+#dashtodockContainer.dashtodockBTT .app-well-app.focused > .overview-icon {
     transition-duration: 250;
     background-gradient-start: rgba(255, 255, 255, .05);
     background-gradient-end: rgba(255, 255, 255, .15);
@@ -69,70 +68,76 @@
     box-shadow: inset 0px 1px 2px 0px rgba(0, 0, 0, 1);
 }
 
-#dashtodockContainer.dashtodock:ltr .running1 {
+#dashtodockContainer.dashtodockLTR .running1 {
     background-image: url('./media/one.svg');
 }
 
-#dashtodockContainer.dashtodock:rtl .running1 {
+#dashtodockContainer.dashtodockRTL .running1 {
     background-image: url('./media/one_rtl.svg');
 }
 
-#dashtodockContainer.dashtodock:btt .running1 {
-    background-image: url('./media/one_btt.png');
-}
-
-#dashtodockContainer.dashtodock:ttb .running1 {
+#dashtodockContainer.dashtodockTTB .running1 {
     background-image: url('./media/one_ttb.png');
 }
 
-#dashtodockContainer.dashtodock:ltr .running2 {
+#dashtodockContainer.dashtodockBTT .running1 {
+    background-image: url('./media/one_btt.png');
+}
+
+#dashtodockContainer.dashtodockLTR .running2 {
     background-image: url('./media/two.svg');
 }
 
-#dashtodockContainer.dashtodock:rtl .running2 {
+#dashtodockContainer.dashtodockRTL .running2 {
     background-image: url('./media/two_rtl.svg');
 }
 
-#dashtodockContainer.dashtodock:btt .running2 {
-    background-image: url('./media/two_btt.png');
-}
-
-#dashtodockContainer.dashtodock:ttb .running2 {
+#dashtodockContainer.dashtodockTTB .running2 {
     background-image: url('./media/two_ttb.png');
 }
 
-#dashtodockContainer.dashtodock:ltr .running3 {
+#dashtodockContainer.dashtodockBTT .running2 {
+    background-image: url('./media/two_btt.png');
+}
+
+#dashtodockContainer.dashtodockLTR .running3 {
    background-image: url('./media/three.svg');
 }
 
-#dashtodockContainer.dashtodock:rtl .running3 {
+#dashtodockContainer.dashtodockRTL .running3 {
     background-image: url('./media/three_rtl.svg');
 }
 
-#dashtodockContainer.dashtodock:btt .running3 {
-   background-image: url('./media/three_btt.png');
-}
-
-#dashtodockContainer.dashtodock:ttb .running3 {
+#dashtodockContainer.dashtodockTTB .running3 {
     background-image: url('./media/three_ttb.png');
 }
 
-#dashtodockContainer.dashtodock:ltr .running4 {
+#dashtodockContainer.dashtodockBTT .running3 {
+   background-image: url('./media/three_btt.png');
+}
+
+#dashtodockContainer.dashtodockLTR .running4 {
     background-image: url('./media/four.svg');
 }
 
-#dashtodockContainer.dashtodock:rtl .running4 {
+#dashtodockContainer.dashtodockRTL .running4 {
     background-image: url('./media/four_rtl.svg');
 }
 
-#dashtodockContainer.dashtodock:btt .running4 {
-    background-image: url('./media/four_btt.png');
-}
-
-#dashtodockContainer.dashtodock:ttb .running4 {
+#dashtodockContainer.dashtodockTTB .running4 {
     background-image: url('./media/four_ttb.png');
 }
 
-#dashtodockContainer.dashtodock #dash {
+#dashtodockContainer.dashtodockBTT .running4 {
+    background-image: url('./media/four_btt.png');
+}
+/*
+#dashtodockContainer.dashtodockLTR,
+#dashtodockContainer.dashtodockRTL,
+#dashtodockContainer.dashtodockTTB,
+#dashtodockContainer.dashtodockBTT,
+#dash
+{
     background: rgba(0,0,0,0.9);
 }
+*/
