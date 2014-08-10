@@ -92,18 +92,19 @@ const myShowAppsIcon = new Lang.Class({
 const myLinkTray = new Lang.Class({
     Name: 'myLinkTray',
                         
-    _init: function(iconSize, settings, ii) {
-//		this._labelText = _("Links Tray");		
-		this._labelText = 'k'+ii;
+    _init: function(iconSize, settings, linksStorage, ii) {
+		this._labelText = _("Links Tray");
 		this.label = new St.Label({ style_class: 'dash-label'});
 		this.label.hide();
 		Main.layoutManager.addChrome(this.label);
 		this.label_actor = this.label;
 
-this.id = this._labelText;
-		
 		this._settings = settings;
 		this.iconSize = iconSize;
+		this.linksStorage = linksStorage;
+//TODO: make it unique
+//FIXME: IF THERE ARE NO TRAYS?
+		this.id = this.linksStorage.links_data.folders[ii].collection_order;
 
         this.actor = new St.Button({ style_class: 'app-well-app',
                                      reactive: true,
@@ -117,10 +118,10 @@ this.id = this._labelText;
 			showLabel: false, createIcon: Lang.bind(this, this._createIcon) });
 			
 		this.actor.set_child(this.icon.actor);
-		
-		this.menuManager = new PopupMenu.PopupMenuManager(this);
+				
+		this.menuManager = new PopupMenu.PopupMenuManager(this);		
 
-		this.menu = new myLinkTrayMenu(this.actor, iconSize);
+		this.menu = new myLinkTrayMenu(this.actor, iconSize, this.linksStorage, this.id);
 		this.menu.actor.hide();
 		this.menu_secondary = new PopupMenu.PopupMenu(this.icon.actor, 0.5, St.Side.BOTTOM, 0);
 		this.menu_secondary.blockSourceEvents = true;		
@@ -130,9 +131,8 @@ this.id = this._labelText;
 		this.menu_secondary.actor.hide();	  
         
 		this.menuManager.addMenu(this.menu);
-		this.menuManager.addMenu(this.menu_secondary);
+		this.menuManager.addMenu(this.menu_secondary);		
 
-//--------------------------------------------------------------------------
         this._draggable = DND.makeDraggable(this.actor);
         this._draggable.connect('drag-begin', Lang.bind(this,
             function () {
@@ -147,9 +147,6 @@ this.id = this._labelText;
             function () {
                Main.overview.endItemDrag(this);
             }));
-//--------------------------------------------------------------------------
-
-		this.linksOfTray = new Convenience.LinksDB();
 	},
 
     destroy: function() {
@@ -320,7 +317,7 @@ this.id = this._labelText;
 		} else {
 			this._removeMenuTimeout();
 			this.actor.fake_release();
-	        //this._draggable.fakeRelease();
+	        this._draggable.fakeRelease();
 			this.emit('menu-state-changed', true);
 			this.actor.set_hover(true);
 			this.menu.close();	
@@ -416,15 +413,16 @@ const myLinkBox = new Lang.Class({
 		this._scrollView.connect('scroll-event', Lang.bind(this, this._onScrollEvent ));
 		this.add_actor(this._scrollView);
 		
+		this.linksStorage = new Convenience.LinksDB();
 		
-		for (let i = 0; i < 5 ;i++) {
-			this._linkTray = new myLinkTray(iconSize, settings, i);
+		for(let i = 0; i < this.linksStorage.links_data.folders.length ;i++) {
+			this._linkTray = new myLinkTray(iconSize, settings, this.linksStorage, i);
 			this._linkTray.childScale = 1;
 			this._linkTray.childOpacity = 255;
 			this._linkTray.icon.setIconSize(iconSize);
 			dash._hookUpLabelForApplets(this._linkTray);
 			this._box.add(this._linkTray.actor);
-		}			
+		}		
 	},
 	
 	_onScrollEvent: function(actor, event) {
@@ -631,9 +629,11 @@ const myLinkTrayMenu = new Lang.Class({
     Name: 'myLinkTrayMenu',
     Extends: AppDisplay.PopupMenu.PopupMenu,
 
-    _init: function(source, iconSize) {
+    _init: function(source, iconSize, linksStorage, trayId) {
         this.parent(source, 0.5, St.Side.TOP);//Menu-Arrow-Side
+        this.trayId = trayId;
 		this.iconSize = iconSize;
+		this.linksStorage = linksStorage;
 		
         // We want to keep the item hovered while the menu is up
         this.blockSourceEvents = true;
@@ -654,14 +654,16 @@ this.actor.add_style_class_name('popup-menu-content2');
         this.populate();
     },
     
-	populate: function() {//GET files from LinksDB
-//------------------------------------
-//		let item = new myPopupImageMenuItem(file,'user-info', null);	
-//		this.addMenuItem(item);
-//------------------------------------	
-		let favs = AppFavorites.getAppFavorites().getFavorites();
-		for(let i = 0; i < favs.length ;i++) {
-			this._appendMenuItem( favs[i] ); 
+	populate: function() {
+		for(let i = 0; i < this.linksStorage.links_data.folders.length ;i++) {
+			if (this.trayId == this.linksStorage.links_data.folders[i].collection_order) {
+				if (this.linksStorage.links_data.folders[i].links_array.length > 0) {
+					for(let j = 0; j < this.linksStorage.links_data.folders[i].links_array.length ;j++) {
+						this._appendMenuItem(this.linksStorage.
+							links_data.folders[i].links_array[j].link.trim());
+					}
+				}
+			}
 		}
 	},
 	
@@ -671,33 +673,14 @@ this.actor.add_style_class_name('popup-menu-content2');
         this.populate();  
     },*/
     
-    _appendMenuItem: function(fav) {
-		
-//		let icon = fav.create_icon_texture(this.iconSize);
-		//box.add(icon, {x_align: Clutter.ActorAlign.CENTER});
-		
-        // FIXME: app-well-menu-item style
-//        let item = new PopupMenu.PopupMenuItem( fav.get_name() );
-//        this.addMenuItem(item);
-//        return item;
-
-
-		let item = new PopupMenu.PopupBaseMenuItem;
-		let box = new St.BoxLayout({vertical: true, x_align: Clutter.ActorAlign.CENTER});//TODO: verticality	
-		
-		item.actor.add_child(box);
-		
-		
-		let icon = fav.create_icon_texture(parseInt(this.iconSize, 10));
-//let icon = fav.create_icon_texture(this.iconSize);		
-		
-		box.add(icon, {x_align: Clutter.ActorAlign.CENTER});
-		let label = new St.Label({text: fav.get_name(), x_align: Clutter.ActorAlign.CENTER});
-		
-		box.add(label);
-		item.connect("activate", function () {fav.open_new_window(-1);});
-		
-		this.addMenuItem(item);
+    _appendMenuItem: function(fileuri) {		
+		let file = Gio.file_new_for_path(fileuri);
+		let item = new myPopupImageMenuItem(file, this.iconSize);
+		item.connect('activate', Lang.bind(this, function () {
+			let handler = file.query_default_handler (null);
+			let result = handler.launch ([file], null);
+		}));
+		this.addMenuItem(item, 0);//order?
 		return item;
     }          
 });

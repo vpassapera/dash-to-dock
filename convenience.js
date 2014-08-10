@@ -138,7 +138,7 @@ const LinksDB = new Lang.Class({
 		this.links_data = null;
 		this.string_data = null;
 		this.check_or_make_directory();
-		this.save_db();
+//		this.save_db();
 	},
 
 	check_or_make_directory: function() {
