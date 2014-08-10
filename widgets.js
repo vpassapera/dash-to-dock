@@ -409,7 +409,7 @@ const myRecyclingBin = new Lang.Class({
 		
 		this._settings = settings;
 		this.iconSize = iconSize;
-			
+/*			
         this.actor = new St.Button({ style_class: 'show-apps',
                                      reactive: true,
                                      button_mask: St.ButtonMask.ONE | St.ButtonMask.TWO,
@@ -423,14 +423,33 @@ const myRecyclingBin = new Lang.Class({
                                         style_class: 'show-apps-icon',
                                         track_hover: true });
 		this.actor.set_child(this.icon);
+*/
+        this.btn = new St.Button({ style_class: 'show-apps',
+                                     reactive: true,
+                                     button_mask: St.ButtonMask.ONE | St.ButtonMask.TWO,
+                                     can_focus: true,
+                                     x_fill: true,
+                                     y_fill: true });	
+		this.btn.connect('clicked', Lang.bind(this, this.popupMenu));
+		this.icon = new St.Icon({ icon_name: 'user-trash',
+                                        icon_size: this.iconSize,
+                                        style_class: 'show-apps-icon',
+                                        track_hover: true });                                       
+        this.btn.add_actor(this.icon);     
+        this.btn._delegate = this;
+        this.add_actor(this.btn);
+
+this.actor = this.btn;
 
         //this.recycling_bin_path = 'trash:///';//FIXME: BUG in Ubuntu cannot access trash:/// gvfs fuse
         this.recycling_bin_path = '~/.local/share/Trash/files';
         this.recycling_bin_file = Gio.file_new_for_uri(this.recycling_bin_path);
     
+		//this.menuManager = new PopupMenu.PopupMenuManager(this);
 		this.menuManager = new PopupMenu.PopupMenuManager(this);
 		
 		//this.menu = new PopupMenu.PopupMenu(this.icon.actor, 0.5, St.Side.BOTTOM, 0);
+		//this.menu = new PopupMenu.PopupMenu(this.actor, 0.5, St.Side.BOTTOM, 0);//good without st.widget
 		this.menu = new PopupMenu.PopupMenu(this.actor, 0.5, St.Side.BOTTOM, 0);
 		this.blockSourceEvents = true;
 		this.menu.actor.add_style_class_name('app-well-menu');
@@ -439,7 +458,7 @@ const myRecyclingBin = new Lang.Class({
         
 		this.menuManager.addMenu(this.menu);
 		this.populate();
-		
+	
         //this.setupWatch();			
         //this.binChange();       
 	},
@@ -530,12 +549,14 @@ const myRecyclingBin = new Lang.Class({
 
     popupMenu: function() {
         this._removeMenuTimeout();
-        this.actor.fake_release();
+//        this.actor.fake_release();
+		this.btn.fake_release();
         this.emit('menu-state-changed', true);
-        this.actor.set_hover(true);
+//        this.actor.set_hover(true);
+        this.btn.set_hover(true);
         this.menu.toggle();
         this.menuManager.ignoreRelease();
-        this.emit('sync-tooltip');
+        this.emit('sync-tooltip');//CHECK IF THIS IS this.btn.emit('sync-tooltip');
 
         return false;
     },

@@ -245,8 +245,8 @@ const myDash = new Lang.Class({
 		this._recyclingBin = new Widgets.myRecyclingBin(this.iconSize, this._settings);
 		this._recyclingBin.childScale = 1;
 		this._recyclingBin.childOpacity = 255;
-		this._recyclingBin.icon.set_icon_size(this.iconSize);
-		this._hookUpLabelForApplets(this._recyclingBin);
+		this._recyclingBin.icon.set_icon_size(this.iconSize);	
+		this._hookUpLabelForApplets(this._recyclingBin);		
 //-------------->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 		this.make_dock();	
 //=========================================================================//
@@ -320,7 +320,8 @@ const myDash = new Lang.Class({
 						this._container.add_actor(this._showDesktop.actor);
 						break;
 					case 5:
-						this._container.add_actor(this._recyclingBin.actor);
+						//this._container.add_actor(this._recyclingBin.actor);
+						this._container.add_actor(this._recyclingBin);
 						break;												
 					default:
 						break;
@@ -430,13 +431,12 @@ const myDash = new Lang.Class({
         }
     },
 
-    _hookUpLabelForApplets: function(item) {	
-        item.actor.connect('notify::hover', Lang.bind(this, function() {
+    _hookUpLabelForApplets: function(item) {
+        item.actor.connect('notify::hover', Lang.bind(this, function() {		
             //this._syncLabel(item, null);
             //let shouldShow = appIcon ? appIcon.shouldShowTooltip() : item.child.get_hover();//ORIGINAL in _sync
-		
+			//let shouldShow = item.actor.get_hover();
 			let shouldShow = item.actor.get_hover();
-
 			if (shouldShow) {
 				if (this._showLabelTimeoutId == 0) {
 					let timeout = this._labelShowing ? 0 : DASH_ITEM_HOVER_TIMEOUT;
