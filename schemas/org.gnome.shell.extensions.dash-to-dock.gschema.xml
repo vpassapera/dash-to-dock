@@ -163,8 +163,8 @@
       <default>false</default>
       <summary>Shows the Recycling Bin Button Applet </summary>
     </key>
-    <key type="i" name="applets-order">
-      <default>12345</default>
+    <key type="s" name="applets-order">
+      <default>"12345"</default>
       <summary>Order of appearance for the enabled applets: 1,2,3,4,5 if enabled</summary>
     </key>
   </schema>

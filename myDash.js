@@ -225,8 +225,8 @@ const myDash = new Lang.Class({
         this.showAppsButton = this._showAppsIcon.toggleButton;
 
 //------ADDING WIDGETS HERE------------------------------------------------//
-		this._container.add_actor(this._showAppsIcon);
-		this._container.add_actor(this._appsContainer);
+//		this._container.add_actor(this._showAppsIcon);
+//		this._container.add_actor(this._appsContainer);
 //=========================================================================//
 //------THIS IS SUPPOSED TO BE A STACK-------------------------------------//
 /*
@@ -255,7 +255,32 @@ const myDash = new Lang.Class({
 		this._linkTray.icon.setIconSize(this.iconSize);
 //		this._hookUpLabel(this._linkTray);
 
-		this._container.add_actor(this._linkTray.actor);
+		//this._container.add_actor(this._linkTray.actor);
+		
+//-------------->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+		let position = this._settings.get_string('applets-order');
+		for (let i = 0; i < 5;i++) {
+			let pos = parseInt(position[i]);
+			switch (pos) {
+				case 1:
+					this._container.add_actor(this._showAppsIcon);
+					break;
+				case 2:
+					this._container.add_actor(this._appsContainer);
+					break;			
+				case 3:
+					this._container.add_actor(this._linkTray.actor);
+					break;
+				case 4:
+					//this._container.add_actor(this._showDesktop.actor);
+					break;
+				case 5:
+					//this._container.add_actor(this._recyclingBin.actor);
+					break;												
+				default:
+					break;
+			}
+		}			
 //=========================================================================//
 //------ADDING WIDGETS HERE------------------------------------------------//
 

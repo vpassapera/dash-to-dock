@@ -639,12 +639,11 @@ const WorkspaceSettingsWidget = new GObject.Class({// FIXME: Why call it this fu
 			hexpand: true, halign: Gtk.Align.START});
         let OrderOfAppletsEntry = new Gtk.Entry({halign: Gtk.Align.END});
 			OrderOfAppletsEntry.set_width_chars(5);
-			OrderOfAppletsEntry.set_text(this.settings.get_int('applets-order').toString());
+			OrderOfAppletsEntry.set_text(this.settings.get_string('applets-order'));
 			OrderOfAppletsEntry.connect('changed', Lang.bind (this, function(widget) {			
-				this.settings.set_int('applets-order', parseInt(widget.get_text()) );
+				this.settings.set_string('applets-order', widget.get_text());
 			}));        
         
-
 		OrderOfApplets.add(OrderOfAppletsLabel);
 		OrderOfApplets.add(OrderOfAppletsEntry);
 		
