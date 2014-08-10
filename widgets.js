@@ -689,11 +689,8 @@ log('gridview switch');
 		this.removeAll();
 //---------------------------------------------------------------------------------------------------------------------		   
 		this._table = new St.Table({ x_expand: true,  y_expand: true, homogeneous: true });
-
 		let appz = AppFavorites.getAppFavorites().getFavorites();
-		
-		let mar = 3;
-		
+		let mar = 5;
 		for(let i = 0 ; i < 3 ;i++) {
 			for(let j = 0 ; j < appz.length ;j++) {
 				let boxOfButton = new St.BoxLayout({ vertical: true, x_expand: false,
@@ -717,10 +714,11 @@ log('gridview switch');
 				boxOfButton.add(btn);
 				let label = new St.Label({text: appz[j].get_name(), x_align: St.Align.MIDDLE });
 				
-				if ( label.width == 48*2 )
-					label.width = 48*2;
+//				if ( label.width == 48*2 )
+//					label.width = 48*2;
 
 				boxOfButton.add(label, { x_align: St.Align.MIDDLE });
+									
 				this._table.add(boxOfButton, { row: j, col:i, x_fill: false, y_fill: false, 
 					x_align: St.Align.MIDDLE, y_align: St.Align.START});
 			}
@@ -729,19 +727,18 @@ log('gridview switch');
         this._scrollView = new St.ScrollView({ x_fill: true, y_fill: false });
         let vscroll = this._scrollView.get_vscroll_bar();
         vscroll.connect('scroll-start', Lang.bind(this, function() {
-            this.menu.passEvents = true;
+            this.passEvents = true;
         }));
         vscroll.connect('scroll-stop', Lang.bind(this, function() {
-            this.menu.passEvents = false;
+            this.passEvents = false;
         }));
         
 		this.abox = new St.BoxLayout({ vertical: true, x_expand: true});
 		this.abox.add(this._table, { x_fill:false, y_fill: false });
 		this._scrollView.add_actor(this.abox);
 
-		// Calculating the vertical space needed for ScrollView
-		let label_sizer = new St.Label({text: "label_sizer" });		
-		this._scrollView.height = (48+label_sizer.height+(2*mar))*3+12;		
+		// Calculating the (aesthetic) height for ScrollView
+		this._scrollView.height = (48+(2*mar))*4+12;		
 				
 		this.box.add(this._scrollView);
 //---------------------------------------------------------------------------------------------------------------------       
