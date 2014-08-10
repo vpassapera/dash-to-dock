@@ -659,10 +659,8 @@ const myLinkTrayMenu = new Lang.Class({
     
 	populate: function() {
 		for(let i = 0; i < this.linksStorage.links_data.folders.length ;i++) {		
-			if (this.trayId == this.linksStorage.links_data.folders[i].collection_id) {
-log('oooooo 1');			
+			if (this.trayId == this.linksStorage.links_data.folders[i].collection_id) {		
 				this.make_menu(this.linksStorage.links_data.folders[i].links_array);
-log('oooooo 2');			
 			}
 		}
 	},
@@ -727,7 +725,7 @@ log('oooooo 2');
 		if(this.icols > 1 && this.irows > 3)
 			this._scrollView.height = (this._scrollView.height/this.icols + 10)*3;
     },
-    
+
     _removeMenuTimeout: function() {
         if (this._menuTimeoutId > 0) {
             Mainloop.source_remove(this._menuTimeoutId);
@@ -797,11 +795,12 @@ const myFileIcon = new Lang.Class({
             }));
         this._draggable.connect('drag-cancelled', Lang.bind(this,
             function () {
-			this.menu.fileIconDeletion.actor.hide();
+				this.menu.fileIconDeletion.actor.hide();
+				this.menu.populate();			
             }));
         this._draggable.connect('drag-end', Lang.bind(this,
             function () {
-			this.menu.fileIconDeletion.actor.hide();
+				this.menu.fileIconDeletion.actor.hide();
             }));  
     },
 
@@ -820,7 +819,7 @@ const myFileIcon = new Lang.Class({
 			link = null;
 			return false;
 		}
-log('DELETING LINK');
+
 		this.menu.linksStorage.move_link_in_tray(this.menu.trayId, source.id, this.id);
 		this.menu.close();
 		this.menu.populate();
