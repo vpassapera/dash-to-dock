@@ -146,17 +146,60 @@ const myLinkTray = new Lang.Class({
     parseClipboardLinks: function(text) {
 		
 		let array = text.split("\n");
-		
+		/*
 		array.forEach(function (element) {
 			if (element != null || element != undefined) {
 				element.trim();
 				
 				let file = Gio.file_new_for_path(element);
 				if (GLib.file_test(element, GLib.FileTest.EXISTS)) {
-						log(">>>>>>>>>>>> "+'YES IT EXISTS');
+					//log(">>>>>>>>>>>> "+'YES IT EXISTS');
+					//Now we add to menu options
+					this.addSuggestedLink(element);
 				}
 			}
-		});
+		});*/
+		
+		for (let i = 0 ; i < array.length; i++) {
+			if (array[i] != null || array[i] != undefined) {
+				array[i].trim();
+				
+				let file = Gio.file_new_for_path(array[i]);
+				if (GLib.file_test(array[i], GLib.FileTest.EXISTS)) {
+					//log(">>>>>>>>>>>> "+'YES IT EXISTS');
+					//Now we add to menu options
+					this.addSuggestedLink(file);
+				}
+			}
+		}
+    },
+
+	/* 
+	 * This item here will be placed in the secondary menu,
+	 * to give an option to the user to add it permanently
+	 * to the Links Tray and LinksDB instances.
+	 */
+    addSuggestedLink: function(file) {
+		let item = new PopupMenu.PopupBaseMenuItem;
+		let label = new St.Label({text: file.get_basename() });//get_parse_name
+		//item.connect("activate", Lang.bind(this, this.addLink, 1000000));
+		//item.connect("activate", this.addLink(1000000));//works
+		item.connect("activate", Lang.bind(this, function(){
+			this.addLink(file);
+		}));
+		item.actor.add_child(label);
+		this.menu_secondary.addMenuItem(item);	
+    },
+
+	/* The file link is added to the tray and LinksDB. */
+    addLink: function(file) {
+log("ping ADD LINK ");	
+		/*
+		let item = new PopupMenu.PopupBaseMenuItem;
+		let label = new St.Label({text: _("Add Another Tray")});
+		item.connect("activate", Lang.bind(this, this.addTray));
+		item.actor.add_child(label);
+		this.menu_secondary.addMenuItem(item);*/	
     },
 
     freeContents: function() {
