@@ -24,6 +24,7 @@ const Workspace = imports.ui.workspace;
 
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 const Convenience = Me.imports.convenience;
+const Widgets = Me.imports.widgets;
 
 let DASH_ANIMATION_TIME = Dash.DASH_ANIMATION_TIME;
 let DASH_ITEM_LABEL_SHOW_TIME = Dash.DASH_ITEM_LABEL_SHOW_TIME;
@@ -224,8 +225,21 @@ const myDash = new Lang.Class({
         this.showAppsButton = this._showAppsIcon.toggleButton;
 
 //-----------------ADDING WIDGETS HERE-----------------//
-this._container.add_actor(this._showAppsIcon);
-this._container.add_actor(this._appsContainer);     
+		this._container.add_actor(this._showAppsIcon);
+		this._container.add_actor(this._appsContainer);
+
+
+//=====================================================//
+//THIS IS SUPPOSED TO BE A STACK
+this._showAppsIcon2 = new Widgets.ShowAppsIconNEW();
+this._showAppsIcon2.childScale = 1;
+this._showAppsIcon2.childOpacity = 255;
+this._showAppsIcon2.icon.setIconSize(this.iconSize);
+this._hookUpLabel(this._showAppsIcon2);
+
+this._container.add_actor(this._showAppsIcon2);
+//=====================================================//
+   
 //-----------------ADDING WIDGETS HERE-----------------//
 
         this.actor = new St.Bin({ child: this._container, y_align: St.Align.START });
