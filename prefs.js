@@ -38,23 +38,34 @@ const WorkspaceSettingsWidget = new GObject.Class({
                                          margin:10});
     indentWidget(dockSettingsMain1);
 
+	let dockSettingsPlacement = new Gtk.Box({spacing:30, margin_left:10, margin_top:10, margin_right:10});
 
-    let dockSettingsHorizontal = new Gtk.Box({spacing:30, margin_left:10, margin_top:10, margin_right:10});
+    let dockPlacement = new Gtk.Box({margin_left:10, margin_top:10, margin_bottom:0, margin_right:10});
+	let dockPlacementLabel = new Gtk.Label({label: _("Dock placement: Left, Right, [No Top], Bottom"), hexpand:true, xalign:0});
+    let dockPlacementCombo = new Gtk.ComboBoxText({halign:Gtk.Align.END});
+	dockPlacementCombo.append_text(_("0"));
+	dockPlacementCombo.append_text(_("1"));
+	dockPlacementCombo.append_text(_("2"));
+	dockPlacementCombo.append_text(_("3"));
+	let active = this.settings.get_int('dock-placement');
+	if (active < 0)
+		active = 0;
+        
+	dockPlacementCombo.set_active(active);
+
+	dockPlacementCombo.connect('changed', Lang.bind (this, function(widget) {
+		let active = widget.get_active();
+		if (active <= 0)
+			this.settings.set_int('dock-placement', -1);
+		else
+			this.settings.set_int('dock-placement', active );
+	}));
+
+    dockPlacement.add(dockPlacementLabel);
+    dockPlacement.add(dockPlacementCombo);
     
     let dockSettingsControl1 = new Gtk.Box({spacing:30, margin_left:10, margin_top:10, margin_right:10});
-
-    let dockHorizontalLabel = new Gtk.Label({label: _("Dock is horizontal"), use_markup: true,
-                                            xalign: 0, hexpand:true});//+|
-
-    let dockHorizontal =  new Gtk.Switch({halign:Gtk.Align.END});
-        dockHorizontal.set_active(this.settings.get_boolean('dock-horizontal'));
-        dockHorizontal.connect('notify::active', Lang.bind(this, function(check){
-            this.settings.set_boolean('dock-horizontal', check.get_active());
-        }));
-
-    dockSettingsHorizontal.add(dockHorizontalLabel);
-    dockSettingsHorizontal.add(dockHorizontal); 
-    
+        
     let alwaysVisibleLabel = new Gtk.Label({label: _("Dock is fixed and always visible"), use_markup: true,
                                             xalign: 0, hexpand:true});
 
@@ -138,7 +149,6 @@ const WorkspaceSettingsWidget = new GObject.Class({
     dockSettingsMain1.add(dockSettingsGrid1);
     dockSettingsMain1.add(dockSettingsGrid2);
 
-    this.settings.bind('dock-horizontal', dockSettingsMain1, 'sensitive', Gio.SettingsBindFlags.INVERT_BOOLEAN);//+|
     this.settings.bind('dock-fixed', dockSettingsMain1, 'sensitive', Gio.SettingsBindFlags.INVERT_BOOLEAN);
 
     let intellihideSubSettings = new Gtk.Box({margin_left:10, margin_top:10, margin_bottom:0, margin_right:10});
@@ -274,8 +284,8 @@ const WorkspaceSettingsWidget = new GObject.Class({
     this.settings.bind('extend-height', dockMaxHeight, 'sensitive', Gio.SettingsBindFlags.INVERT_BOOLEAN);
 
     dockSettingsMain2.add(dockHeightMain);
-
-	dockSettings.add(dockSettingsHorizontal);
+    
+	dockSettings.add(dockPlacement);
     dockSettings.add(dockSettingsControl1);
     dockSettings.add(dockSettingsMain1);
     dockSettings.add(intellihideSubSettings);

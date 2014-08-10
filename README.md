@@ -28,6 +28,7 @@ version 2 or later. See the COPYING file for details.
 ## Hacking
 
 Remember to compile the gschemas with "glib-compile-schemas" in the schemas directory.
+glib-compile-schemas /home/<USER>/dash-to-dock@micxgx.gmail.com/schemas
 
 ## Donations
 
