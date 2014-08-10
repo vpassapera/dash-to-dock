@@ -304,15 +304,7 @@ const dockedDash = new Lang.Class({
         this._dockBox = new St.BoxLayout({ name: 'dashtodockBox', reactive: true, track_hover:true });
 
         this._dockBox.connect("notify::hover", Lang.bind(this, this._hoverChanged));
-/*
-        if (dock_horizontal) {
-			// Create and apply height constraint to the dash. It's controlled by this.actor height
-			this.actor.height = Main.overview.viewSelector.actor.height; // Guess initial reasonable height.
-			this.constrainHeight = new Clutter.BindConstraint({ source: this.actor,
-				coordinate: Clutter.BindCoordinate.HEIGHT });
-			this.dash.actor.add_constraint(this.constrainHeight);
-        }
-*/
+
         if (dock_horizontal) {
 			// Create and apply height constraint to the dash. It's controlled by this.actor height
 			//this.actor.height = Main.overview.viewSelector.actor.height; // Guess initial reasonable height.
@@ -1106,50 +1098,77 @@ const dockedDash = new Lang.Class({
             }
         }
 
-        // This was inspired to desktop-scroller@obsidien.github.com
+        // This was inspired by desktop-scroller@obsidien.github.com
         function onScrollEvent(actor, event) {
-
+log('SCROOOOOL IN THE DUNGEON!!!');
             let activeWs = global.screen.get_active_workspace();
             let direction = 0; // 0: do nothing; +1: up; -1:down.
 
-            // filter events occuring not near the screen border if required
+            // Filter events occuring not near the screen border if required
             if (this._settings.get_boolean('scroll-switch-workspace-whole') == false) {
-
+				
                 let [x,y] = event.get_coords();
 
-                if (this._settings.get_int('dock-placement') == 1) {
+                if (this._settings.get_int('dock-placement') == 1) {					
                     if(x < this.staticBox.x2 - 1)
                         return false;
-                } else {
+                } else if (this._settings.get_int('dock-placement') == 3) {
+
+					switch ( event.get_scroll_direction() ) {
+						case Clutter.ScrollDirection.UP:
+							this.dash._onScrollBtnLeftOrTop();				
+							break;
+						case Clutter.ScrollDirection.DOWN:
+							this.dash._onScrollBtnRightOrBottom();
+							break;
+						case Clutter.ScrollDirection.SMOOTH:			
+							let [dx, dy] = event.get_scroll_delta();
+							if (dy < 0) {
+								this.dash._onScrollBtnLeftOrTop();
+							} else if(dy > 0) {
+								this.dash._onScrollBtnRightOrBottom();
+							}
+							break;
+					}
+					/*
+					let [dx, dy] = event.get_scroll_delta();
+					if (dy < 0) {
+						this.dash._onScrollBtnLeftOrTop();			
+					} else if(dy > 0) {
+						this.dash._onScrollBtnRightOrBottom();
+					}*/
+					
+					return true;
+				} else {					
                     if(x > this.staticBox.x1 + 1)
                         return false;
                 }
             }
 
             switch ( event.get_scroll_direction() ) {
-            case Clutter.ScrollDirection.UP:
-                direction = 1;
-                break;
-            case Clutter.ScrollDirection.DOWN:
-                direction = -1;
-                break;
-            case Clutter.ScrollDirection.SMOOTH:
-                let [dx, dy] = event.get_scroll_delta();
-                if(dy < 0){
-                    direction = 1;
-                } else if(dy > 0) {
-                    direction = -1;
-                }
-                break;
+				case Clutter.ScrollDirection.UP:
+					direction = 1;						
+					break;
+				case Clutter.ScrollDirection.DOWN:
+					direction = -1;
+					break;
+				case Clutter.ScrollDirection.SMOOTH:			
+					let [dx, dy] = event.get_scroll_delta();
+					if(dy < 0){
+						direction = 1;
+					} else if(dy > 0) {
+						direction = -1;
+					}
+					break;
             }
 
             if(direction !==0 ) {
 
-                // Prevent scroll events from triggering too many workspace switches
-                // by adding a deadtime between each scroll event.
+                // Prevent scroll events from triggering too many workspace
+                // switches by adding a dead time between each scroll event.
                 // Usefull on laptops when using a touchpad.
                 if(this._settings.get_boolean('scroll-switch-workspace-one-at-a-time')){
-                    // During the deadtime do nothing
+                    // During the dead time do nothing
                     if(this._optionalScrollWorkspaceSwitchDeadTimeId>0)
                         return false;
                     else {
@@ -1165,7 +1184,7 @@ const dockedDash = new Lang.Class({
 
                 let ws;
 
-                if (direction>0)
+                if (direction > 0)
                     ws = activeWs.get_neighbor(Meta.MotionDirection.UP)
                 else
                     ws = activeWs.get_neighbor(Meta.MotionDirection.DOWN);
