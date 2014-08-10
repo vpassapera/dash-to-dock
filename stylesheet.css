@@ -143,6 +143,15 @@
 
 /* THIS IS STILL VERY EXPERIMENTAL */
 
+/* Applet Recycling Bin Icon */
+#dashtodockContainer.dashtodockLTR .applet-recycling-bin,
+#dashtodockContainer.dashtodockRTL .applet-recycling-bin,
+#dashtodockContainer.dashtodockTTB .applet-recycling-bin,
+#dashtodockContainer.dashtodockBTT .applet-recycling-bin {
+    background-image: url('./media/four_btt.png');
+}
+
+
 #dashtodockContainer.dashtodockLTR .app-well-menu-custom,
 #dashtodockContainer.dashtodockRTL .app-well-menu-custom,
 #dashtodockContainer.dashtodockTTB .app-well-menu-custom,
