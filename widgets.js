@@ -92,7 +92,7 @@ const myShowAppsIcon = new Lang.Class({
 const myLinkTray = new Lang.Class({
     Name: 'myLinkTray',
                         
-    _init: function(iconSize, settings) {				
+    _init: function(iconSize, settings) {
 		this._labelText = _("Links Tray");
 		this.label = new St.Label({ style_class: 'dash-label'});
 		this.label.hide();
@@ -128,6 +128,23 @@ const myLinkTray = new Lang.Class({
         
 		this.menuManager.addMenu(this.menu);
 		this.menuManager.addMenu(this.menu_secondary);//ERROR: push Modal: invocation of begin_modal failed: WHY??
+
+//--------------------------------------------------------------------------
+        this._draggable = DND.makeDraggable(this.actor);
+        this._draggable.connect('drag-begin', Lang.bind(this,
+            function () {
+                this._removeMenuTimeout();
+                Main.overview.beginItemDrag(this);
+            }));
+        this._draggable.connect('drag-cancelled', Lang.bind(this,
+            function () {
+                Main.overview.cancelledItemDrag(this);
+            }));
+        this._draggable.connect('drag-end', Lang.bind(this,
+            function () {
+               Main.overview.endItemDrag(this);
+            }));
+//--------------------------------------------------------------------------
 
 		this.linksOfTray = new Convenience.LinksDB();
 	},
@@ -356,6 +373,90 @@ const myLinkTray = new Lang.Class({
 });
 
 Signals.addSignalMethods(myLinkTray.prototype);
+
+const myLinkBox = new Lang.Class({
+    Name: 'myLinkBox',
+    Extends: St.BoxLayout,
+    
+	_init: function(iconSize, settings, functionHookLabel) {
+log ('HOOOOORAY');
+
+		if (!dock_horizontal) {
+			this.parent({ vertical: true, clip_to_allocation: true });
+		} else {
+			this.parent({ vertical: false, clip_to_allocation: true });
+		}
+
+        this._boxLinks;
+        if (!dock_horizontal) {
+			this._boxLinks = new St.BoxLayout({ vertical: true, clip_to_allocation: false });
+		} else {
+			this._boxLinks = new St.BoxLayout({ vertical: false, clip_to_allocation: false });
+		}
+		this._boxLinks._delegate = this;
+
+		this._appsContainer;
+
+		this._scrollView = new St.ScrollView({ reactive: true });
+        if (!dock_horizontal) {
+			this._scrollView.hscrollbar_policy = Gtk.PolicyType.NEVER;
+			this._scrollView.vscroll.hide();
+		} else {
+			this._scrollView.vscrollbar_policy = Gtk.PolicyType.NEVER;
+			this._scrollView.hscroll.hide();
+		}
+
+		this._scrollView.add_actor(this._boxLinks);
+		this._scrollView.connect('scroll-event', Lang.bind(this, this._onScrollEvent ));
+		//this._appsContainer.add_actor(this._scrollView);
+		this.add_actor(this._scrollView);
+	},
+	
+	_onScrollEvent: function(actor, event) {
+		switch(event.get_scroll_direction()) {
+			case Clutter.ScrollDirection.UP:
+				this._onScrollBtnLeftOrTop(actor);				
+				break;
+			case Clutter.ScrollDirection.DOWN:
+				this._onScrollBtnRightOrBottom(actor);
+				break;
+			case Clutter.ScrollDirection.SMOOTH:			
+				let [dx, dy] = event.get_scroll_delta();
+				if (dy < 0) {
+					this._onScrollBtnLeftOrTop(actor);
+				} else if(dy > 0) {
+					this._onScrollBtnRightOrBottom(actor);
+				}
+				break;
+			default:
+				break;
+		}
+					
+		return true;
+    },      
+        
+    _onScrollBtnLeftOrTop: function(scroll_actor) {
+		if (!dock_horizontal) {
+			let vscroll = scroll_actor.get_vscroll_bar();
+			vscroll.get_adjustment().set_value(vscroll.get_adjustment().get_value() - scroll_actor.height);				
+		} else {
+			let hscroll = scroll_actor.get_hscroll_bar();
+			hscroll.get_adjustment().set_value(hscroll.get_adjustment().get_value() - scroll_actor.width);	
+		}
+    },
+    
+    _onScrollBtnRightOrBottom: function(scroll_actor) {
+		if (!dock_horizontal) {
+			let vscroll = scroll_actor.get_vscroll_bar();
+			vscroll.get_adjustment().set_value(vscroll.get_adjustment().get_value() + scroll_actor.height);				
+		} else {
+			let hscroll = scroll_actor.get_hscroll_bar();
+			hscroll.get_adjustment().set_value(hscroll.get_adjustment().get_value() + scroll_actor.width);			
+		}
+    },	
+});
+
+Signals.addSignalMethods(myLinkBox.prototype);
 
 // This class is a extension of the upstream AppIcon class (ui.appDisplay.js).
 const myLinkTrayMenu = new Lang.Class({

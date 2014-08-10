@@ -164,13 +164,13 @@ const myDash = new Lang.Class({
 		} else {
 			this._scrollView.vscrollbar_policy = Gtk.PolicyType.NEVER;
 			this._scrollView.hscroll.hide();
-			this._appsContainer = new St.BoxLayout({ vertical: false, clip_to_allocation: true });	
+			this._appsContainer = new St.BoxLayout({ vertical: false, clip_to_allocation: true });
 		}
 
 		this._scrollView.add_actor(this._box);
 		this._scrollView.connect('scroll-event', Lang.bind(this, this._onScrollEvent ));
 		this._appsContainer.add_actor(this._scrollView);
-
+/*
         this._boxLinks;
         if (!dock_horizontal) {
 			this._boxLinks = new St.BoxLayout({ vertical: true, clip_to_allocation: false });
@@ -179,7 +179,7 @@ const myDash = new Lang.Class({
 		}
 		this._boxLinks._delegate = this;
 
-		this._appsContainer;
+		this._appsContainer2;
 		
 		this._scrollView2 = new St.ScrollView({ reactive: true });
         if (!dock_horizontal) {
@@ -195,7 +195,7 @@ const myDash = new Lang.Class({
 		this._scrollView2.add_actor(this._boxLinks);
 		this._scrollView2.connect('scroll-event', Lang.bind(this, this._onScrollEvent ));
 		this._appsContainer2.add_actor(this._scrollView2);
-
+*/
 		// Init Show Apps applet	
 		this.showAppsButton = new St.Button({ toggle_mode: true });
 		this._showAppsIcon = null;
@@ -296,6 +296,7 @@ const myDash = new Lang.Class({
 							this._container.add_actor(this._appsContainer2);
 */
 
+/*
 							for (let i = 0; i < 5 ;i++) {
 								this._linkTray = new Widgets.myLinkTray(this.iconSize, this._settings);
 								this._linkTray.childScale = 1;
@@ -306,7 +307,24 @@ const myDash = new Lang.Class({
 								this._boxLinks.add(this._linkTray.actor);
 							}
 							this._container.add_actor(this._appsContainer2);
+*/							
+
+							this._linksBox = new Widgets.myLinkBox(this.iconSize, this._settings, this._hookUpLabelForApplets);
 							
+							
+							for (let i = 0; i < 5 ;i++) {
+								this._linkTray = new Widgets.myLinkTray(this.iconSize, this._settings);
+								this._linkTray.childScale = 1;
+								this._linkTray.childOpacity = 255;
+								this._linkTray.icon.setIconSize(this.iconSize);
+								//this._hookUpLabelForApplets(this._linkTray);
+								//this._container.add_actor(this._linkTray.actor);//PREVIOUS was direct
+								this._linksBox.add(this._linkTray.actor);
+							}							
+							
+							
+							this._container.add_actor(this._linksBox);
+
 						}
 						break;
 					case 4:
