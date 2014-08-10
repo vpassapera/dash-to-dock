@@ -34,6 +34,406 @@ let DASH_ITEM_LABEL_HIDE_TIME = Dash.DASH_ITEM_LABEL_HIDE_TIME;
 let DASH_ITEM_HOVER_TIMEOUT = Dash.DASH_ITEM_HOVER_TIMEOUT;
 
 let dock_horizontal = true;
+let tracker = Shell.WindowTracker.get_default();
+
+/**
+ * Extends AppIcon
+ *
+ * - Pass settings to the constructor and bind settings changes
+ * - Apply a css class based on the number of windows of each application (#N);
+ *   a class of the form "running#N" is applied to the AppWellIcon actor.
+ *   like the original .running one.
+ * - add a .focused style to the focused app
+ * - Customize click actions.
+ *
+ */
+const myAppIcon = new Lang.Class({
+    Name: 'dashToDock.AppIcon',
+    Extends: AppDisplay.AppIcon,
+
+	clickAction: {
+		SKIP: 0,
+		MINIMIZE: 1,
+		LAUNCH: 2,
+		CYCLE_WINDOWS: 3
+	},
+
+    _init: function(settings, app, iconParams, onActivateOverride) {
+        this._settings = settings;
+        this._maxN = 4;
+        this.parent(app, iconParams, onActivateOverride);
+        
+        this.recentlyClickedAppLoopId = 0;
+		this.recentlyClickedApp = null;
+		this.recentlyClickedAppWindows = null;
+		this.recentlyClickedAppIndex = 0;
+
+        // Monitor windows-changes instead of app state.
+        // Keep using the same Id and function callback (that is extended)
+        if(this._stateChangedId>0){
+            this.app.disconnect(this._stateChangedId);
+            this._stateChangedId=0;
+        }
+
+        this._stateChangedId = this.app.connect('windows-changed',
+			Lang.bind(this,this._onStateChanged));
+        this._focuseAppChangeId = tracker.connect('notify::focus-app',
+			Lang.bind(this, this._onFocusAppChanged));
+
+    },
+
+    _onDestroy: function() {
+        this.parent();
+
+        // Disconect global signals
+        // stateChangedId is already handled by parent)
+        if(this._focusAppId>0)
+            tracker.disconnect(this._focusAppId);
+    },
+
+    popupMenu: function() {
+        this._removeMenuTimeout();
+        this.actor.fake_release();
+        this._draggable.fakeRelease();
+
+        if (!this._menu) {
+			let side;
+			switch(this._settings.get_int('dock-placement')) {
+				case 0:
+					side = St.Side.LEFT;
+				break;	
+				case 1:
+					side = St.Side.RIGHT;
+				break;
+				case 2:
+					side = St.Side.BOTTOM;
+				break;
+				case 3:
+					side = St.Side.TOP;
+				break;	
+			}
+			this._menu = new myAppIconMenu(this, side);
+
+            this._menu.connect('activate-window',
+                Lang.bind(this, function (menu, window) {
+                    this.activateWindow(window);
+                })
+            );
+
+            this._menu.connect('open-state-changed',
+                Lang.bind(this, function (menu, isPoppedUp) {
+                    if (!isPoppedUp) {
+                        this._onMenuPoppedDown();
+                    }
+                })
+            );
+
+			// This causes errors and is not really needed...
+			// Usually either a click on the background overview or back on the icon is enough
+            //Main.overview.connect('hiding', Lang.bind(this, function () { this._menu.close(); }));
+
+            this._menuManager.addMenu(this._menu);
+        }
+
+        this.emit('menu-state-changed', true);
+        this.actor.set_hover(true);
+        this._menu.popup();
+        this._menuManager.ignoreRelease();
+        this.emit('sync-tooltip');
+
+        return false;
+    },
+
+    _onStateChanged: function() {
+        this.parent();
+        this._updateCounterClass();
+    },
+
+    _onFocusAppChanged: function() {
+        if(tracker.focus_app == this.app)
+            this.actor.add_style_class_name('focused');
+        else
+            this.actor.remove_style_class_name('focused');
+    },
+
+    _onActivate: function(event) {
+        if ( !this._settings.get_boolean('customize-click') ){
+            this.parent(event);
+            return;
+        }
+
+        let modifiers = event.get_state();
+        let focusedApp = tracker.focus_app;
+
+        if(this.app.state == Shell.AppState.RUNNING) {
+
+            if(modifiers & Clutter.ModifierType.CONTROL_MASK){
+                // Keep default behaviour: launch new window
+                this.emit('launching');
+                this.app.open_new_window(-1);
+
+            } else if (this._settings.get_boolean('minimize-shift') && modifiers & Clutter.ModifierType.SHIFT_MASK){
+                // On double click, minimize all windows in the current workspace
+                minimizeWindow(this.app, event.get_click_count() > 1);
+
+            } else if(this.app == focusedApp && !Main.overview._shown){
+
+                if(this._settings.get_enum('click-action') == this.clickAction.CYCLE_WINDOWS){
+                    this.emit('launching');
+                    this.cycleThroughWindows(this.app);
+
+                } else if(this._settings.get_enum('click-action') == this.clickAction.MINIMIZE)
+                    this.minimizeWindow(this.app, true);
+
+                else if(this._settings.get_enum('click-action') == this.clickAction.LAUNCH){
+                    this.emit('launching');
+                    this.app.open_new_window(-1);
+                }
+
+            } else {
+                // Activate all window of the app or only le last used
+                this.emit('launching');
+                if (this._settings.get_enum('click-action') == this.clickAction.CYCLE_WINDOWS && !Main.overview._shown){
+                    // If click cycles through windows I can activate one windows at a time
+                    let windows = this.getAppInterestingWindows(this.app);
+                    let w = windows[0];
+                    Main.activateWindow(w);
+                } else if(this._settings.get_enum('click-action') == this.clickAction.LAUNCH)
+                    this.app.open_new_window(-1);
+                else if(this._settings.get_enum('click-action') == this.clickAction.MINIMIZE){
+                    // If click minimizes all, then one expects all windows to be reshown
+                    this.activateAllWindows(this.app);
+                } else
+                    this.app.activate();
+            }
+        } else {
+            // Just launch new app
+            this.emit('launching');
+            this.app.activate();
+        }
+
+        Main.overview.hide();
+    },
+
+    _updateCounterClass: function() {
+        let n = this.getAppInterestingWindows(this.app).length;
+
+        if(n>this._maxN)
+             n = this._maxN;
+
+        for(let i = 1; i <= this._maxN; i++){
+            let className = 'running'+i;
+            if(i!=n)
+                this.actor.remove_style_class_name(className);
+            else
+                this.actor.add_style_class_name(className);
+        }
+    },
+
+	minimizeWindow: function(app, param){
+		// Param true make all app windows minimize
+		let windows = this.getAppInterestingWindows(app);
+		let current_workspace = global.screen.get_active_workspace();
+		for (let i = 0; i < windows.length; i++) {
+			let w = windows[i];
+			if (w.get_workspace() == current_workspace && w.showing_on_its_workspace()){
+				w.minimize();
+				// Just minimize one window. By specification it should be the
+				// focused window on the current workspace.
+				if(!param)
+					break;
+			}
+		}
+	},
+
+	/*
+	 * By default only non minimized windows are activated.
+	 * This activates all windows in the current workspace.
+	 */
+	activateAllWindows: function(app){
+		// First activate first window so workspace is switched if needed.
+		app.activate();
+
+		// then activate all other app windows in the current workspace
+		let windows = this.getAppInterestingWindows(app);
+		let activeWorkspace = global.screen.get_active_workspace_index();
+
+		if( windows.length <= 0)
+			return;
+
+		let activatedWindows = 0;
+
+		for (let i = windows.length - 1; i >= 0; i--){
+			if(windows[i].get_workspace().index() == activeWorkspace){
+				Main.activateWindow(windows[i]);
+				activatedWindows++;
+			}
+		}
+	},
+
+	cycleThroughWindows: function(app) {
+		// Store for a little amount of time last clicked app and its windows
+		// since the order changes upon window interaction
+		let MEMORY_TIME = 3000;
+
+		let app_windows = this.getAppInterestingWindows(app);
+
+		if(this.recentlyClickedAppLoopId > 0)
+			Mainloop.source_remove(this.recentlyClickedAppLoopId);
+		this.recentlyClickedAppLoopId = Mainloop.timeout_add(MEMORY_TIME, this.resetRecentlyClickedApp);
+
+		// If there isn't already a list of windows for the current app,
+		// or the stored list is outdated, use the current windows list.
+		if( !this.recentlyClickedApp ||
+			this.recentlyClickedApp.get_id() != app.get_id() ||
+			this.recentlyClickedAppWindows.length != app_windows.length
+		  ){
+
+			this.recentlyClickedApp = app;
+			this.recentlyClickedAppWindows = app_windows;
+			this.recentlyClickedAppIndex = 0;
+		}
+
+		this.recentlyClickedAppIndex++;
+		let index = this.recentlyClickedAppIndex % this.recentlyClickedAppWindows.length;
+		let window = this.recentlyClickedAppWindows[index];
+
+		Main.activateWindow(window);
+	},
+
+	resetRecentlyClickedApp: function() {
+		if(this.recentlyClickedAppLoopId > 0)
+			Mainloop.source_remove(this.recentlyClickedAppLoopId);
+		this.recentlyClickedAppLoopId = 0;
+		this.recentlyClickedApp = null;
+		this.recentlyClickedAppWindows = null;
+		this.recentlyClickedAppIndex = 0;
+
+		return false;
+	},
+
+	getAppInterestingWindows: function(app) {
+		// Filter out unnecessary windows, for instance
+		// nautilus desktop window.
+		let windows = app.get_windows().filter(function(w) {
+			return !w.skip_taskbar;
+		});
+
+		return windows;
+	} 
+});
+
+Signals.addSignalMethods(myAppIcon.prototype);
+
+// This class is a extension of the upstream AppIcon class (ui.appDisplay.js).
+const myAppIconMenu = new Lang.Class({
+    Name: 'AppIconMenu',
+    Extends: AppDisplay.PopupMenu.PopupMenu,
+
+    _init: function(source, side) {
+        this.parent(source.actor, 0.5, side);
+
+        // We want to keep the item hovered while the menu is up
+        this.blockSourceEvents = true;
+
+        this._source = source;
+
+        this.actor.add_style_class_name('app-well-menu');
+
+        // Chain our visibility and lifecycle to that of the source
+        source.actor.connect('notify::mapped', Lang.bind(this, function () {
+            if (!source.actor.mapped)
+                this.close();
+        }));
+        source.actor.connect('destroy', Lang.bind(this, function () { this.actor.destroy(); }));
+
+        Main.uiGroup.add_actor(this.actor);
+    },
+
+    _redisplay: function() {
+        this.removeAll();
+
+        let windows = this._source.app.get_windows().filter(function(w) {
+            return !w.skip_taskbar;
+        });
+
+        // Display the app windows menu items and the separator between windows
+        // of the current desktop and other windows.
+        let activeWorkspace = global.screen.get_active_workspace();
+        let separatorShown = windows.length > 0 && windows[0].get_workspace() != activeWorkspace;
+
+        for (let i = 0; i < windows.length; i++) {
+            let window = windows[i];
+            if (!separatorShown && window.get_workspace() != activeWorkspace) {
+                this._appendSeparator();
+                separatorShown = true;
+            }
+            let item = this._appendMenuItem(window.title);
+            item.connect('activate', Lang.bind(this, function() {
+                this.emit('activate-window', window);
+            }));
+        }
+
+        if (!this._source.app.is_window_backed()) {
+            this._appendSeparator();
+
+            this._newWindowMenuItem = this._appendMenuItem(_("New Window"));
+            this._newWindowMenuItem.connect('activate', Lang.bind(this, function() {
+                this._source.app.open_new_window(-1);
+                this.emit('activate-window', null);
+            }));
+            this._appendSeparator();
+
+            let appInfo = this._source.app.get_app_info();
+            let actions = appInfo.list_actions();
+            for (let i = 0; i < actions.length; i++) {
+                let action = actions[i];
+                let item = this._appendMenuItem(appInfo.get_action_name(action));
+                item.connect('activate', Lang.bind(this, function(emitter, event) {
+                    this._source.app.launch_action(action, event.get_time(), -1);
+                    this.emit('activate-window', null);
+                }));
+            }
+            this._appendSeparator();
+
+            let isFavorite = AppFavorites.getAppFavorites().isFavorite(this._source.app.get_id());
+
+            if (isFavorite) {
+                let item = this._appendMenuItem(_("Remove from Favorites"));
+                item.connect('activate', Lang.bind(this, function() {
+                    let favs = AppFavorites.getAppFavorites();
+                    favs.removeFavorite(this._source.app.get_id());
+                }));
+            } else {
+                let item = this._appendMenuItem(_("Add to Favorites"));
+                item.connect('activate', Lang.bind(this, function() {
+                    let favs = AppFavorites.getAppFavorites();
+                    favs.addFavorite(this._source.app.get_id());
+                }));
+            }
+        }
+    },
+
+    _appendSeparator: function () {
+        let separator = new PopupMenu.PopupSeparatorMenuItem();
+        this.addMenuItem(separator);
+    },
+
+    _appendMenuItem: function(labelText) {
+        // FIXME: app-well-menu-item style
+        let item = new PopupMenu.PopupMenuItem(labelText);
+        this.addMenuItem(item);
+        return item;
+    },
+
+    popup: function(activatingButton) {
+        this._redisplay();
+        this.open();
+    }
+});
+
+Signals.addSignalMethods(myAppIconMenu.prototype);
+
 
 /* This class is a extension of the upstream ShowAppsIcon class (ui.dash.js). */
 const myShowAppsIcon = new Lang.Class({
