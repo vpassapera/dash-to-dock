@@ -81,7 +81,6 @@ const DashSlideContainer = new Lang.Class({
     },
 
     vfunc_allocate: function(box, flags) {
-			
         if (!dock_horizontal) {
 			let panelHeight =  Main.panel.actor.height;
 			let maxH = Main.layoutManager.primaryMonitor.height - panelHeight;
@@ -160,11 +159,11 @@ const DashSlideContainer = new Lang.Class({
 			} else if (fraction == 1) {
 				box.x1 = 0;
 				box.x2 = maxW;
-			} else {
-				boxW = Math.floor(maxW * fraction);
+			} else {			
+				//boxW = Math.floor(maxW * fraction);
 				let lack = maxW - boxW;
 				box.x1 = Math.floor(lack / 2);
-				box.x2 = Math.floor(lack / 2) + boxW;
+				box.x2 = Math.floor(lack / 2) + boxW;		
 			}
 		
 			this.set_allocation(box, flags);
@@ -189,7 +188,7 @@ const DashSlideContainer = new Lang.Class({
 
 			childBox.x1 = 0;
 			childBox.x2 = childBox.x1 + childWidth;
-	
+
 			this._child.allocate(childBox, flags);
 			this._child.set_clip(-childBox.x1, 0, -childBox.x1+availWidth, availHeight);			
 		}
@@ -866,7 +865,7 @@ const dockedDash = new Lang.Class({
 			else if(fraction<0 || fraction >1)
 				fraction = 0.95;
 				
-			this.dash._container.set_height(availableHeight * fraction);
+//			this.dash._container.set_height(availableHeight * fraction);
 		} else {
 			let fraction = this._settings.get_double('size-fraction');
 			let extendSize = this._settings.get_boolean('extend-size');
@@ -878,7 +877,9 @@ const dockedDash = new Lang.Class({
 			else if(fraction<0 || fraction >1)
 				fraction = 0.95;
 				
-			this.dash._container.set_width(availableWidth * fraction);
+//			this.dash._container.set_width(availableWidth * fraction);
+log('MAYVE IS '+(availableWidth * fraction));
+
 
 			this.actor.height = this._monitor.height;
 			this.actor.y = this._monitor.y;

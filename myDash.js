@@ -124,10 +124,22 @@ const myDashActor = new Lang.Class({
     },
 
     vfunc_allocate: function(box, flags) {	
-        let contentBox = this.get_theme_node().get_content_box(box);
+        let contentBox = this.get_theme_node().get_content_box(box);   
         let availWidth = contentBox.x2 - contentBox.x1;        
         let availHeight = contentBox.y2 - contentBox.y1;
+//-------------------
+//BREAKER
+if (availWidth > 600) {
+	log('TROUBLE '+availWidth);
+	//box = null;
+	//box = undefined;	
+	//box.dispose();
+    //while (true){
+	//	let a = 1;
+    //}
 
+}
+//-------------------
         this.set_allocation(box, flags);
 
         let [appIcons, showAppsButton] = this.get_children();
@@ -221,9 +233,7 @@ const myDash = new Lang.Class({
 		else
 			dock_horizontal = true;
         
-        this._signalHandler = new Convenience.globalSignalHandler();				
-        this._maxWidth = -1;        
-		this._maxHeight = -1;
+        this._signalHandler = new Convenience.globalSignalHandler();
         this.iconSize = this._settings.get_int('dash-max-icon-size');
         this._avaiableIconSize = Dash.baseIconSizes;
         this._shownInitially = false;
@@ -244,8 +254,8 @@ const myDash = new Lang.Class({
 		}
 		this._box._delegate = this;
 
-		this._scrollView = new St.ScrollView({ x_expand: true, y_expand: true,
-                                               x_fill: true, y_fill: false, reactive: true });
+		this._scrollView = new St.ScrollView({ x_expand: false, y_expand: false,
+                                               x_fill: false, y_fill: false, reactive: true });
 
 		this._leftOrTopArrow = new St.Button();
 		this._rightOrBottomArrow = new St.Button();
@@ -287,6 +297,7 @@ const myDash = new Lang.Class({
 			this._appsContainer.add_actor(this._rightOrBottomArrow);
 			this._rightOrBottomArrow.connect('clicked', Lang.bind(this, this._onScrollBtnRightOrBottom));			
 		}
+
 		this._container.add_actor(this._appsContainer);
 
 		if (!dock_horizontal) {
@@ -561,10 +572,10 @@ const myDash = new Lang.Class({
         let maxAllocation;
 		if (!dock_horizontal) {
 			maxAllocation = new Clutter.ActorBox({ x1: 0, y1: 0,
-				x2: 64, y2: this._maxHeight });
+				x2: 64, y2: 64 });
 		} else {
 			maxAllocation = new Clutter.ActorBox({ x1: 0, y1: 0,
-				x2: this._maxWidth, y2: 64});
+				x2: 64, y2: 64});
 		}
         let maxContent = themeNode.get_content_box(maxAllocation);
         let availWidth, availHeight;
@@ -646,6 +657,7 @@ const myDash = new Lang.Class({
     },
 
     _redisplay: function () {
+	
         let favorites = AppFavorites.getAppFavorites().getFavoriteMap();
 
         let running = this._appSystem.get_running();
@@ -823,7 +835,6 @@ const myDash = new Lang.Class({
         this._shownInitially = false;
 
         this._redisplay();
-
     },
 
     // Reset the displayed apps icon to mantain the correct order when changing
@@ -841,9 +852,8 @@ const myDash = new Lang.Class({
         }
 
         // to avoid ugly animations, just suppress them like when dash is first loaded.
-        this._shownInitially = false;
+        this._shownInitially = false;     
         this._redisplay();
-
     },
 
     _clearDragPlaceholder: function() {
