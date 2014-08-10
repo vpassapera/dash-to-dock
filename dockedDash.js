@@ -802,6 +802,8 @@ const dockedDash = new Lang.Class({
         else {
             this._fadeOutBackground(this._settings.get_double('animation-time'), 0);
         }
+        
+		this._adjustBorders();       
     },
 
     _getBackgroundColor: function() {
@@ -825,7 +827,7 @@ const dockedDash = new Lang.Class({
         this.dash._queueRedisplay();
         this._getBackgroundColor();
         this._updateBackgroundOpacity();
-		this._adjustBorders();               
+        this._adjustBorders(); 
     },
 
 	// Re-themes the corners and borders. SOURCE: simple-dock extension.
@@ -841,15 +843,15 @@ const dockedDash = new Lang.Class({
 			this.dash._container.set_style(null);
 
 			let themeNode = this.dash._container.get_theme_node();
+
+			let alpha = this._settings.get_double('background-opacity');
 	  
 			// Corner rounding
-			let borderColor = themeNode.get_border_color(St.Side.BOTTOM);
-			let borderWidth = themeNode.get_border_width(St.Side.BOTTOM);		
-			let borderRadius = themeNode.get_border_radius(St.Corner.TOPRIGHT);
+			//let newStyle = 'background: rgba(0,0,0,0.9);'
+			//+ 'border-bottom: none;' + 'border-radius: 6px 6px 0 0;';
 
-			let newStyle = 'border-bottom: none;' + 'border-radius: ' + borderRadius 
-				+ 'px ' + borderRadius + 'px 0 0;' + 'border-left: ' + borderWidth 
-				+ 'px solid ' + borderColor.to_string() + ';';
+			let newStyle = 'background: rgba(8,54,14,' + alpha + ');' 
+			+ 'border-bottom: none;' + 'border-radius: 6px 6px 0 0;';
 
 			this.dash._container.set_style(newStyle);
 		}
