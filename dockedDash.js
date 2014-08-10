@@ -77,7 +77,7 @@ const DashSlideContainer = new Lang.Class({
         // slide parameter: 1 = visible, 0 = hidden.
         this._slidex = localParams.initialSlideValue;
         this._direction = localParams.direction;
-        this._slideoutWidth = 1; // minimum width when slided out
+        this._slideoutWidth = 1; // minimum width when slid out
     },
 
     vfunc_allocate: function(box, flags) {
@@ -186,7 +186,7 @@ const DashSlideContainer = new Lang.Class({
 
 			childBox.y1 = 0;
 			childBox.y2 = slideoutWidth + this._slidex*(childHeight - slideoutWidth);
-			
+
 			childBox.x1 = 0;
 			childBox.x2 = childBox.x1 + childWidth;
 	
@@ -208,7 +208,7 @@ const DashSlideContainer = new Lang.Class({
     /* Just the child min height, no border, no positioning etc. */
     vfunc_get_preferred_height: function(forWidth) {
         let [minHeight, natHeight] = this._child.get_preferred_height(forWidth);
-		if (!dock_horizontal) {
+		if (dock_horizontal) {		
 			minHeight = (minHeight - this._slideoutWidth)*this._slidex + this._slideoutWidth;
 			natHeight = (natHeight - this._slideoutWidth)*this._slidex + this._slideoutWidth;		
 		} 
@@ -290,17 +290,10 @@ const dockedDash = new Lang.Class({
         // connect app icon into the view selector
         this.dash.showAppsButton.connect('notify::checked', Lang.bind(this, this._onShowAppsButtonToggled));
 
-        // Create the main actor and the containers for sliding in and out and
-        // centering, turn on track hover
+        // Create the main actor and the containers for sliding
+        // in and out, as well as centering, turn on track hover
 
-        // This is the vertical centering actor
-		if (!dock_horizontal) {
-			this.actor = new St.Bin({ name: 'dashtodockContainer', reactive: false,
-            y_align: St.Align.MIDDLE})
-		} else {
-			this.actor = new St.Bin({ name: 'dashtodockContainer', reactive: false,
-			x_align: St.Align.MIDDLE})
-		}
+		this.actor = new St.Bin({ name: 'dashtodockContainer', reactive: false })
 
         this.actor._delegate = this;
 
@@ -311,7 +304,7 @@ const dockedDash = new Lang.Class({
         this._dockBox = new St.BoxLayout({ name: 'dashtodockBox', reactive: true, track_hover:true });
 
         this._dockBox.connect("notify::hover", Lang.bind(this, this._hoverChanged));
-
+/*
         if (dock_horizontal) {
 			// Create and apply height constraint to the dash. It's controlled by this.actor height
 			this.actor.height = Main.overview.viewSelector.actor.height; // Guess initial reasonable height.
@@ -319,7 +312,15 @@ const dockedDash = new Lang.Class({
 				coordinate: Clutter.BindCoordinate.HEIGHT });
 			this.dash.actor.add_constraint(this.constrainHeight);
         }
-     
+*/
+        if (dock_horizontal) {
+			// Create and apply height constraint to the dash. It's controlled by this.actor height
+			//this.actor.height = Main.overview.viewSelector.actor.height; // Guess initial reasonable height.
+			this.constrainHeight = new Clutter.BindConstraint({ source: this.actor,
+				coordinate: Clutter.BindCoordinate.HEIGHT });
+			this.dash.actor.add_constraint(this.constrainHeight);
+        }
+    
         // Connect global signals
         this._signalHandler = new Convenience.globalSignalHandler();
         this._signalHandler.push(
@@ -887,7 +888,7 @@ const dockedDash = new Lang.Class({
 
 			this.actor.height = this._monitor.height;
 			this.actor.y = this._monitor.y;
-			this.actor.y_align = St.Align.END;			
+			this.actor.y_align = St.Align.END;
 		}
 
         this._updateStaticBox();
@@ -1110,7 +1111,7 @@ const dockedDash = new Lang.Class({
             let direction = 0; // 0: do nothing; +1: up; -1:down.
 
             // filter events occuring not near the screen border if required
-            if(this._settings.get_boolean('scroll-switch-workspace-whole')==false) {
+            if (this._settings.get_boolean('scroll-switch-workspace-whole') == false) {
 
                 let [x,y] = event.get_coords();
 
