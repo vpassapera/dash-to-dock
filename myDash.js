@@ -924,21 +924,14 @@ const myAppIcon = new Lang.Class({
             tracker.disconnect(this._focusAppId);
     },
 
-//-----------------------------------------------------------------
     popupMenu: function() {
         this._removeMenuTimeout();
         this.actor.fake_release();
         this._draggable.fakeRelease();
-//HACK
-//this._menu.arrowSide = St.Side.LEFT;
-log('111111111111111111111111111kk');
-        if (!this._menu) {
-//            this._menu = new AtomAppIconMenu(this);
 
-//this._menu = new AppIconMenu(this);
-this._menu = new myAppIconMenu(this);
-//this._menu._arrowSide = St.Side.TOP;
-log('333333333333333kk');
+        if (!this._menu) {
+			this._menu = new myAppIconMenu(this);
+
             this._menu.connect('activate-window',
                 Lang.bind(this, function (menu, window) {
                     this.activateWindow(window);
@@ -953,7 +946,9 @@ log('333333333333333kk');
                 })
             );
 
-            Main.overview.connect('hiding', Lang.bind(this, this._menu.close));
+			// This causes errors and is not really needed...
+			// Usually either a click on the background overview or back on the icon is enough
+            //Main.overview.connect('hiding', Lang.bind(this, function () { this._menu.close(); }));
 
             this._menuManager.addMenu(this._menu);
         }
@@ -966,7 +961,7 @@ log('333333333333333kk');
 
         return false;
     },
-//-----------------------------------------------------------------
+
     _onStateChanged: function() {
 
         this.parent();
@@ -1057,8 +1052,7 @@ log('333333333333333kk');
     }
 });
 
-//-----------------------------------------------------------------------
-//Signals.addSignalMethods(myAppIcon.prototype);
+Signals.addSignalMethods(myAppIcon.prototype);
 
 // This class is a extension of the upstream AppIcon class (ui.appDisplay.js).
 const myAppIconMenu = new Lang.Class({
