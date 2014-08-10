@@ -697,7 +697,6 @@ const myLinkTrayMenu = new Lang.Class({
 		
 		this._table = new St.Table({ x_expand: true,  y_expand: true, homogeneous: true });
 		let appz = AppFavorites.getAppFavorites().getFavorites();
-		let mar = 5;
 		let div = files.length % 3;
 		let irows = 0;
 		if (div == 0) {
@@ -708,9 +707,6 @@ const myLinkTrayMenu = new Lang.Class({
 		let i = 0;
 		for(let irow = 0 ; irow < irows ;irow++) {
 			for(let icol = 0 ; icol < 3 ;icol++) {
-				let boxOfButton = new St.BoxLayout({ vertical: true, x_expand: false,
-					margin_top: mar, margin_right: mar, margin_bottom: mar, margin_left: mar });
-		
 				let item = new myFileIcon(files[i].link, this.iconSize, this.menu);
 										
 				this._table.add(item, { row: irow, col: icol, x_fill: false, y_fill: false, 
@@ -736,7 +732,7 @@ const myLinkTrayMenu = new Lang.Class({
 		this._scrollView.add_actor(this.abox);
 
 		// Calculating the (aesthetic) height for ScrollView
-		this._scrollView.height = (this.iconSize+(2*mar))*4+12;		
+		this._scrollView.height = (this.iconSize+(2*5))*4+12;		
 				
 		this.box.add(this._scrollView);
     },
@@ -763,7 +759,9 @@ const myFileIcon = new Lang.Class({
     Extends: St.BoxLayout,
 
     _init: function (filepath, size, menu) {
-        this.parent({ vertical: true, clip_to_allocation: true });
+        this.parent({ vertical: true, clip_to_allocation: true, x_expand: false,
+			margin_top: 5, margin_right: 5, margin_bottom: 5, margin_left: 5 });
+        
         this.iconSize = size;
 		let btn = new St.Button({ style_class: 'app-well-app',
 									reactive: true,
