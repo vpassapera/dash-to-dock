@@ -1071,25 +1071,11 @@ const dockedDash = new Lang.Class({
         }
 
         // This was inspired to desktop-scroller@obsidien.github.com
-        function onScrollEvent(actor, event) {
+        function onScrollEvent(actor, event) {			
             let activeWs = global.screen.get_active_workspace();
-            let direction = 0; // 0: do nothing; +1: up; -1:down.
+            let direction = 0;// 0: do nothing, +1: up, -1:down
 
-            // filter events occuring not near the screen border if required
-            if(this._settings.get_boolean('scroll-switch-workspace-whole')==false) {
-
-                let [x,y] = event.get_coords();
-
-                if (this._rtl) {
-                    if(x < this.staticBox.x2 - 1)
-                        return false;
-                } else {
-                    if(x > this.staticBox.x1 + 1)
-                        return false;
-                }
-            }
-
-            switch ( event.get_scroll_direction() ) {
+            switch (event.get_scroll_direction()) {
             case Clutter.ScrollDirection.UP:
                 direction = 1;
                 break;
@@ -1098,7 +1084,7 @@ const dockedDash = new Lang.Class({
                 break;
             case Clutter.ScrollDirection.SMOOTH:
                 let [dx, dy] = event.get_scroll_delta();
-                if(dy < 0){
+                if(dy < 0) {
                     direction = 1;
                 } else if(dy > 0) {
                     direction = -1;
@@ -1106,14 +1092,14 @@ const dockedDash = new Lang.Class({
                 break;
             }
 
-            if(direction !==0 ){
+            if(direction !==0 ) {
 
                 // Prevent scroll events from triggering too many workspace switches
                 // by adding a deadtime between each scroll event.
                 // Usefull on laptops when using a touchpad.
-                if(this._settings.get_boolean('scroll-switch-workspace-one-at-a-time')){
+                if(this._settings.get_boolean('scroll-switch-workspace-one-at-a-time')) {
                     // During the deadtime do nothing
-                    if(this._optionalScrollWorkspaceSwitchDeadTimeId>0)
+                    if(this._optionalScrollWorkspaceSwitchDeadTimeId > 0)
                         return false;
                     else {
                         this._optionalScrollWorkspaceSwitchDeadTimeId =
@@ -1128,7 +1114,7 @@ const dockedDash = new Lang.Class({
 
                 let ws;
 
-                if (direction>0)
+                if (direction > 0)
                     ws = activeWs.get_neighbor(Meta.MotionDirection.UP)
                 else
                     ws = activeWs.get_neighbor(Meta.MotionDirection.DOWN);

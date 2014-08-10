@@ -465,17 +465,18 @@ const myDashToDockPrefs = new GObject.Class({
 				}));
 
 		let only1px = new Gtk.RadioButton({label: _("Only a 1px wide area close to the screen edge is active")});
-
+/*
 			only1px.set_active(!this.settings.get_boolean('scroll-switch-workspace-whole'));
 			only1px.connect('toggled', Lang.bind(this, function(check){
 				if(check.get_active()) this.settings.set_boolean('scroll-switch-workspace-whole', false);
 			}));
+
 		let wholeArea = new Gtk.RadioButton({label: _("All of the dock area active"), group: only1px });
 			wholeArea.set_active(this.settings.get_boolean('scroll-switch-workspace-whole'));
 			wholeArea.connect('toggled', Lang.bind(this, function(check){
 				if(check.get_active()) this.settings.set_boolean('scroll-switch-workspace-whole', true);
 			}));
-
+*/
 		this.settings.bind('scroll-switch-workspace-one-at-a-time', deadTimeSettings, 'sensitive', Gio.SettingsBindFlags.DEFAULT);
 
 
@@ -487,7 +488,7 @@ const myDashToDockPrefs = new GObject.Class({
 		switchWorkspaceMain.add(oneAtATime);
 		switchWorkspaceMain.add(deadTimeSettings);
 		switchWorkspaceMain.add(only1px);
-		switchWorkspaceMain.add(wholeArea);
+//		switchWorkspaceMain.add(wholeArea);
 
 		switchWorkspaceControl.add(switchWorkspaceLabel)
 		switchWorkspaceControl.add(switchWorkspace)

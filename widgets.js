@@ -721,7 +721,7 @@ const myLinkBox = new Lang.Class({
         this._dragPlaceholderPos = -1;
     },
 
-    handleDragOver : function(source, actor, x, y, time) {
+    handleDragOver : function(source, actor, x, y, time) {	
         let tray;
 		if (source instanceof myLinkTray) {
 			tray = source;

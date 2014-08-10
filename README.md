@@ -35,7 +35,7 @@ dconf reset -f "/org/gnome/shell/extensions/dash-to-dock/"
 dconf reset "/org/gnome/shell/extensions/dash-to-dock"
 
 Then manually copy your schema
-cp org.gnome.shell.extensions.dash-to-dock.gschema.xml /usr/share/glib-2.0/schemas/
+cp ./org.gnome.shell.extensions.dash-to-dock.gschema.xml /usr/share/glib-2.0/schemas/
 
 ## Donations
 
