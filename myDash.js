@@ -14,7 +14,6 @@ const Mainloop = imports.mainloop;
 const PopupMenu = imports.ui.appDisplay.PopupMenu;
 const AppDisplay = imports.ui.appDisplay;
 const AppFavorites = imports.ui.appFavorites;
-//const Dash = imports.ui.dash;
 const DND = imports.ui.dnd;
 
 const IconGrid = imports.ui.iconGrid;
@@ -33,42 +32,6 @@ let DASH_ITEM_HOVER_TIMEOUT = 300;
 
 let dock_horizontal = true;
 
-/* This class is a extension of the upstream DashItemContainer class (ui.dash.js).
- * Changes were made to make the label show on the top. SOURCE: simple-dock extension.
- */
-const showHoverLabelTop = function() {
-    if (!this._labelText) {
-        return;
-    }
-
-    this.label.set_text(this._labelText);
-    this.label.opacity = 0;
-    this.label.show();
-
-    let [stageX, stageY] = this.get_transformed_position();
-
-    let labelHeight = this.label.get_height();
-    let labelWidth = this.label.get_width();
-
-    let node = this.label.get_theme_node();
-    let yOffset = node.get_length('-x-offset');
-
-    let y = stageY - labelHeight - yOffset;
-
-    let itemWidth = this.allocation.x2 - this.allocation.x1;
-    let xOffset = Math.floor((itemWidth - labelWidth) / 2);
-
-    let x = stageX + xOffset;
-
-    this.label.set_position(x, y);
-
-    Tweener.addTween(this.label, {
-        opacity: 255,
-        time: DASH_ITEM_LABEL_SHOW_TIME,
-        transition: 'easeOutQuad',
-    });
-};
-
 function getAppFromSource(source) {
     if (source instanceof AppDisplay.AppIcon) {
         return source.app;
@@ -81,8 +44,11 @@ const myDashItemContainer = new Lang.Class({
     Name: 'myDashItemContainer',
     Extends: St.Widget,
 
-    _init: function() {
+    _init: function(iconSize, settings) {
         this.parent({ style_class: 'dash-item-container' });
+
+		this.iconSize = iconSize;
+		this._settings = settings;
 
         this._labelText = "";
         this.label = new St.Label({ style_class: 'dash-label'});
@@ -144,39 +110,59 @@ const myDashItemContainer = new Lang.Class({
                                                 natWidth * this.child.scale_y);
     },
 
-    showLabel: function() {
-        if (!this._labelText)
-            return;
+	showLabel: function() {
+		if (!this._labelText) {
+			return;
+		}
 
-        this.label.set_text(this._labelText);
-        this.label.opacity = 0;
-        this.label.show();
+		this.label.set_text(this._labelText);
+		this.label.opacity = 0;
+		this.label.show();
 
-        let [stageX, stageY] = this.get_transformed_position();
+		let [stageX, stageY] = this.get_transformed_position();
+		let node = this.label.get_theme_node();
 
-        let itemHeight = this.allocation.y2 - this.allocation.y1;
+		let itemWidth = this.allocation.x2 - this.allocation.x1;
+		let itemHeight = this.allocation.y2 - this.allocation.y1;
+		
+		let labelWidth = this.label.get_width();
+		let labelHeight = this.label.get_height();
+		
+		let x, y, xOffset, yOffset;
 
-        let labelHeight = this.label.get_height();
-        let yOffset = Math.floor((itemHeight - labelHeight) / 2)
+		switch(this._settings.get_int('dock-placement')) {
+			case 0:
+				yOffset = Math.floor((itemHeight - labelHeight) / 2)
+				y = stageY + yOffset;
+				xOffset = node.get_length('-x-offset');
+				x = stageX + this.get_width() + xOffset;
+				break;	
+			case 1:
+				yOffset = Math.floor((itemHeight - labelHeight) / 2)
+				y = stageY + yOffset;
+				xOffset = node.get_length('-x-offset');
+				x = stageX - this.label.get_width() - xOffset;
+				break;
+			case 2:
+				y = stageY + labelHeight+ this.iconSize;
+				xOffset = Math.floor((itemWidth - labelWidth) / 2);
+				x = stageX + xOffset;
+				break;
+			case 3:
+				yOffset = node.get_length('-x-offset');
+				y = stageY - labelHeight - yOffset;	
+				xOffset = Math.floor((itemWidth - labelWidth) / 2);
+				x = stageX + xOffset;	
+				break;
+		}
 
-        let y = stageY + yOffset;
-
-        let node = this.label.get_theme_node();
-        let xOffset = node.get_length('-x-offset');
-
-        let x;
-        if (Clutter.get_default_text_direction() == Clutter.TextDirection.RTL)
-            x = stageX - this.label.get_width() - xOffset;
-        else
-            x = stageX + this.get_width() + xOffset;
-
-        this.label.set_position(x, y);
-        Tweener.addTween(this.label,
-                         { opacity: 255,
-                           time: DASH_ITEM_LABEL_SHOW_TIME,
-                           transition: 'easeOutQuad',
-                         });
-    },
+		this.label.set_position(x, y);
+		Tweener.addTween(this.label, 
+			{ opacity: 255,
+				time: DASH_ITEM_LABEL_SHOW_TIME,
+				transition: 'easeOutQuad',
+			});
+	},
 
     setLabelText: function(text) {
         this._labelText = text;
@@ -284,7 +270,7 @@ const myDragPlaceholderItem = new Lang.Class({
     Extends: myDashItemContainer,
 
     _init: function() {
-        this.parent();
+        this.parent(null, null);
         this.setChild(new St.Bin({ style_class: 'placeholder' }));
     }
 });
@@ -294,7 +280,7 @@ const myEmptyDropTargetItem = new Lang.Class({
     Extends: myDashItemContainer,
 
     _init: function() {
-        this.parent();
+        this.parent(null, null);
         this.setChild(new St.Bin({ style_class: 'empty-dash-drop-target' }));
     }
 });
@@ -487,11 +473,11 @@ const myDash = new Lang.Class({
 						break;
 					case 5:
 						if (this._settings.get_boolean('applet-recycling-bin-visible')) {
-/*							this._recyclingBin = new Widgets.myRecyclingBin(this.iconSize, this._settings);
+							this._recyclingBin = new Widgets.myRecyclingBin(this.iconSize, this._settings);
 							this._recyclingBin.icon.setIconSize(this.iconSize);	
 							this._hookUpLabelForApplets(this._recyclingBin);
 							this._container.add_actor(this._recyclingBin.actor);
-*/						}
+						}
 						break;												
 					default:
 						break;
@@ -644,20 +630,7 @@ const myDash = new Lang.Class({
 				this._itemMenuStateChanged(item, opened);
 			}));
 
-		let item = new myDashItemContainer();
-		
-		switch(this._settings.get_int('dock-placement')) {
-				case 0:
-					break;	
-				case 1:
-					break;
-				case 2:
-					break;
-				case 3:
-					item.showLabel = showHoverLabelTop;
-					break;	
-		}
-		
+		let item = new myDashItemContainer(this.iconSize, this._settings);
         item.setChild(appIcon.actor);
 
         // Override default AppIcon label_actor, now the

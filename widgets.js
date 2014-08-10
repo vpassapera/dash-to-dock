@@ -70,17 +70,17 @@ const showLabelInDirections = function() {
 			xOffset = node.get_length('-x-offset');
 			x = stageX - this.label.get_width() - xOffset;
 			break;
+		case 2:
+			y = stageY + labelHeight + this.iconSize;
+			xOffset = Math.floor((itemWidth - labelWidth) / 2);
+			x = stageX + xOffset;		
+			break;
 		case 3:
 			yOffset = node.get_length('-x-offset');
 			y = stageY - labelHeight - yOffset;	
 			xOffset = Math.floor((itemWidth - labelWidth) / 2);
 			x = stageX + xOffset;	
 			break;
-		case 2:
-			y = stageY + labelHeight + this.iconSize;
-			xOffset = Math.floor((itemWidth - labelWidth) / 2);
-			x = stageX + xOffset;		
-			break;	
 	}
 
 	this.label.set_position(x, y);
@@ -513,8 +513,6 @@ const myShowAppsIcon = new Lang.Class({
         this.icon = new IconGrid.BaseIcon(this._labelText, { setSizeManually: true, 
 			showLabel: false, createIcon: Lang.bind(this, this._createIcon) });
 		this.actor.set_child(this.icon.actor);
-		
-		this.showLabel = showLabelInDirections;
 	},
 
     destroy: function() {
@@ -873,7 +871,7 @@ const myLinkTray = new Lang.Class({
 		Main.layoutManager.addChrome(this.label);
 		this.label_actor = this.label;
 
-		this.settings = settings;
+		this._settings = settings;
 		this.iconSize = iconSize;
 		this.myLinkBoxInstance = myLinkBoxInstance;
 		this.id = id;
@@ -894,7 +892,7 @@ const myLinkTray = new Lang.Class({
 				
 		this.menuManager = new PopupMenu.PopupMenuManager(this);		
 
-		this.menu = new myLinkTrayMenu(this.actor, this.iconSize, this.myLinkBoxInstance.linksStorage, this.id, this.settings);
+		this.menu = new myLinkTrayMenu(this.actor, this.iconSize, this.myLinkBoxInstance.linksStorage, this.id, this._settings);
 		this.menu.actor.hide();
 		this.menu_secondary = new PopupMenu.PopupMenu(this.icon.actor, 0.5, St.Side.BOTTOM, 0);
 		this.menu_secondary.blockSourceEvents = true;		
@@ -1105,36 +1103,7 @@ const myLinkTray = new Lang.Class({
         return false;
     },
 
-	showLabel: function() {
-		if (!this._labelText) {
-			return;
-		}
-
-		this.label.set_text(this._labelText);
-		this.label.opacity = 0;
-		this.label.show();
-
-		let [stageX, stageY] = this.actor.get_transformed_position();
-
-		let labelHeight = this.label.get_height();
-		let labelWidth = this.label.get_width();
-
-		let node = this.label.get_theme_node();
-		let yOffset = node.get_length('-x-offset');
-		let y = stageY - labelHeight - yOffset;
-		
-		let itemWidth = this.actor.allocation.x2 - this.actor.allocation.x1;
-		let xOffset = Math.floor((itemWidth - labelWidth) / 2);
-		let x = stageX + xOffset;
-
-		this.label.set_position(x, y);
-
-		Tweener.addTween(this.label, {
-			opacity: 255,
-			time: DASH_ITEM_LABEL_SHOW_TIME,
-			transition: 'easeOutQuad',
-		});
-	},
+	showLabel: showLabelInDirections,
 
     hideLabel: function () {
         Tweener.addTween(this.label,
@@ -1485,36 +1454,7 @@ const myShowDesktop = new Lang.Class({
         this.desktopShown = !this.desktopShown;
     },
     
-	showLabel: function() {
-		if (!this._labelText) {
-			return;
-		}
-
-		this.label.set_text(this._labelText);
-		this.label.opacity = 0;
-		this.label.show();
-
-		let [stageX, stageY] = this.actor.get_transformed_position();
-
-		let labelHeight = this.label.get_height();
-		let labelWidth = this.label.get_width();
-
-		let node = this.label.get_theme_node();
-		let yOffset = node.get_length('-x-offset');
-		let y = stageY - labelHeight - yOffset;
-		
-		let itemWidth = this.actor.allocation.x2 - this.actor.allocation.x1;
-		let xOffset = Math.floor((itemWidth - labelWidth) / 2);
-		let x = stageX + xOffset;
-
-		this.label.set_position(x, y);
-
-		Tweener.addTween(this.label, {
-			opacity: 255,
-			time: DASH_ITEM_LABEL_SHOW_TIME,
-			transition: 'easeOutQuad',
-		});
-	},
+	showLabel: showLabelInDirections,
 
     hideLabel: function () {
         Tweener.addTween(this.label,
@@ -1663,36 +1603,7 @@ const myRecyclingBin = new Lang.Class({
         return false;
     },
     
-	showLabel: function() {
-		if (!this._labelText) {
-			return;
-		}
-
-		this.label.set_text(this._labelText);
-		this.label.opacity = 0;
-		this.label.show();
-
-		let [stageX, stageY] = this.actor.get_transformed_position();
-
-		let labelHeight = this.label.get_height();
-		let labelWidth = this.label.get_width();
-
-		let node = this.label.get_theme_node();
-		let yOffset = node.get_length('-x-offset');
-		let y = stageY - labelHeight - yOffset;
-		
-		let itemWidth = this.actor.allocation.x2 - this.actor.allocation.x1;
-		let xOffset = Math.floor((itemWidth - labelWidth) / 2);
-		let x = stageX + xOffset;
-
-		this.label.set_position(x, y);
-
-		Tweener.addTween(this.label, {
-			opacity: 255,
-			time: DASH_ITEM_LABEL_SHOW_TIME,
-			transition: 'easeOutQuad',
-		});
-	},
+	showLabel: showLabelInDirections,
 
     hideLabel: function () {
         Tweener.addTween(this.label,

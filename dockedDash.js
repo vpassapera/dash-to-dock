@@ -11,7 +11,6 @@ const Mainloop = imports.mainloop;
 const Params = imports.misc.params;
 
 const Main = imports.ui.main;
-//const Dash = imports.ui.dash;
 const Overview = imports.ui.overview;
 const Tweener = imports.ui.tweener;
 const ViewSelector = imports.ui.viewSelector;
@@ -25,13 +24,6 @@ const MyDash = Me.imports.myDash;
 const PRESSURE_TIMEOUT = 1000;
 
 let dock_horizontal = true;
-
-const SlideDirection = {
-    LEFT: 0,
-    RIGHT: 1,
-    TOP: 2,
-    BOTTOM: 3
-};
 
 /*
  * A simple Actor with one child whose allocation takes into account the
@@ -49,12 +41,19 @@ const DashSlideContainer = new Lang.Class({
     Name: 'DashSlideContainer',
     Extends: Clutter.Actor,
 
+	SlideDirection: {
+		LEFT: 0,
+		RIGHT: 1,
+		TOP: 2,
+		BOTTOM: 3
+	},
+
     _init: function(params, settings) {
 		this._settings = settings;
-                
+
         /* Default local params */
         let localDefaults = {
-            direction: SlideDirection.LEFT,
+            direction: this.SlideDirection.LEFT,
             initialSlideValue: 1
         }
 
@@ -127,10 +126,10 @@ const DashSlideContainer = new Lang.Class({
 
 			let slideoutWidth = this._slideoutWidth;
 
-			if (this._direction == SlideDirection.LEFT) {
+			if (this._direction == this.SlideDirection.LEFT) {
 				childBox.x1 = (this._slidex -1)*(childWidth - slideoutWidth);
 				childBox.x2 = slideoutWidth + this._slidex*(childWidth - slideoutWidth);
-			} else if (this._direction == SlideDirection.RIGHT) {
+			} else if (this._direction == this.SlideDirection.RIGHT) {
 				childBox.x1 = 0;
 				childBox.x2 = childWidth;
 			}
