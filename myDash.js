@@ -697,7 +697,7 @@ const myDash = new Lang.Class({
         let numChildren = children.length;
         let boxWidth = this._box.width;
         for (let i = 0; i < numChildren; i++) {
-            boxHeight += children[i].height;
+            boxWidth += children[i].width;
         }
 
         // Keep the placeholder out of the index calculation; assuming that

@@ -707,7 +707,7 @@ const dockedDash = new Lang.Class({
     },
 
     _updateYPosition: function() {
-
+/*
         let unavailableTopSpace = 0;
         let unavailableBottomSpace = 0;
 
@@ -731,7 +731,7 @@ const dockedDash = new Lang.Class({
             fraction = 0.95;
 
         this.actor.height = Math.round( fraction * availableHeight);
-//        this.actor.y = this._monitor.y + unavailableTopSpace + Math.round( (1-fraction)/2 * availableHeight);
+        this.actor.y = this._monitor.y + unavailableTopSpace + Math.round( (1-fraction)/2 * availableHeight);
 
         if(extendHeight){
             this.dash._container.set_height(this.actor.height);
@@ -740,6 +740,7 @@ const dockedDash = new Lang.Class({
             this.dash._container.set_height(-1);
             this.actor.remove_style_class_name('extended');
         }
+*/
 //----------------------------------------------------------------------
         this.actor.width = this._monitor.width;
         this.actor.x = this._monitor.x;
