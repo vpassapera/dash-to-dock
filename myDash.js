@@ -228,59 +228,27 @@ const myDash = new Lang.Class({
 //		this._container.add_actor(this._showAppsIcon);
 //		this._container.add_actor(this._appsContainer);
 //=========================================================================//
-//------THIS IS SUPPOSED TO BE A STACK-------------------------------------//
-/*
-		this._activeFolder = new Widgets.myActiveFolderIcon();
-		this._activeFolder.childScale = 1;
-		this._activeFolder.childOpacity = 255;
-		this._activeFolder.icon.setIconSize(this.iconSize);
-		this._hookUpLabel(this._activeFolder);
-
-		this._container.add_actor(this._activeFolder);	
-*/		
-//------------------------------------------------------------------------		
-/*
-		this._activeFolder = new Widgets.DashItemContainerNEW();
-		this._activeFolder.childScale = 1;
-		this._activeFolder.childOpacity = 255;
-		this._activeFolder.btnFolderIcon.setIconSize(this.iconSize);
-		this._hookUpLabel(this._activeFolder);
-
-		this._container.add_actor(this._activeFolder);
-*/
 //------------------------------------------------------------------------
 		this._linkTray = new Widgets.myLinkTray(this.iconSize, this._settings);
 		this._linkTray.childScale = 1;
 		this._linkTray.childOpacity = 255;
 		this._linkTray.icon.setIconSize(this.iconSize);
 //		this._hookUpLabel(this._linkTray);
-
 		//this._container.add_actor(this._linkTray.actor);
-		
 //-------------->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
-		let position = this._settings.get_string('applets-order');
-		for (let i = 0; i < 5;i++) {
-			let pos = parseInt(position[i]);
-			switch (pos) {
-				case 1:
-					this._container.add_actor(this._showAppsIcon);
-					break;
-				case 2:
-					this._container.add_actor(this._appsContainer);
-					break;			
-				case 3:
-					this._container.add_actor(this._linkTray.actor);
-					break;
-				case 4:
-					//this._container.add_actor(this._showDesktop.actor);
-					break;
-				case 5:
-					//this._container.add_actor(this._recyclingBin.actor);
-					break;												
-				default:
-					break;
-			}
-		}			
+		this._showDesktop = new Widgets.myShowDesktop(this.iconSize, this._settings);
+		this._showDesktop.childScale = 1;
+		this._showDesktop.childOpacity = 255;
+		this._showDesktop.icon.setIconSize(this.iconSize);
+//		this._hookUpLabel(this._showDesktop);
+
+		this._recyclingBin = new Widgets.myRecyclingBin(this.iconSize, this._settings);
+		this._recyclingBin.childScale = 1;
+		this._recyclingBin.childOpacity = 255;
+		this._recyclingBin.icon.setIconSize(this.iconSize);
+//		this._hookUpLabel(this._recyclingBin);
+
+		this.make_dock();	
 //=========================================================================//
 //------ADDING WIDGETS HERE------------------------------------------------//
 
@@ -332,7 +300,37 @@ const myDash = new Lang.Class({
     destroy: function() {
         this._signalHandler.disconnect();
     },
-    
+
+    make_dock: function() {
+		try {
+			let position = this._settings.get_string('applets-order');
+			for (let i = 0; i < 5;i++) {
+				let pos = parseInt(position[i]);
+				switch (pos) {
+					case 1:
+						this._container.add_actor(this._showAppsIcon);
+						break;
+					case 2:
+						this._container.add_actor(this._appsContainer);
+						break;			
+					case 3:
+						this._container.add_actor(this._linkTray.actor);
+						break;
+					case 4:
+						this._container.add_actor(this._showDesktop.actor);
+						break;
+					case 5:
+						this._container.add_actor(this._recyclingBin.actor);
+						break;												
+					default:
+						break;
+				}
+			}
+		} catch (e) {
+			log("Error in adding applets "+e.message);
+		}		
+    },
+        
     _onScrollBtnLeftOrTop: function() {
 		if (!dock_horizontal) {
 			let vscroll = this._scrollView.get_vscroll_bar();

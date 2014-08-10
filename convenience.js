@@ -70,7 +70,7 @@ function getSettings(schema) {
     if (!schemaObj)
         throw new Error('Schema ' + schema + ' could not be found for extension '
                         + extension.metadata.uuid + '. Please check your installation.');
-
+	
     return new Gio.Settings({ settings_schema: schemaObj });
 }
 

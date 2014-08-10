@@ -55,11 +55,11 @@ const myLinkTray = new Lang.Class({
 		this.menuManager = new PopupMenu.PopupMenuManager(this);
 
 		if (dontCreateMenu) {
-            this.menu = new PopupMenu.PopupDummyMenu(this.btnFolderIcon);
+            this.menu = new PopupMenu.PopupDummyMenu(this);
         } else {
 			this.menu = new myLinkTrayMenu(this, iconSize);
            
-            this.menu.actor.hide();    
+            this.menu.actor.hide();
         }
         
 		this.menuManager.addMenu(this.menu);
@@ -149,7 +149,14 @@ global.logError('' + e);
     },
 
     _createIcon: function(size) {
+        /*
         this.icon_actor = new St.Icon({ icon_name: 'go-down-symbolic',
+                                        icon_size: size,
+                                        style_class: 'show-apps-icon',
+                                        track_hover: true });
+		*/
+		let LT = Gio.icon_new_for_string(Me.path + "/media/links-tray.svg");
+        this.icon_actor = new St.Icon({ gicon: LT,
                                         icon_size: size,
                                         style_class: 'show-apps-icon',
                                         track_hover: true });
@@ -290,3 +297,151 @@ this.actor.add_style_class_name('popup-menu-content2');
 });
 
 Signals.addSignalMethods(myLinkTrayMenu.prototype);
+
+
+//----------------------------------------------------------------------------------
+
+
+const myShowDesktop = new Lang.Class({
+    Name: 'myShowDesktop',
+                    
+    _init: function(iconSize, settings) {
+		this._settings = settings;
+		this.iconSize = iconSize;	
+        this.actor = new St.Button({ style_class: 'app-well-app',
+                                     reactive: true,
+                                     button_mask: St.ButtonMask.ONE | St.ButtonMask.TWO,
+                                     can_focus: true,
+                                     x_fill: true,
+                                     y_fill: true });
+        this.actor._delegate = this;		
+		
+//		this.actor.connect('clicked', Lang.bind(this, this.show_hide_desktop));
+		this.icon_actor = null;
+        this.icon = new IconGrid.BaseIcon(_("Show Desktop"),
+                                           { setSizeManually: true, showLabel: false,
+                                             createIcon: Lang.bind(this, this._createIcon) });
+		this.actor.set_child(this.icon.actor);
+	},
+
+    destroy: function() {
+        this.actor._delegate = null;
+
+        if (this.menu)
+            this.menu.destroy();
+            
+        this.actor.destroy();
+        this.emit('destroy');
+    },
+
+    _createIcon: function(size) {
+		//let LT = Gio.icon_new_for_string(Me.path + "/media/links-tray.svg");
+        //this.icon_actor = new St.Icon({ gicon: LT,
+        this.icon_actor = new St.Icon({ icon_name: 'user-desktop',
+                                        icon_size: size,
+                                        style_class: 'show-apps-icon',
+                                        track_hover: true });
+        return this.icon_actor;
+    }
+});
+
+Signals.addSignalMethods(myShowDesktop.prototype);
+
+const myRecyclingBin = new Lang.Class({
+    Name: 'myRecyclingBin',
+                    
+    _init: function(iconSize, settings) {
+		this._settings = settings;
+		this.iconSize = iconSize;	
+        this.actor = new St.Button({ style_class: 'app-well-app',
+                                     reactive: true,
+                                     button_mask: St.ButtonMask.ONE | St.ButtonMask.TWO,
+                                     can_focus: true,
+                                     x_fill: true,
+                                     y_fill: true });
+        this.actor._delegate = this;		
+		
+		this.actor.connect('clicked', Lang.bind(this, this.popupMenu));
+		this.icon_actor = null;
+        this.icon = new IconGrid.BaseIcon(_("Recycling Bin"),
+                                           { setSizeManually: true, showLabel: false,
+                                             createIcon: Lang.bind(this, this._createIcon) });
+		this.actor.set_child(this.icon.actor);
+
+		let dontCreateMenu = false;
+
+		this.menuManager = new PopupMenu.PopupMenuManager(this);
+
+		if (dontCreateMenu) {
+            this.menu = new PopupMenu.PopupDummyMenu(this);
+        } else {
+            this.menu = new PopupMenu.PopupMenu(this.icon.actor, 0.5, St.Side.BOTTOM, 0);
+            this.blockSourceEvents = true;
+            this.menu.actor.add_style_class_name('app-well-menu');
+            Main.uiGroup.add_actor(this.menu.actor);         
+            this.menu.actor.hide();
+        }
+        
+		this.menuManager.addMenu(this.menu);
+		this.populate();
+	},
+
+    destroy: function() {
+        this.actor._delegate = null;
+
+        if (this.menu)
+            this.menu.destroy();
+            
+        this.actor.destroy();
+        this.emit('destroy');
+    },
+
+    _createIcon: function(size) {
+        this.icon_actor = new St.Icon({ icon_name: 'user-trash',//OR user-trash-full
+                                        icon_size: size,
+                                        style_class: 'show-apps-icon',
+                                        track_hover: true });                                      
+        return this.icon_actor;
+    },
+    
+    _removeMenuTimeout: function() {
+        if (this._menuTimeoutId > 0) {
+            Mainloop.source_remove(this._menuTimeoutId);
+            this._menuTimeoutId = 0;
+        }
+    },
+
+	populate: function(button) {
+		let itemWipe = new PopupMenu.PopupBaseMenuItem;
+		let labelWipe = new St.Label({text: _("Wipe Bin Securely")});
+//		itemWipe.connect("activate", function () {fav.open_new_window(-1);});
+		itemWipe.actor.add_child(labelWipe);
+		this.menu.addMenuItem(itemWipe);			
+		
+		let itemRestore = new PopupMenu.PopupBaseMenuItem;
+		let labelRestore = new St.Label({text: _("Restore Contents")});
+//		itemRestore.connect("activate", function () {fav.open_new_window(-1);});
+		itemRestore.actor.add_child(labelRestore);
+		this.menu.addMenuItem(itemRestore);		
+		
+		let itemClear = new PopupMenu.PopupBaseMenuItem;
+		let labelClear = new St.Label({text: _("Clear Recycling Bin")});
+//		itemClear.connect("activate", function () {fav.open_new_window(-1);});
+		itemClear.actor.add_child(labelClear);
+		this.menu.addMenuItem(itemClear);	
+	},
+    
+    popupMenu: function() {
+        this._removeMenuTimeout();
+        this.actor.fake_release();
+        this.emit('menu-state-changed', true);
+        this.actor.set_hover(true);
+        this.menu.toggle();
+        this.menuManager.ignoreRelease();
+        this.emit('sync-tooltip');
+
+        return false;
+    }   
+});
+
+Signals.addSignalMethods(myRecyclingBin.prototype);
