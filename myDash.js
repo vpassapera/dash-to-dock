@@ -1168,7 +1168,7 @@ const myAppIconMenu = new Lang.Class({
     }
 });
 
-//Signals.addSignalMethods(myAppIconMenu.prototype);
+Signals.addSignalMethods(myAppIconMenu.prototype);
 //-----------------------------------------------------------------------
 function minimizeWindow(app, param){
     // Param true make all app windows minimize

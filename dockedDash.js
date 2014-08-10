@@ -79,59 +79,6 @@ const DashSlideContainer = new Lang.Class({
         this._slideoutWidth = 1; // minimum width when slided out
     },
 
-    vfunc_allocate: function(box, flags) {
-//log('_____________________________________________________________________');
-let hideshow = 'UP';//true = 1 showing, false = 0 hiding, for slidex
-if (this._slidex == 0) hideshow = 'DOWN';
-//log('SlideDirection: '+this._direction+' Situation:    '+hideshow);
-//log('startbox [x1,y1 = '+box.x1+', '+box.y1+'] [x2,y2 =  '+box.x2+', '+box.y2+']');
-        this.set_allocation(box, flags);
-
-        if (this._child == null)
-            return;
-
-        let availWidth = box.x2 - box.x1;
-        let availHeight = box.y2 - box.y1;
-        let [minChildWidth, minChildHeight, natChildWidth, natChildHeight] =
-            this._child.get_preferred_size();
-//log('SIZES minChildWidth='+minChildWidth+'    minChildHeight='+minChildHeight+'    natChildWidth='+natChildWidth+'    natChildHeight='+natChildHeight);
-        let childWidth = natChildWidth;
-        let childHeight = natChildHeight;
-
-        let childBox = new Clutter.ActorBox();
-
-        let slideoutWidth = this._slideoutWidth;
-
-//log('prelmnry [x1,y1 = '+0+', '+(-1*(this._slidex -1)*childHeight)+'] [x2,y2 =  '+childWidth+', '+(-1*this._slidex*childHeight)+']');
-
-//acordeons and goes to the top
-//childBox.x1 = 0;//(this._slidex -1)*(childWidth - slideoutWidth);
-//childBox.x2 = childBox.x1 + childWidth;//slideoutWidth + this._slidex*(childWidth - slideoutWidth);
-//childBox.y1 = (this._slidex -1)*(childHeight - slideoutWidth);//0;
-//childBox.y2 = slideoutWidth + this._slidex*(childHeight - slideoutWidth);//childBox.y1 + childHeight;
-
-childBox.x1 = 0;
-childBox.x2 = childWidth;
-
-if ((-1*(this._slidex -1)*childHeight) < 1) {	
-	childBox.y1 = 1;	
-} else {
-	 childBox.y1 = -1*(this._slidex -1)*childHeight;
-}
-
-if ((-1*this._slidex*childHeight) < 1) {
-	childBox.y2 = 1;
-}else {
-	childBox.y2 = -1*this._slidex*childHeight;
-}	
-
-
-        this._child.allocate(childBox, flags);//<--WARNING SPAMMER TODO: fix this!! FIXME: there should be no warnings in the console
-        this._child.set_clip(-childBox.x1, 0, -childBox.x1+availWidth, availHeight);
-//log('childBox [x1,y1 = '+childBox.x1+', '+childBox.y1+'] [x2,y2 =  '+childBox.x2+', '+childBox.y2+']');
-//log('chldclip [xOff,yOff = '+-childBox.x1+', '+0+'] [x,y =  '+(-childBox.x1+availWidth)+', '+availHeight+']');
-    },
-
 /* older code
     vfunc_allocate: function(box, flags) {
 
@@ -167,17 +114,119 @@ if ((-1*this._slidex*childHeight) < 1) {
     },
 */
 
-    /* Just the child width but taking into account the slided out part 
+    vfunc_allocate: function(box, flags) {
+log('_____________________________________________________________________');
+let hideshow = 'IN';//true = 1 showing, false = 0 hiding, for slidex
+if (this._slidex == 0) hideshow = 'OUT';
+log('SlideDirection: '+this._direction+' Situation: '+hideshow);
+log('startbox [x1,y1 = '+box.x1+', '+box.y1+'] [x2,y2 =  '+box.x2+', '+box.y2+']');
+        this.set_allocation(box, flags);
+
+        if (this._child == null)
+            return;
+
+        let availWidth = box.x2 - box.x1;
+        let availHeight = box.y2 - box.y1;
+        let [minChildWidth, minChildHeight, natChildWidth, natChildHeight] =
+            this._child.get_preferred_size();
+//log('SIZES minChildWidth='+minChildWidth+'    minChildHeight='+minChildHeight+'    natChildWidth='+natChildWidth+'    natChildHeight='+natChildHeight);
+        let childWidth = natChildWidth;
+        let childHeight = natChildHeight;
+
+        let childBox = new Clutter.ActorBox();
+
+        let slideoutWidth = this._slideoutWidth;
+
+//log('prelmnry [x1,y1 = '+0+', '+(-1*(this._slidex -1)*childHeight)+'] [x2,y2 =  '+childWidth+', '+(-1*this._slidex*childHeight)+']');
+
+//acordeons and goes to the top
+//childBox.x1 = 0;//(this._slidex -1)*(childWidth - slideoutWidth);
+//childBox.x2 = childBox.x1 + childWidth;//slideoutWidth + this._slidex*(childWidth - slideoutWidth);
+//childBox.y1 = (this._slidex -1)*(childHeight - slideoutWidth);//0;
+//childBox.y2 = slideoutWidth + this._slidex*(childHeight - slideoutWidth);//childBox.y1 + childHeight;
+/*
+childBox.x1 = 0;
+childBox.x2 = childWidth;
+
+if ((-1*(this._slidex -1)*childHeight) < 1) {	
+	childBox.y1 = 1;	
+} else {
+	 childBox.y1 = -1*(this._slidex -1)*childHeight;
+}
+
+if ((-1*this._slidex*childHeight) < 1) {
+	childBox.y2 = 1;
+}else {
+	childBox.y2 = -1*this._slidex*childHeight;
+}	
+*/
+
+//FchildBox.x1 = 0;//(this._slidex -1)*(childWidth - slideoutWidth);
+//FchildBox.x2 = childWidth;//slideoutWidth + this._slidex*(childWidth - slideoutWidth);
+//FchildBox.y1 = 0;//0;
+//FchildBox.y2 = childHeight;//childBox.y1 + childHeight;
+
+//childBox.x1 = 0;//(this._slidex -1)*(childWidth - slideoutWidth);
+//childBox.x2 = box.x2;//slideoutWidth + this._slidex*(childWidth - slideoutWidth);
+//childBox.y1 = 0;//0;
+//childBox.y2 = box.y2;//childBox.y1 + childHeight;
+//==========================================================================
+//childBox.x1 = (this._slidex -1)*(childWidth - slideoutWidth);
+//childBox.x2 = slideoutWidth + this._slidex*(childWidth - slideoutWidth);
+//childBox.y1 = 0;
+//childBox.y2 = childBox.y1 + childHeight; 
+
+/*
+childBox.x1 = 0;
+childBox.x2 = childBox.x1 + childWidth; 
+childBox.y1 = (this._slidex -1)*(childHeight- slideoutWidth)*-1;
+childBox.y2 = slideoutWidth + this._slidex*(childHeight - slideoutWidth);
+
+
+if ( childBox.y1 < 1) {
+log('BOOOOOOOOOOOM Y1 '+childBox.y1);	
+	childBox.y1 = 1;
+}
+
+if ( childBox.y2 < 1) {
+log('BOOOOOOOOOOOM Y2 '+childBox.y2);		
+	childBox.y2 = 1;
+}
+*/
+
+
+childBox.x1 = 0;
+childBox.x2 = childBox.x1 + childWidth; 
+
+childBox.y1 = (this._slidex -1)*(childHeight- slideoutWidth);
+childBox.y2 = slideoutWidth + this._slidex*(childHeight - slideoutWidth);
+
+//==========================================================================
+//IS THIS ONE OF THOSE ACTOR.Y POSITIONAL MOVEMENTS?
+
+        this._child.allocate(childBox, flags);//<--WARNING SPAMMER TODO: fix this!! FIXME: there should be no warnings in the console
+        this._child.set_clip(-childBox.x1, 0, -childBox.x1+availWidth, availHeight);
+log('childBox [x1,y1 = '+childBox.x1+', '+childBox.y1+'] [x2,y2 =  '+childBox.x2+', '+childBox.y2+']');
+    },
+
+
+
+    /* Just the child width but taking into account the slided out part */
     vfunc_get_preferred_width: function(forHeight) {
-        let [minWidth, natWidth ] = this._child.get_preferred_width(forHeight);     
+        let [minWidth, natWidth ] = this._child.get_preferred_width(forHeight);   
+log("PING vfunc_get_preferred_width: for "+forHeight+'  min '+minWidth+' nat '+natWidth);          
         return [minWidth, natWidth];
-    },*/
+    },
  
-    /* Just the child min height, no border, no positioning etc.
+    /* Just the child min height, no border, no positioning etc. */
     vfunc_get_preferred_height: function(forWidth) {
-        let [minHeight, natHeight] = this._child.get_preferred_height(forWidth);    
+        let [minHeight, natHeight] = this._child.get_preferred_height(forWidth);  
+log("PING vfunc_get_preferred_heightA: for "+forWidth+'  min '+minHeight+' nat '+natHeight);
+minHeight = (minHeight - this._slideoutWidth)*this._slidex + this._slideoutWidth;
+natHeight = (natHeight - this._slideoutWidth)*this._slidex + this._slideoutWidth;  
+log("PING vfunc_get_preferred_heightB: for "+forWidth+'  min '+minHeight+' nat '+natHeight);       
         return [minHeight, natHeight];
-    },*/
+    },
  
     /* I was expecting it to be a virtual function... stil I don't understand
        how things work.
@@ -575,11 +624,11 @@ const dockedDash = new Lang.Class({
     },
    
     _animateIn: function(time, delay) {
-		
+log('ANIMATE IN   ');  		
         this._animStatus.queue(true);
         Tweener.addTween(this._slider,{
-            slidex: 1,
-            time: time,
+            slidex: 1,         
+            time: time,         
             delay: delay,
             transition: 'easeOutQuad',
             onStart:  Lang.bind(this, function() {
@@ -600,7 +649,7 @@ const dockedDash = new Lang.Class({
     },
 
     _animateOut: function(time, delay){
-
+log('ANIMATE OUT   '); 
         this._animStatus.queue(false);
         Tweener.addTween(this._slider,{
             slidex: 0,
