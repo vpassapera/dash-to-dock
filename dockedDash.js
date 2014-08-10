@@ -43,17 +43,16 @@ const SlideDirection = {
  * The slidex parameter can be used to directly animate the sliding. The parent
  * must have a WEST anchor_point to achieve the sliding in the RIGHT direction.
 */
-
 const DashSlideContainer = new Lang.Class({
     Name: 'DashSlideContainer',
     Extends: Clutter.Actor,
 
-    _init: function(params) {
-
+    _init: function(params, settings) {
+		this._settings = settings;
         
         /* Default local params */
         let localDefaults = {
-            direction: SlideDirection.BOTTOM,//SlideDirection.LEFT,
+            direction: SlideDirection.BOTTOM,
             initialSlideValue: 1
         }
 
@@ -173,6 +172,9 @@ log('childBox [x1,y1 = '+childBox.x1+', '+childBox.y1+'] [x2,y2 =  '+childBox.x2
  
     /* Just the child min height, no border, no positioning etc. */
     vfunc_get_preferred_height: function(forWidth) {
+
+log('NOTICE     '+this._settings.get_boolean('autohide') );
+		
         let [minHeight, natHeight] = this._child.get_preferred_height(forWidth);  
 log("PING vfunc_get_preferred_heightA: for "+forWidth+'  min '+minHeight+' nat '+natHeight);
 minHeight = (minHeight - this._slideoutWidth)*this._slidex + this._slideoutWidth;
@@ -262,7 +264,7 @@ const dockedDash = new Lang.Class({
 
         // This is the sliding actor whose allocation is to be tracked for input regions
         this._slider = new DashSlideContainer( {
-            direction:this._rtl?SlideDirection.RIGHT:SlideDirection.LEFT}
+            direction:this._rtl?SlideDirection.RIGHT:SlideDirection.LEFT}, this._settings
 //			direction:SlideDirection.BOTTOM}//+|
         );
         // This is the actor whose hover status us tracked for autohide
@@ -760,7 +762,7 @@ const dockedDash = new Lang.Class({
 		this._adjustBorders();               
     },
 
-	// This function was taken from an extension called simple-dock
+	// Re-themes the corners and borders. SOURCE: simple-dock extension.
     _adjustBorders: function() {
         // Prevent shell crash if the actor is not on the stage.
         // It happens enabling/disabling repeatedly the extension
@@ -777,9 +779,6 @@ const dockedDash = new Lang.Class({
         let borderColor = themeNode.get_border_color(St.Side.BOTTOM);
         let borderWidth = themeNode.get_border_width(St.Side.BOTTOM);
         let borderRadius = themeNode.get_border_radius(St.Corner.TOPRIGHT);
-
-//        let newStyle = 'border-bottom: none;' + 'border-radius: ' + borderRadius + 'px ' 
-//			+ borderRadius + 'px 0 0;';
 
         let newStyle = 'border-bottom: none;' +
             'border-radius: ' + borderRadius + 'px ' + borderRadius + 'px 0 0;' +
