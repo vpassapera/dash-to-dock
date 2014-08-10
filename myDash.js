@@ -55,7 +55,7 @@ const showHoverLabelTop = function() {
     let yOffset = node.get_length('-x-offset');
 
     let y = stageY - labelHeight - yOffset;
-
+log('yOLD '+y+' '+stageY+' '+labelHeight+' '+yOffset);
     let itemWidth = this.allocation.x2 - this.allocation.x1;
     let xOffset = Math.floor((itemWidth - labelWidth) / 2);
 

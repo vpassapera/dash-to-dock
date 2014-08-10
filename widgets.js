@@ -407,7 +407,8 @@ const myRecyclingBin = new Lang.Class({
 		
 		this._settings = settings;
 		this.iconSize = iconSize;	
-        this.actor = new St.Button({ style_class: 'app-well-app',
+        this.actor = new St.Button({ //style_class: 'app-well-app',
+									 style_class: 'show-apps',
                                      reactive: true,
                                      button_mask: St.ButtonMask.ONE | St.ButtonMask.TWO,
                                      can_focus: true,
@@ -559,23 +560,26 @@ const myRecyclingBin = new Lang.Class({
 		this.label.opacity = 0;
 		this.label.show();
 
-		let [stageX, stageY] = this.actor.get_transformed_position();
+//		let [stageX, stageY] = this.actor.get_transformed_position();//works
+		let [stageX, stageY] = this.icon.get_transformed_position();//works
 
 		let labelHeight = this.label.get_height();
 		let labelWidth = this.label.get_width();
 
 		let node = this.label.get_theme_node();
-//		let yOffset = node.get_length('-x-offset');
-		let yOffset = node.get_length('-y-offset');		
+		let yOffset = node.get_length('-x-offset');
 
 //		let y = stageY - labelHeight - yOffset;
-		let y = stageY - labelHeight - yOffset;
+		let y = stageY - labelHeight - yOffset - 8;
+log('y '+y+' '+stageY+' '+labelHeight+' '+yOffset);
 
 		//let itemWidth = this.allocation.x2 - this.allocation.x1;
 		let	itemWidth = this.label.width;
 //		let xOffset = Math.floor((itemWidth - labelWidth) / 2);
-let xOffset = -Math.floor((labelWidth) / 2);
 
+log('x-len '+labelWidth);
+//let xOffset = 0;//Math.floor(labelWidth / 2);
+let xOffset = -(labelWidth/2)+25;
 
 		let x = stageX + xOffset;
 

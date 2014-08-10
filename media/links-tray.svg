@@ -29,14 +29,18 @@
      inkscape:window-width="1440"
      inkscape:window-height="834"
      id="namedview10"
-     showgrid="false"
-     inkscape:zoom="29.5"
-     inkscape:cx="8"
-     inkscape:cy="9.3741983"
+     showgrid="true"
+     inkscape:zoom="128"
+     inkscape:cx="7.5334489"
+     inkscape:cy="3.1521302"
      inkscape:window-x="0"
      inkscape:window-y="27"
      inkscape:window-maximized="1"
-     inkscape:current-layer="layer12" />
+     inkscape:current-layer="layer12">
+    <inkscape:grid
+       type="xygrid"
+       id="grid3046" />
+  </sodipodi:namedview>
   <metadata
      id="metadata90">
     <rdf:RDF>
@@ -54,11 +58,6 @@
   <g
      id="layer12"
      transform="translate(-80,-648)">
-    <path
-       inkscape:connector-curvature="0"
-       d="m 83.033898,658.61017 v 4 h 10 v -4 z m 3.3438,1.4375 c 0.0208,-0.001 0.0417,-0.001 0.0625,0 0.29096,-0.0556 0.59898,0.20383 0.59375,0.5 v 0.0625 h 2 v -0.0625 c -0.004,-0.26416 0.23582,-0.50712 0.5,-0.50712 0.26418,0 0.50373,0.24296 0.5,0.50712 v 0.06 c 0,0.54535 -0.45465,1 -1,1 h -2 c -0.54535,0 -1,-0.45465 -1,-1 v -0.0625 c -0.0108,-0.21706 0.13723,-0.43234 0.34375,-0.5 z"
-       style="color:#000000;fill:#bebebe;fill-rule:evenodd"
-       id="rect11668-7-5" />
     <g
        id="layer12-0-0"
        transform="matrix(0.421875,0,0,0.421875,-0.13118386,334.78851)">
@@ -88,5 +87,11 @@
          x="758"
          height="1" />
     </g>
+    <path
+       inkscape:connector-curvature="0"
+       d="m 83,659.51647 0,2.98353 10,0 0,-2.98353 z m 0.966102,0.0111 3,0 2,0 3,0 C 91,659.53126 91,660.26517 90,661 c -1,0 -3.990532,0.007 -3.99995,0.006 C 84.966102,660.27302 85,659.5074 83.966102,659.52714 z"
+       style="color:#000000;fill:#bebebe;fill-rule:evenodd"
+       id="rect11668-7-5-0"
+       sodipodi:nodetypes="ccccccccccccc" />
   </g>
 </svg>
