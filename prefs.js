@@ -38,11 +38,23 @@ const WorkspaceSettingsWidget = new GObject.Class({
                                          margin:10});
     indentWidget(dockSettingsMain1);
 
+
+    let dockSettingsHorizontal = new Gtk.Box({spacing:30, margin_left:10, margin_top:10, margin_right:10});
+    
     let dockSettingsControl1 = new Gtk.Box({spacing:30, margin_left:10, margin_top:10, margin_right:10});
 
     let dockHorizontalLabel = new Gtk.Label({label: _("Dock is horizontal"), use_markup: true,
                                             xalign: 0, hexpand:true});//+|
 
+    let dockHorizontal =  new Gtk.Switch({halign:Gtk.Align.END});
+        dockHorizontal.set_active(this.settings.get_boolean('dock-horizontal'));
+        dockHorizontal.connect('notify::active', Lang.bind(this, function(check){
+            this.settings.set_boolean('dock-horizontal', check.get_active());
+        }));
+
+    dockSettingsHorizontal.add(dockHorizontalLabel);
+    dockSettingsHorizontal.add(dockHorizontal); 
+    
     let alwaysVisibleLabel = new Gtk.Label({label: _("Dock is fixed and always visible"), use_markup: true,
                                             xalign: 0, hexpand:true});
 
@@ -51,8 +63,7 @@ const WorkspaceSettingsWidget = new GObject.Class({
         alwaysVisible.connect('notify::active', Lang.bind(this, function(check){
             this.settings.set_boolean('dock-fixed', check.get_active());
         }));
-
-    dockSettingsControl1.add(dockHorizontalLabel);
+   
     dockSettingsControl1.add(alwaysVisibleLabel);
     dockSettingsControl1.add(alwaysVisible);
 
@@ -127,7 +138,7 @@ const WorkspaceSettingsWidget = new GObject.Class({
     dockSettingsMain1.add(dockSettingsGrid1);
     dockSettingsMain1.add(dockSettingsGrid2);
 
-    this.settings.bind('dock-horizontal', dockSettingsMain1, 'sensitive', Gio.SettingsBindFlags.INVERT_BOOLEAN);
+    this.settings.bind('dock-horizontal', dockSettingsMain1, 'sensitive', Gio.SettingsBindFlags.INVERT_BOOLEAN);//+|
     this.settings.bind('dock-fixed', dockSettingsMain1, 'sensitive', Gio.SettingsBindFlags.INVERT_BOOLEAN);
 
     let intellihideSubSettings = new Gtk.Box({margin_left:10, margin_top:10, margin_bottom:0, margin_right:10});
@@ -264,6 +275,7 @@ const WorkspaceSettingsWidget = new GObject.Class({
 
     dockSettingsMain2.add(dockHeightMain);
 
+	dockSettings.add(dockSettingsHorizontal);
     dockSettings.add(dockSettingsControl1);
     dockSettings.add(dockSettingsMain1);
     dockSettings.add(intellihideSubSettings);
@@ -322,7 +334,7 @@ const WorkspaceSettingsWidget = new GObject.Class({
         showRunning.connect('toggled', Lang.bind(this, function(check){
             this.settings.set_boolean('show-running', check.get_active());
         }));
-    let showAppsAtTop =  new Gtk.CheckButton({label: _("Show applications button at the top")});
+    let showAppsAtTop =  new Gtk.CheckButton({label: _("Show applications button at the top or the left")});
         showAppsAtTop.set_active(this.settings.get_boolean('show-apps-at-top'));
         showAppsAtTop.connect('toggled', Lang.bind(this, function(check){
             this.settings.set_boolean('show-apps-at-top', check.get_active());

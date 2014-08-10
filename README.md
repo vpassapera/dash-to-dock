@@ -25,6 +25,10 @@ Bugs should be reported to the Github bug tracker [https://github.com/micheleg/d
 Dash to Dock Gnome Shell extension is distributed under the terms of the GNU General Public License,
 version 2 or later. See the COPYING file for details.
 
+## Hacking
+
+Remember to compile the gschemas with "glib-compile-schemas" in the schemas directory.
+
 ## Donations
 
 You can
