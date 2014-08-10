@@ -637,11 +637,8 @@ const myLinkTrayMenu = new Lang.Class({
 		
         // We want to keep the item hovered while the menu is up
         this.blockSourceEvents = true;
-
+//this.actor.set_style(null);
         this.actor.add_style_class_name('app-well-menu-custom');
-
-this.actor.add_style_class_name('popup-menu-ornament2');
-this.actor.add_style_class_name('popup-menu-content2');
         
         // Chain our visibility and lifecycle to that of the source
         source.connect('notify::mapped', Lang.bind(this, function () {
@@ -692,6 +689,61 @@ const myPopupImageMenuItem = new Lang.Class({
     Extends: PopupMenu.PopupBaseMenuItem,
 
     _init: function (file, size) {
+/*
+
+.popup-menu-content {
+    padding: 1em 0em;
+}
+
+.popup-menu-item {
+    spacing: 12px;
+}
+
+.popup-menu-item:ltr {
+    padding: .4em 1.75em .4em 0em;
+}
+
+.popup-menu-item:rtl {
+    padding: .4em 0em .4em 1.75em;
+}
+
+.popup-menu-item:active {
+    background-color: #4c4c4c;
+}
+
+.popup-menu-item:insensitive {
+    color: #9f9f9f;
+}
+
+.popup-sub-menu:scrolled .popup-menu-item:ltr {
+    padding-right: 0em;
+}
+
+.popup-sub-menu:scrolled .popup-menu-item:rtl {
+    padding-left: 0em;
+}
+
+.popup-menu-ornament {
+    text-align: right;
+    width: 1em;
+}
+
+.popup-inactive-menu-item, .popup-inactive-menu-item:insensitive {
+    color: white;
+}
+  
+  
+  
+        this.actor = new St.BoxLayout({ style_class: 'popup-menu-item',
+                                        reactive: params.reactive,
+                                        track_hover: params.reactive,
+                                        can_focus: params.can_focus,
+                                        accessible_role: Atk.Role.MENU_ITEM });
+
+        this._ornamentLabel = new St.Label({ style_class: 'popup-menu-ornament' });
+        if (!this._activatable)
+            this.actor.add_style_class_name('popup-inactive-menu-item');
+*/		
         this.parent();
 
 		this.actor.set_vertical(true);

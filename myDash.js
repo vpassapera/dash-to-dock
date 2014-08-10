@@ -244,20 +244,19 @@ const myDash = new Lang.Class({
 				let pos = parseInt(position[i]);
 				switch (pos) {
 					case 1:
-						if (this._settings.get_boolean('applet-show-apps-visible')) {
+						if (this._settings.get_boolean('applet-show-apps-visible')) {					
 							this._showAppsIcon = new Widgets.myShowAppsIcon();
-							this._showAppsIcon.add_actor(this._showAppsIcon);
 							this._showAppsIcon.childScale = 1;
 							this._showAppsIcon.childOpacity = 255;
 							this._showAppsIcon.icon.setIconSize(this.iconSize);
 							this._hookUpLabel(this._showAppsIcon);
-							this.showAppsButton = this._showAppsIcon.toggleButton;
-							this._container.add_actor(this._showAppsIcon);
+							this.showAppsButton = this._showAppsIcon.toggleButton;						
+							this._container.add_actor(this._showAppsIcon);						
 						}
 						break;
 					case 2:
-						if (this._settings.get_boolean('applet-favourite-apps-visible'))
-						this._container.add_actor(this._appsContainer);
+						//if (this._settings.get_boolean('applet-favourite-apps-visible'))			
+						this._container.add_actor(this._appsContainer);						
 						break;
 					case 3:
 						if (this._settings.get_boolean('applet-links-tray-visible')) {
