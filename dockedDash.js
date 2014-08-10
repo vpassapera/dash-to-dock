@@ -100,30 +100,6 @@ const DashSlideContainer = new Lang.Class({
 log('_____________________________________________________________________');          
 log('SlideDirection: '+this._direction);
 log('COORDS1: childBox [x1,y1 = '+childBox.x1+', '+childBox.y2+'] [x2,y2 =  '+childBox.x2+', '+childBox.y2+']');
-/*
-        if (this._direction == SlideDirection.LEFT) {
-            childBox.x1 = (this._slidex -1)*(childWidth - slideoutWidth);
-            childBox.x2 = slideoutWidth + this._slidex*(childWidth - slideoutWidth);
-        } else if (this._direction == SlideDirection.RIGHT) {
-            childBox.x1 = 0;
-            childBox.x2 = childWidth;
-        } else if (this._direction == SlideDirection.BOTTOM) {
-log('SlideDirection.TOP');
-            childBox.x1 = 0;
-            childBox.x2 = childWidth;
-        }
-
-        childBox.y1 = 0;
-        childBox.y2 = childBox.y1 + childHeight;
-        this._child.allocate(childBox, flags);
-        this._child.set_clip(-childBox.x1, 0, -childBox.x1+availWidth, availHeight);
-log('COORDS2: childBox x = '+childBox.x1+' -> '+childBox.x2+' | y =  '+childBox.y1+' -> '+childBox.y2);//COMPARE WITH SIMPLE DOCK
-*/
-
-//		childBox.x1 = 0;
-//		childBox.x2 = childWidth;
-//        childBox.y1 = 0;
-//        childBox.y2 = childHeight;
 
 //almost works
 //childBox.x1 = (this._slidex -1)*(childWidth - 1);
@@ -137,22 +113,40 @@ log('COORDS2: childBox x = '+childBox.x1+' -> '+childBox.x2+' | y =  '+childBox.
 //childBox.x2 = 0;//1 + this._slidex*(childWidth - 1);
 //childBox.y2 = childHeight;//slideoutWidth + this._slidex*(childWidth - 1);
 
-childBox.x1 = (this._slidex -1)*(childWidth - 1);
-childBox.x2 = 1 + this._slidex*(childWidth - 1);
-childBox.y1 = (this._slidex -1)*(childWidth - 1);
-childBox.y2 = slideoutWidth + this._slidex*(childWidth - 1);
+//anchor_point = Clutter.Gravity.NORTH;
+//this.move_anchor_point_from_gravity(anchor_point);
+//this.set_anchor_point(-(100),-(100));//x,y
 
-anchor_point = Clutter.Gravity.NORTH;
-this.move_anchor_point_from_gravity(anchor_point);
-//this.actor.set_anchor_point(-(100),-(10));//x,y
+//log('SLIDEX IS: '+this._slidex);
+//childBox.x1 = 0;
+//childBox.x2 = slideoutWidth + (childWidth - slideoutWidth);
+//childBox.y1 = 0;
+//childBox.y2 = childBox.y1 + childHeight;
 
-        
+//childBox.x1 = 0;
+//childBox.x2 = childBox.x1 + childWidth;//slideoutWidth + (childWidth - slideoutWidth);
+//childBox.y1 = 0;//childHeight-10;<-WISDOM IN THIS
+//childBox.y2 = (slideoutWidth + (childHeight - slideoutWidth));//childBox.y1 + childHeight;
+
+//childBox.x1 = 0;
+//childBox.x2 = childWidth;
+//childBox.y1 = 0;
+//childBox.y2 = childBox.y1 + childHeight;
+
+
+//this makes an animation = slide acordeon
+let contentBox = this.get_content_box(box);
+childBox.x1 = contentBox.x1;
+childBox.y1 = contentBox.y1;
+childBox.x2 = contentBox.x2;
+childBox.y2 = contentBox.y2;
+
+log('COORDS2: contnBox [x1,y1 = '+contentBox.x1+', '+contentBox.y2+'] [x2,y2 =  '+contentBox.x2+', '+contentBox.y2+']');
+
         this._child.allocate(childBox, flags);
-//        this._child.set_clip(-childBox.x1, 0, -childBox.x1+availWidth, availHeight);//WTF??
-this._child.set_clip_to_allocation(true);//+|Experimental
-//this._child.set_clip(0, 0, -childBox.x1+availWidth, availHeight);//cuts off: A, offTop, C, D
-log('COORDS2: childBox [x1,y1 = '+childBox.x1+', '+childBox.y2+'] [x2,y2 =  '+childBox.x2+', '+childBox.y2+']');
-
+        this._child.set_clip(-childBox.x1, 0, -childBox.x1+availWidth, availHeight);//WTF?? //cuts off: A, offTop, C, D
+//this._child.set_clip_to_allocation(true);//+|Experimental..seemed to work at one time
+log('COORDS3: childBox [x1,y1 = '+childBox.x1+', '+childBox.y2+'] [x2,y2 =  '+childBox.x2+', '+childBox.y2+']');
     },
 
 /* older code
@@ -197,13 +191,13 @@ log('COORDS2: childBox [x1,y1 = '+childBox.x1+', '+childBox.y2+'] [x2,y2 =  '+ch
         natWidth = (natWidth - this._slideoutWidth)*this._slidex + this._slideoutWidth;
         return [minWidth, natWidth];
     },
-
-    /* Just the child min height, no border, no positioning etc. */
+ 
+    /* Just the child min height, no border, no positioning etc. 
     vfunc_get_preferred_height: function(forWidth) {
         let [minHeight, natHeight] = this._child.get_preferred_height(forWidth);
         return [minHeight, natHeight];
     },
-
+*/
     /* I was expecting it to be a virtual function... stil I don't understand
        how things work.
     */
@@ -279,8 +273,8 @@ const dockedDash = new Lang.Class({
         // centering, turn on track hover
 
         // This is the vertical centering actor
-        this.actor = new St.Bin({ name: 'dashtodockContainer',reactive: false,
-            y_align: St.Align.MIDDLE});//TODO:chek if its supposed to be x_align for horizontal
+        this.actor = new St.Bin({ name: 'dashtodockContainer',reactive: false});
+//            x_align: St.Align.START, y_align: St.Align.START});//TODO:chek if its supposed to be x_align for horizontal
         this.actor._delegate = this;
 
         // This is the sliding actor whose allocation is to be tracked for input regions
@@ -597,12 +591,12 @@ const dockedDash = new Lang.Class({
     },
     
     _animateIn: function(time, delay) {
-		
+/*		
         this._animStatus.queue(true);
         Tweener.addTween(this._slider,{
             slidex: 1,
 //-----------------------------------------------------
-//y: this._monitor.y + this._monitor.height - this._box.height,//simple-dock
+y: this._monitor.y + this._monitor.height - this._box.height,//simple-dock
 //-----------------------------------------------------
             time: time,
             delay: delay,
@@ -622,10 +616,38 @@ const dockedDash = new Lang.Class({
                   this._removeBarrierTimeoutId = Mainloop.timeout_add(100, Lang.bind(this, this._removeBarrier));
               })
         });
+*/
+//------------------------------------------------------------------------------------------------------------------------
+        this._animStatus.queue(true);
+        Tweener.addTween(this._slider, {
+            y: this._monitor.y + this._monitor.height - this._box.height,
+            time: time,
+            delay: delay,
+            transition: 'easeOutQuad',
+
+            onStart:  Lang.bind(this, function() {
+                this._animStatus.start();
+            }),
+
+            onOverwrite : Lang.bind(this, function() {
+                this._animStatus.clear();
+            }),
+
+            onComplete: Lang.bind(this, function() {
+                this._animStatus.end();
+                if (this._removeBarrierTimeoutId > 0) {
+                      Mainloop.source_remove(this._removeBarrierTimeoutId);
+                  }
+				this._removeBarrierTimeoutId = Mainloop.timeout_add(100, Lang.bind(this, this._removeBarrier));
+            })
+        });
+//------------------------------------------------------------------------------------------------------------------------
+
+
     },
 
     _animateOut: function(time, delay){
-
+/*
         this._animStatus.queue(false);
         Tweener.addTween(this._slider,{
             slidex: 0,
@@ -641,6 +663,29 @@ const dockedDash = new Lang.Class({
                     this._updateBarrier();
             })
         });
+*/
+//------------------------------------------------------------------------------------------------------------------------
+        this._animStatus.queue(false);
+        Tweener.addTween(this.actor, {
+            y: this._monitor.y + this._monitor.height - 1,
+            time: time,
+            delay: delay,
+            transition: 'easeOutQuad',
+
+            onStart:  Lang.bind(this, function() {
+                this._animStatus.start();
+            }),
+
+            onOverwrite : Lang.bind(this, function() {
+                this._animStatus.clear();
+            }),
+
+            onComplete: Lang.bind(this, function() {
+                this._animStatus.end();
+                this._updateBarrier();
+            })
+        });
+//------------------------------------------------------------------------------------------------------------------------
     },
 
     _updatePressureBarrier: function() {
@@ -823,11 +868,20 @@ const dockedDash = new Lang.Class({
         }
 */
 //----------------------------------------------------------------------
+/*
+        this.actor.width = this._monitor.width;
+        this.actor.x = this._monitor.x;
+        this.actor.x_align = St.Align.MIDDLE;
+
+		this.actor.height = this._monitor.height;        
+		this.actor.y = this._monitor.y;
+		this.actor.y_align = St.Align.END;
+*/
         this.actor.width = this._monitor.width;
         this.actor.x = this._monitor.x;
         this.actor.x_align = St.Align.MIDDLE;//TODO: return to MIDDLE OF SCREEEN
 
-		this.actor.height = this._monitor.height;        
+		this.actor.height = this._monitor.height;
 		this.actor.y = this._monitor.y;
 		this.actor.y_align = St.Align.END;
 //----------------------------------------------------------------------
@@ -897,13 +951,15 @@ const dockedDash = new Lang.Class({
             position = this.staticBox.x1;
         }
 
-        this.actor.move_anchor_point_from_gravity(anchor_point);
-        this.actor.x = position;
-
 //Moving teh reveal position to the bottom of the screen
 //anchor_point = Clutter.Gravity.SOUTH;
+//anchor_point = Clutter.Gravity.CENTER;
+//log('POSSSSSSSSSSS :'+position);
 //this.actor.move_anchor_point_from_gravity(anchor_point);
 //this.actor.set_anchor_point(-(100),-(10));//x,y
+
+//        this.actor.move_anchor_point_from_gravity(anchor_point);
+        this.actor.x = position;
 
         this._updateYPosition();
     },
