@@ -191,22 +191,6 @@ const DashSlideContainer = new Lang.Class({
 
 			this._child.allocate(childBox, flags);
 			this._child.set_clip(-childBox.x1, 0, -childBox.x1+availWidth, availHeight);
-
-
-//------------------
-/*		
-			log("slider: "+(-childBox.x1+availWidth));	
-
-			if (this._scrollView.width > slider.width) {
-				this._leftOrTopArrow.show();
-				this._rightOrBottomArrow.show();	
-			} else {
-				this._leftOrTopArrow.hide();
-				this._rightOrBottomArrow.hide();
-			}
-*/
-//------------------
-		
 		}
     },
 
@@ -307,6 +291,7 @@ const dockedDash = new Lang.Class({
 
         // Create the main actor and the containers for sliding
         // in and out, as well as centering, turn on track hover
+
 		this.actor = new St.Bin({ name: 'dashtodockContainer', reactive: false })
 
         this.actor._delegate = this;
@@ -317,54 +302,6 @@ const dockedDash = new Lang.Class({
         // This is the actor whose hover status us tracked for autohide
         this._dockBox = new St.BoxLayout({ name: 'dashtodockBox', reactive: true, track_hover:true });
 
-//---------------
-		this._dockBox.add_actor(this.dash.actor);
-		
-		// Adding a ScrollView container to contain the expansion of the dock
-		this._scrollView = new St.ScrollView({ x_expand: false, y_expand: false,
-			x_fill: false, y_fill: false, reactive: true });
-
-		this._leftOrTopArrow = new St.Button();
-		this._rightOrBottomArrow = new St.Button();
-
-        if (!dock_horizontal) {
-			this._scrollView.hscrollbar_policy = Gtk.PolicyType.NEVER;
-			this._scrollView.vscroll.hide();
-
-			this._appsContainer = new St.BoxLayout({ vertical: true, clip_to_allocation: false });
-
-			this._leftOrTopArrowIcon = new St.Icon({ icon_name: 'go-up-symbolic', icon_size: 16 });
-			this._leftOrTopArrow.set_child(this._leftOrTopArrowIcon);
-			this._appsContainer.add_actor(this._leftOrTopArrow);
-			this._leftOrTopArrow.connect('clicked', Lang.bind(this, this._onScrollBtnLeftOrTop));		
-
-			this._scrollView.add_actor(this._dockBox);		
-			this._appsContainer.add_actor(this._scrollView);
-			
-			this._rightOrBottomArrowIcon = new St.Icon({ icon_name: 'go-down-symbolic', icon_size: 16});
-			this._rightOrBottomArrow.set_child(this._rightOrBottomArrowIcon);
-			this._appsContainer.add_actor(this._rightOrBottomArrow);
-			this._rightOrBottomArrow.connect('clicked', Lang.bind(this, this._onScrollBtnRightOrBottom));
-		} else {
-			this._scrollView.vscrollbar_policy = Gtk.PolicyType.NEVER;
-			this._scrollView.hscroll.hide();
-
-			this._appsContainer = new St.BoxLayout({ vertical: false, clip_to_allocation: true });//clip was false
-
-			this._leftOrTopArrowIcon = new St.Icon({ icon_name: 'go-previous-symbolic', icon_size: 16 });
-			this._leftOrTopArrow.set_child(this._leftOrTopArrowIcon);
-			this._appsContainer.add_actor(this._leftOrTopArrow);
-			this._leftOrTopArrow.connect('clicked', Lang.bind(this, this._onScrollBtnLeftOrTop));	
-
-			this._scrollView.add_actor(this._dockBox);		
-			this._appsContainer.add_actor(this._scrollView);
-			
-			this._rightOrBottomArrowIcon = new St.Icon({ icon_name: 'go-next-symbolic', icon_size: 16});
-			this._rightOrBottomArrow.set_child(this._rightOrBottomArrowIcon);
-			this._appsContainer.add_actor(this._rightOrBottomArrow);
-			this._rightOrBottomArrow.connect('clicked', Lang.bind(this, this._onScrollBtnRightOrBottom));			
-		}
-//---------------
         this._dockBox.connect("notify::hover", Lang.bind(this, this._hoverChanged));
 
         if (dock_horizontal) {
@@ -464,15 +401,9 @@ const dockedDash = new Lang.Class({
         Main.overview._controls._dashSlider.actor.hide();
 
         // Add dash container actor and the container to the Chrome.
-/*        this.actor.set_child(this._slider);
+        this.actor.set_child(this._slider);
 		this._slider.add_child(this._dockBox);
         this._dockBox.add_actor(this.dash.actor);
-*/
-
-
-this.actor.set_child(this._slider);
-//this._dockBox.add_actor(this.dash.actor);
-this._slider.add_child(this._appsContainer);
 
         // Add aligning container without tracking it for input region (old affectsinputRegion: false that was removed).
         // The public method trackChrome requires the actor to be child of a tracked actor. Since I don't want the parent
@@ -601,26 +532,6 @@ this._slider.add_child(this._appsContainer);
             this._updateBarrier();
         }));
 
-    },
-
-    _onScrollBtnLeftOrTop: function() {
-		if (!dock_horizontal) {
-			let vscroll = this._scrollView.get_vscroll_bar();
-			vscroll.get_adjustment().set_value(vscroll.get_adjustment().get_value() - this._scrollView.height);				
-		} else {
-			let hscroll = this._scrollView.get_hscroll_bar();
-			hscroll.get_adjustment().set_value(hscroll.get_adjustment().get_value() - this._scrollView.width);	
-		}
-    },
-    
-    _onScrollBtnRightOrBottom: function() {
-		if (!dock_horizontal) {
-			let vscroll = this._scrollView.get_vscroll_bar();
-			vscroll.get_adjustment().set_value(vscroll.get_adjustment().get_value() + this._scrollView.height);				
-		} else {
-			let hscroll = this._scrollView.get_hscroll_bar();
-			hscroll.get_adjustment().set_value(hscroll.get_adjustment().get_value() + this._scrollView.width);			
-		}
     },
 
     _hoverChanged: function() {
@@ -910,7 +821,7 @@ this._slider.add_child(this._appsContainer);
         this._adjustBorders(); 
     },
 
-	// Re-themes the corners and borders. SOURCE: simple-dock extension.
+	// Re-theme the corners and borders. SOURCE: simple-dock extension.
     _adjustBorders: function() {
 		if (dock_horizontal && !this._settings.get_boolean('apply-custom-theme')) {
 			// Prevent shell crash if the actor is not on the stage.
@@ -925,10 +836,6 @@ this._slider.add_child(this._appsContainer);
 			let themeNode = this.dash._container.get_theme_node();
 
 			let alpha = this._settings.get_double('background-opacity');
-	  
-			// Corner rounding
-			//let newStyle = 'background: rgba(0,0,0,0.9);'
-			//+ 'border-bottom: none;' + 'border-radius: 6px 6px 0 0;';
 
 			let newStyle = 'background: rgba(8,54,14,' + alpha + ');' 
 			+ 'border-bottom: none;' + 'border-radius: 6px 6px 0 0;';
@@ -946,31 +853,20 @@ this._slider.add_child(this._appsContainer);
 		if (!dock_horizontal) {
 			let fraction = this._settings.get_double('size-fraction');
 			let extendSize = this._settings.get_boolean('extend-size');
-
-			//let availableHeight = this._monitor.height - Main.panel.actor.height;
 					
 			if(extendSize)
 				fraction = 1;
 			else if(fraction<0 || fraction >1)
 				fraction = 0.95;
 				
-			//this.dash._container.set_height(availableHeight * fraction);
 		} else {
 			let fraction = this._settings.get_double('size-fraction');
 			let extendSize = this._settings.get_boolean('extend-size');
-
-			//let availableWidth = this._monitor.width;
 					
 			if(extendSize)
 				fraction = 1;
 			else if(fraction<0 || fraction >1)
 				fraction = 0.95;
-				
-			//this.dash._container.set_width(availableWidth * fraction);
-
-//----------------------------------------------------------------------
-//log('appContainer '+this.dash._appsContainer.width + ' scrollView '+this.dash._scrollView.width);
-//----------------------------------------------------------------------
 
 			this.actor.height = this._monitor.height;
 			this.actor.y = this._monitor.y;
@@ -1159,7 +1055,7 @@ this._slider.add_child(this._appsContainer);
         if(this._settings.get_boolean('scroll-switch-workspace'))
             Lang.bind(this, enable)();
 
-        function enable(){
+        function enable() {
 
             // Sometimes Main.wm._workspaceSwitcherPopup is null when first loading the extension
             if (Main.wm._workspaceSwitcherPopup == null)
@@ -1190,70 +1086,50 @@ this._slider.add_child(this._appsContainer);
             }
         }
 
-        // This was inspired by desktop-scroller@obsidien.github.com
+        // This was inspired to desktop-scroller@obsidien.github.com
         function onScrollEvent(actor, event) {
 
             let activeWs = global.screen.get_active_workspace();
             let direction = 0; // 0: do nothing; +1: up; -1:down.
 
-            // Filter events occuring not near the screen border if required
-            if (this._settings.get_boolean('scroll-switch-workspace-whole') == false) {
-				
+            // filter events occuring not near the screen border if required
+            if(this._settings.get_boolean('scroll-switch-workspace-whole')==false) {
+
                 let [x,y] = event.get_coords();
 
-                if (this._settings.get_int('dock-placement') == 1) {					
+                if (this._rtl) {
                     if(x < this.staticBox.x2 - 1)
                         return false;
-                } else if (this._settings.get_int('dock-placement') == 3) {
-
-					switch ( event.get_scroll_direction() ) {
-						case Clutter.ScrollDirection.UP:
-							this._onScrollBtnLeftOrTop();				
-							break;
-						case Clutter.ScrollDirection.DOWN:
-							this._onScrollBtnRightOrBottom();
-							break;
-						case Clutter.ScrollDirection.SMOOTH:			
-							let [dx, dy] = event.get_scroll_delta();
-							if (dy < 0) {
-								this._onScrollBtnLeftOrTop();
-							} else if(dy > 0) {
-								this._onScrollBtnRightOrBottom();
-							}
-							break;
-					}
-					
-					return true;
-				} else {					
+                } else {
                     if(x > this.staticBox.x1 + 1)
                         return false;
                 }
             }
 
             switch ( event.get_scroll_direction() ) {
-				case Clutter.ScrollDirection.UP:
-					direction = 1;						
-					break;
-				case Clutter.ScrollDirection.DOWN:
-					direction = -1;
-					break;
-				case Clutter.ScrollDirection.SMOOTH:			
-					let [dx, dy] = event.get_scroll_delta();
-					if(dy < 0){
-						direction = 1;
-					} else if(dy > 0) {
-						direction = -1;
-					}
-					break;
+            case Clutter.ScrollDirection.UP:
+                direction = 1;
+                break;
+            case Clutter.ScrollDirection.DOWN:
+                direction = -1;
+                break;
+            case Clutter.ScrollDirection.SMOOTH:
+                let [dx, dy] = event.get_scroll_delta();
+                if(dy < 0){
+                    direction = 1;
+                } else if(dy > 0) {
+                    direction = -1;
+                }
+                break;
             }
 
-            if(direction !==0 ) {
+            if(direction !==0 ){
 
-                // Prevent scroll events from triggering too many workspace
-                // switches by adding a dead time between each scroll event.
+                // Prevent scroll events from triggering too many workspace switches
+                // by adding a deadtime between each scroll event.
                 // Usefull on laptops when using a touchpad.
                 if(this._settings.get_boolean('scroll-switch-workspace-one-at-a-time')){
-                    // During the dead time do nothing
+                    // During the deadtime do nothing
                     if(this._optionalScrollWorkspaceSwitchDeadTimeId>0)
                         return false;
                     else {
@@ -1269,7 +1145,7 @@ this._slider.add_child(this._appsContainer);
 
                 let ws;
 
-                if (direction > 0)
+                if (direction>0)
                     ws = activeWs.get_neighbor(Meta.MotionDirection.UP)
                 else
                     ws = activeWs.get_neighbor(Meta.MotionDirection.DOWN);
@@ -1282,7 +1158,6 @@ this._slider.add_child(this._appsContainer);
                 return false;
             }
         }
-
     },
 
     _updateCustomTheme: function() {

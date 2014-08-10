@@ -147,22 +147,56 @@ const myDash = new Lang.Class({
         this._container = new myDashActor(settings);
         
         this._box;
-     
         if (!dock_horizontal) {
 			this._box = new St.BoxLayout({ vertical: true, clip_to_allocation: false });
 		} else {
 			this._box = new St.BoxLayout({ vertical: false, clip_to_allocation: false });
 		}
-		
 		this._box._delegate = this;
 
-		// Init Show Apps applet
-		if (!dock_horizontal) {
-			this._linksBox = new St.BoxLayout({ vertical: true, clip_to_allocation: false });
+		this._appsContainer;
+		
+		this._scrollView = new St.ScrollView({ reactive: true });
+        if (!dock_horizontal) {
+			this._scrollView.hscrollbar_policy = Gtk.PolicyType.NEVER;
+			this._scrollView.vscroll.hide();
+			this._appsContainer = new St.BoxLayout({ vertical: true, clip_to_allocation: false });
 		} else {
-			this._linksBox = new St.BoxLayout({ vertical: false, clip_to_allocation: false });
+			this._scrollView.vscrollbar_policy = Gtk.PolicyType.NEVER;
+			this._scrollView.hscroll.hide();
+			this._appsContainer = new St.BoxLayout({ vertical: false, clip_to_allocation: true });	
 		}
-		this._linksBox._delegate = this;
+
+		this._scrollView.add_actor(this._box);
+		this._scrollView.connect('scroll-event', Lang.bind(this, this._onScrollEvent ));
+		this._appsContainer.add_actor(this._scrollView);
+
+        this._boxLinks;
+        if (!dock_horizontal) {
+			this._boxLinks = new St.BoxLayout({ vertical: true, clip_to_allocation: false });
+		} else {
+			this._boxLinks = new St.BoxLayout({ vertical: false, clip_to_allocation: false });
+		}
+		this._boxLinks._delegate = this;
+
+		this._appsContainer;
+		
+		this._scrollView2 = new St.ScrollView({ reactive: true });
+        if (!dock_horizontal) {
+			this._scrollView2.hscrollbar_policy = Gtk.PolicyType.NEVER;
+			this._scrollView2.vscroll.hide();
+			this._appsContainer2 = new St.BoxLayout({ vertical: true, clip_to_allocation: false });
+		} else {
+			this._scrollView2.vscrollbar_policy = Gtk.PolicyType.NEVER;
+			this._scrollView2.hscroll.hide();
+			this._appsContainer2 = new St.BoxLayout({ vertical: false, clip_to_allocation: true });	
+		}
+
+		this._scrollView2.add_actor(this._boxLinks);
+		this._scrollView2.connect('scroll-event', Lang.bind(this, this._onScrollEvent ));
+		this._appsContainer2.add_actor(this._scrollView2);
+
+		// Init Show Apps applet	
 		this.showAppsButton = new St.Button({ toggle_mode: true });
 		this._showAppsIcon = null;
 		
@@ -237,26 +271,42 @@ const myDash = new Lang.Class({
 					case 1:
 						if (this._settings.get_boolean('applet-show-apps-visible')) {
 							this._showAppsIcon = new Widgets.myShowAppsIcon();
-							this._linksBox.add_actor(this._showAppsIcon);
+							this._showAppsIcon.add_actor(this._showAppsIcon);
 							this._showAppsIcon.childScale = 1;
 							this._showAppsIcon.childOpacity = 255;
 							this._showAppsIcon.icon.setIconSize(this.iconSize);
 							this._hookUpLabel(this._showAppsIcon);
 							this.showAppsButton = this._showAppsIcon.toggleButton;
-							this._container.add_actor(this._linksBox);
+							this._container.add_actor(this._showAppsIcon);
 						}
 						break;
 					case 2:
-						this._container.add_actor(this._box);
+						this._container.add_actor(this._appsContainer);
 						break;
 					case 3:
 						if (this._settings.get_boolean('applet-links-tray-visible')) {
+/*
 							this._linkTray = new Widgets.myLinkTray(this.iconSize, this._settings);
 							this._linkTray.childScale = 1;
 							this._linkTray.childOpacity = 255;
 							this._linkTray.icon.setIconSize(this.iconSize);
-							this._hookUpLabelForApplets(this._linkTray);					
-							this._container.add_actor(this._linkTray.actor);
+							this._hookUpLabelForApplets(this._linkTray);
+							//this._container.add_actor(this._linkTray.actor);//PREVIOUS was direct
+							this._boxLinks.add(this._linkTray.actor);
+							this._container.add_actor(this._appsContainer2);
+*/
+
+							for (let i = 0; i < 5 ;i++) {
+								this._linkTray = new Widgets.myLinkTray(this.iconSize, this._settings);
+								this._linkTray.childScale = 1;
+								this._linkTray.childOpacity = 255;
+								this._linkTray.icon.setIconSize(this.iconSize);
+								this._hookUpLabelForApplets(this._linkTray);
+								//this._container.add_actor(this._linkTray.actor);//PREVIOUS was direct
+								this._boxLinks.add(this._linkTray.actor);
+							}
+							this._container.add_actor(this._appsContainer2);
+							
 						}
 						break;
 					case 4:
@@ -285,6 +335,49 @@ const myDash = new Lang.Class({
 			}
 		} catch (e) {
 			log("Error in adding applets "+e.message);
+		}
+    },
+      
+	_onScrollEvent: function(actor, event) {
+		switch(event.get_scroll_direction()) {
+			case Clutter.ScrollDirection.UP:
+				this._onScrollBtnLeftOrTop(actor);				
+				break;
+			case Clutter.ScrollDirection.DOWN:
+				this._onScrollBtnRightOrBottom(actor);
+				break;
+			case Clutter.ScrollDirection.SMOOTH:			
+				let [dx, dy] = event.get_scroll_delta();
+				if (dy < 0) {
+					this._onScrollBtnLeftOrTop(actor);
+				} else if(dy > 0) {
+					this._onScrollBtnRightOrBottom(actor);
+				}
+				break;
+			default:
+				break;
+		}
+					
+		return true;
+    },      
+        
+    _onScrollBtnLeftOrTop: function(scroll_actor) {
+		if (!dock_horizontal) {
+			let vscroll = scroll_actor.get_vscroll_bar();
+			vscroll.get_adjustment().set_value(vscroll.get_adjustment().get_value() - scroll_actor.height);				
+		} else {
+			let hscroll = scroll_actor.get_hscroll_bar();
+			hscroll.get_adjustment().set_value(hscroll.get_adjustment().get_value() - scroll_actor.width);	
+		}
+    },
+    
+    _onScrollBtnRightOrBottom: function(scroll_actor) {
+		if (!dock_horizontal) {
+			let vscroll = scroll_actor.get_vscroll_bar();
+			vscroll.get_adjustment().set_value(vscroll.get_adjustment().get_value() + scroll_actor.height);				
+		} else {
+			let hscroll = scroll_actor.get_hscroll_bar();
+			hscroll.get_adjustment().set_value(hscroll.get_adjustment().get_value() + scroll_actor.width);			
 		}
     },
         
