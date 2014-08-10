@@ -248,42 +248,42 @@ const WorkspaceSettingsWidget = new GObject.Class({
                                         margin_left:10, margin_top:5, margin_bottom:10, margin_right:10});
     indentWidget(dockSettingsMain2);
 
-    let dockHeightMain = new Gtk.Box({spacing:30, orientation:Gtk.Orientation.HORIZONTAL, homogeneous:false,
+    let dockSizeMain = new Gtk.Box({spacing:30, orientation:Gtk.Orientation.HORIZONTAL, homogeneous:false,
                                        margin:10});
-    indentWidget(dockHeightMain);
-    let dockMaxHeightTimeout=0; // Used to avoid to continuosly update the dock height
-    let dockMaxHeightLabel = new Gtk.Label({label: _("Max height"), xalign: 0});
-    let dockMaxHeight =  new Gtk.Scale({orientation: Gtk.Orientation.HORIZONTAL, valuePos: Gtk.PositionType.RIGHT});
-        dockMaxHeight.set_range(0, 100);
-        dockMaxHeight.set_value(this.settings.get_double('height-fraction')*100);
-        dockMaxHeight.set_digits(0);
-        dockMaxHeight.set_increments(5,5);
-        dockMaxHeight.set_size_request(200, -1);
-        dockMaxHeight.connect('value-changed', Lang.bind(this, function(button){
+    indentWidget(dockSizeMain);
+    let dockMaxSizeTimeout=0; // Used to avoid to continuosly update the dock height
+    let dockMaxSizeLabel = new Gtk.Label({label: _("Max height/width"), xalign: 0});
+    let dockMaxSize =  new Gtk.Scale({orientation: Gtk.Orientation.HORIZONTAL, valuePos: Gtk.PositionType.RIGHT});
+        dockMaxSize.set_range(0, 100);
+        dockMaxSize.set_value(this.settings.get_double('size-fraction')*100);
+        dockMaxSize.set_digits(0);
+        dockMaxSize.set_increments(5,5);
+        dockMaxSize.set_size_request(200, -1);
+        dockMaxSize.connect('value-changed', Lang.bind(this, function(button){
             let s = button.get_value()/100;
-            if(dockMaxHeightTimeout>0)
-                Mainloop.source_remove(dockMaxHeightTimeout);
-            dockMaxHeightTimeout = Mainloop.timeout_add(250, Lang.bind(this, function(){
-                this.settings.set_double('height-fraction', s);
+            if(dockMaxSizeTimeout>0)
+                Mainloop.source_remove(dockMaxSizeTimeout);
+            dockMaxSizeTimeout = Mainloop.timeout_add(250, Lang.bind(this, function(){
+                this.settings.set_double('size-fraction', s);
                 return false;
             }));
         }));
 
-        dockMaxHeight.connect('format-value', function(scale, value) {return value + '%'});
-    let extendHeight =  new Gtk.CheckButton({label: _("Expand (experimental and buggy)")});
-        extendHeight.set_active(this.settings.get_boolean('extend-height'));
-        extendHeight.connect('toggled', Lang.bind(this, function(check){
-            this.settings.set_boolean('extend-height', check.get_active());
+        dockMaxSize.connect('format-value', function(scale, value) {return value + '%'});
+    let extendSize =  new Gtk.CheckButton({label: _("Expand all the way")});
+        extendSize.set_active(this.settings.get_boolean('extend-size'));
+        extendSize.connect('toggled', Lang.bind(this, function(check){
+            this.settings.set_boolean('extend-size', check.get_active());
         }));
 
-    dockHeightMain.add(dockMaxHeightLabel);
-    dockHeightMain.add(dockMaxHeight);
-    dockHeightMain.add(extendHeight);
+    dockSizeMain.add(dockMaxSizeLabel);
+    dockSizeMain.add(dockMaxSize);
+    dockSizeMain.add(extendSize);
 
-    this.settings.bind('extend-height', dockMaxHeightLabel, 'sensitive', Gio.SettingsBindFlags.INVERT_BOOLEAN);
-    this.settings.bind('extend-height', dockMaxHeight, 'sensitive', Gio.SettingsBindFlags.INVERT_BOOLEAN);
+    this.settings.bind('extend-size', dockMaxSizeLabel, 'sensitive', Gio.SettingsBindFlags.INVERT_BOOLEAN);
+    this.settings.bind('extend-size', dockMaxSize, 'sensitive', Gio.SettingsBindFlags.INVERT_BOOLEAN);
 
-    dockSettingsMain2.add(dockHeightMain);
+    dockSettingsMain2.add(dockSizeMain);
     
 	dockSettings.add(dockPlacement);
     dockSettings.add(dockSettingsControl1);

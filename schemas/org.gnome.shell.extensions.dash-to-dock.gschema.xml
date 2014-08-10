@@ -117,13 +117,13 @@
       <summary>Basic compatibility with bolt extensions</summary>
       <description>Make the extension work properly when bolt extensions is enabled</description>
     </key>
-    <key type="d" name="height-fraction">
+    <key type="d" name="size-fraction">
       <default>0.95</default>
-      <summary>Dock max height (fraction of available space)</summary>
+      <summary>Dock is a fraction of available max height/width</summary>
     </key>
-    <key type="b" name="extend-height">
+    <key type="b" name="extend-size">
       <default>false</default>
-      <summary>Extend the dock container to all the available height</summary>
+      <summary>Extend the dock container to all the available height/width</summary>
     </key>
     <key type="i" name="preferred-monitor">
       <default>-1</default>

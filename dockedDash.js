@@ -60,14 +60,13 @@ const myMaxSizeBin = new Lang.Class({
 			}
 		} else {
 			if (boxW > maxW) {
-				let excessWidth = boxW - maxW;
-				
-log('HORIZONTAL  '+dock_horizontal);				
-adjustedBox.x1 = 0;
-adjustedBox.x2 = maxW;
-								
+				let excessWidth = excessWidth = boxW - maxW;
+
+				adjustedBox.x1 = 0;
+				adjustedBox.x2 = maxW;
+			
 				adjustedBox.x1 += Math.floor(excessWidth / 2);
-				adjustedBox.x2 -= Math.floor(excessWidth / 2);
+				adjustedBox.x2 -= Math.floor(excessWidth / 2);				
 			}
 		}
         this.parent(adjustedBox, flags);     
@@ -504,7 +503,7 @@ const dockedDash = new Lang.Class({
                 this.emit('box-changed');
             }
 
-            this._updateYPosition();
+            this._updatePosition();
 
             // Add or remove barrier depending on if dock-fixed
             this._updateBarrier();
@@ -515,11 +514,11 @@ const dockedDash = new Lang.Class({
             this._updateBarrier();
         }));
         
-        this._settings.connect('changed::extend-height', Lang.bind(this, this._updateYPosition));
+        this._settings.connect('changed::extend-height', Lang.bind(this, this._updatePosition));
         
         this._settings.connect('changed::preferred-monitor', Lang.bind(this,this._resetPosition));
         
-        this._settings.connect('changed::height-fraction', Lang.bind(this,this._updateYPosition));
+        this._settings.connect('changed::height-fraction', Lang.bind(this,this._updatePosition));
 
         this._settings.connect('changed::apply-custom-theme', Lang.bind(this, this._updateCustomTheme));
 
@@ -849,32 +848,33 @@ const dockedDash = new Lang.Class({
              this._monitor.y == Main.layoutManager.primaryMonitor.y);
     },
 
-    _updateYPosition: function() {
+    _updatePosition: function() {
 		if (!dock_horizontal) {			
 			let unavailableTopSpace = 0;
 			let unavailableBottomSpace = 0;
-
-			let extendHeight = this._settings.get_boolean('extend-height');
+			
+			let fraction = this._settings.get_double('size-fraction');
+			let extendSize = this._settings.get_boolean('extend-size');
 			let dockFixed = this._settings.get_boolean('dock-fixed');
 
 			// check if the dock is on the primary monitor
 			if (this._isPrimaryMonitor()){
-				if (!extendHeight || !dockFixed) {
+				if (!extendSize || !dockFixed) {
 					unavailableTopSpace = Main.panel.actor.height;
 				}
 			}
 
 			let availableHeight = this._monitor.height - unavailableTopSpace - unavailableBottomSpace;
 
-			let fraction = this._settings.get_double('height-fraction');
-
-			if(extendHeight)
+			if(extendSize)
 				fraction = 1;
 			else if(fraction<0 || fraction >1)
 				fraction = 0.95;
 
 			this.actor.height = Math.round( fraction * availableHeight);
-			this.actor.y = this._monitor.y + unavailableTopSpace + Math.round( (1-fraction)/2 * availableHeight);
+//			this.actor.y = this._monitor.y + unavailableTopSpace + Math.round( (1-fraction)/2 * availableHeight);
+//this.actor._dockBox = Math.round( fraction * availableHeight);
+this.actor.y_align = St.Align.MIDDLE;
 
 			if(extendHeight){
 				this.dash._container.set_height(this.actor.height);
@@ -884,6 +884,16 @@ const dockedDash = new Lang.Class({
 				this.actor.remove_style_class_name('extended');
 			}
 		} else {
+			let fraction = this._settings.get_double('size-fraction');
+			let extendSize = this._settings.get_boolean('extend-size');
+			
+			if(extendSize)
+				fraction = 1;
+			else if(fraction<0 || fraction >1)
+				fraction = 0.95;
+			
+			this._dockBox.width = this._monitor.width*fraction;
+
 			this.actor.width = this._monitor.width;
 			this.actor.x = this._monitor.x;
 			this.actor.x_align = St.Align.MIDDLE;
@@ -962,7 +972,7 @@ const dockedDash = new Lang.Class({
         this.actor.x = position;
 
 
-        this._updateYPosition();
+        this._updatePosition();
     },
 
     _getMonitor: function() {
