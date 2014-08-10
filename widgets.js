@@ -134,10 +134,6 @@ const myLinkBox = new Lang.Class({
 		for(let i = 0; i < this.linksStorage.links_data.folders.length ;i++) {		
 			this.loadTray(this.linksStorage.links_data.folders[i].collection_id);	
 		}
-
-//let item = new myFileIconSPECIAL('/home/pc', this.iconSize);
-//this._box.add(item.actor);		
-//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	},
 
     loadTray: function(trayId) {
@@ -405,17 +401,14 @@ const myLinkTray = new Lang.Class({
         this._draggable.connect('drag-begin', Lang.bind(this,
             function () {
                 this._removeMenuTimeout();
-                //this._myLinkBoxInstance._onDragBegin();
 				Main.overview.beginItemDrag(this);
             }));
         this._draggable.connect('drag-cancelled', Lang.bind(this,
             function () {
-                //this._myLinkBoxInstance._onDragCancelled();
 				Main.overview.cancelledItemDrag(this);
             }));
         this._draggable.connect('drag-end', Lang.bind(this,
             function () {
-               //this._myLinkBoxInstance._onDragEnd();
 				Main.overview.endItemDrag(this);
             }));
 	},
@@ -705,7 +698,23 @@ const myLinkTrayMenu = new Lang.Class({
 		for(let irow = 0 ; irow < irows ;irow++) {
 			for(let icol = 0 ; icol < icols ;icol++) {
 				let item = new myFileIcon(files[i].link, this.iconSize, this);
-										
+/*
+//-------------------------------
+        item._draggable.connect('drag-begin', Lang.bind(this,
+            function () {
+                this._removeMenuTimeout();
+				this._onDragBegin();
+            }));
+        item._draggable.connect('drag-cancelled', Lang.bind(this,
+            function () {
+				this._onDragCancelled();
+            }));
+        item._draggable.connect('drag-end', Lang.bind(this,
+            function () {
+				this._onDragEnd();
+            }));
+//-------------------------------
+*/										
 				this._table.add(item.actor, { row: irow, col: icol, x_fill: false, y_fill: false, 
 					x_align: St.Align.MIDDLE, y_align: St.Align.START});
 
@@ -725,84 +734,246 @@ const myLinkTrayMenu = new Lang.Class({
         }));
         
 		this.abox = new St.BoxLayout({ vertical: true, x_expand: true});
-		this.abox.add(this._table, { x_fill:false, y_fill: false });
+		this.abox.add(this._table);
 		this._scrollView.add_actor(this.abox);
-
+		
+		this.box.add(this._scrollView);  
+		
 		// Calculating the (aesthetic) height for ScrollView
-		if(icols > 1)
-			this._scrollView.height = (this.iconSize+(2*5))*4+12;//margin=5;for_menu=12
+		if(icols > 1 && irows > 3)
+			this._scrollView.height = 
+				(this._scrollView.height/icols + 10)*3;//10 is from popup menu
+    },
+    
+//----------------------------------------------------------------------------------------------- 
+    _removeMenuTimeout: function() {
+        if (this._menuTimeoutId > 0) {
+            Mainloop.source_remove(this._menuTimeoutId);
+            this._menuTimeoutId = 0;
+        }
+    },
+/*       
+    _onDragBegin: function() {
+        this._dragCancelled = false;
+        this._dragMonitor = {
+            dragMotion: Lang.bind(this, this._onDragMotion)
+        };
+        DND.addDragMonitor(this._dragMonitor);
 
-		this.box.add(this._scrollView);     		
-    }      
+        if (this._table.get_n_children() == 0) {
+            this._emptyDropTarget = new EmptyDropTargetItem();
+            this._table.insert_child_at_index(this._emptyDropTarget, 0);
+            this._emptyDropTarget.show(true);
+        }
+    },
+
+    _onDragCancelled: function() {
+        this._dragCancelled = true;
+        this._endDrag();
+    },
+
+    _onDragEnd: function() {
+        if (this._dragCancelled)
+            return;
+
+        this._endDrag();
+    },
+
+    _endDrag: function() {
+        this._clearDragPlaceholder();
+        this._clearEmptyDropTarget();
+        DND.removeDragMonitor(this._dragMonitor);
+    },
+
+    _onDragMotion: function(dragEvent) {
+        let app;
+		if (source instanceof myFileIcon) {
+			tray = source;		
+		} else {
+			tray = null;
+			return false;
+		}
+        
+        if (app == null)
+            return DND.DragMotionResult.CONTINUE;
+
+        if (!this._table.contains(dragEvent.targetActor))
+            this._clearDragPlaceholder();
+
+        return DND.DragMotionResult.CONTINUE;
+    },
+*/
+    _clearDragPlaceholder: function() {
+        if (this._dragPlaceholder) {
+            this._animatingPlaceholdersCount++;
+            this._dragPlaceholder.animateOutAndDestroy();
+            this._dragPlaceholder.connect('destroy',
+                Lang.bind(this, function() {
+                    this._animatingPlaceholdersCount--;
+                }));
+            this._dragPlaceholder = null;
+        }
+        this._dragPlaceholderPos = -1;
+    },
+
+    _clearEmptyDropTarget: function() {
+        if (this._emptyDropTarget) {
+            this._emptyDropTarget.animateOutAndDestroy();
+            this._emptyDropTarget = null;
+        }
+    },
+
+    handleDragOver : function(source, actor, x, y, time) {
+        let link;
+		if (source instanceof myFileIcon) {
+			link = source;
+		} else {
+			link = null;
+		}
+
+        // Don't allow favoriting of transient apps
+        if (link == null)
+            return DND.DragMotionResult.NO_DROP;
+
+        let links = this._table.get_children();
+        let numLinks = links.length;
+
+        let linkPos = links.indexOf(link);
+
+        let children = this._table.get_children();
+        let numChildren = children.length;
+
+		let pos, boxHeight, boxWidth
+		if (!dock_horizontal) {
+			boxHeight = 0;
+			for (let i = 0; i < numChildren; i++) {
+				boxHeight += children[i].height;
+			}
+
+			// Keep the placeholder out of the index calculation; assuming that
+			// the remove target has the same size as "normal" items, we don't
+			// need to do the same adjustment there.
+			if (this._dragPlaceholder) {
+				boxHeight -= this._dragPlaceholder.height;
+				numChildren--;
+			}
+
+			if (!this._emptyDropTarget) {
+				pos = Math.floor(y * numChildren / boxHeight);
+				if (pos >  numChildren)
+					pos = numChildren;
+			} else
+				pos = 0; // always insert at the top when dash is empty
+		} else {
+			boxWidth = this._table.width;
+			if (this._dragPlaceholder) {
+				boxWidth -= this._dragPlaceholder.width;
+				numChildren--;
+			}
+
+			if (!this._emptyDropTarget) {
+				pos = Math.floor(x * numChildren / boxWidth);
+			}
+		}
+
+        if (pos != this._dragPlaceholderPos && pos <= numLinks && this._animatingPlaceholdersCount == 0) {
+            this._dragPlaceholderPos = pos;
+
+            // Don't allow positioning before or after self
+            if (linkPos != -1 && (pos == linkPos || pos == linkPos + 1)) {
+                this._clearDragPlaceholder();
+                return DND.DragMotionResult.CONTINUE;
+            }
+
+            // If the placeholder already exists, we just move
+            // it, but if we are adding it, expand its size in
+            // an animation
+            let fadeIn;
+            if (this._dragPlaceholder) {
+                this._dragPlaceholder.destroy();
+                fadeIn = false;
+            } else {
+                fadeIn = true;
+            }
+
+            this._dragPlaceholder = new Dash.DragPlaceholderItem();
+			if (!dock_horizontal) {
+				this._dragPlaceholder.child.set_width (this.iconSize);
+				this._dragPlaceholder.child.set_height (this.iconSize / 2);
+
+			} else {
+				this._dragPlaceholder.child.set_width (this.iconSize / 2);
+				this._dragPlaceholder.child.set_height (this.iconSize);
+			}
+            this._table.insert_child_at_index(this._dragPlaceholder,
+                                            this._dragPlaceholderPos);
+            this._dragPlaceholder.show(fadeIn);
+        }
+
+        // Remove the drag placeholder if we are not in the
+        // "link zone"        
+        if (pos > numLinks)
+            this._clearDragPlaceholder();
+
+        if (!this._dragPlaceholder)
+            return DND.DragMotionResult.NO_DROP;
+
+        if (linkPos != -1)
+            return DND.DragMotionResult.MOVE_DROP;
+
+        return DND.DragMotionResult.COPY_DROP;
+    },
+
+    // Draggable target interface
+    acceptDrop : function(source, actor, x, y, time) {
+log('dropped1 '+this._table.get_children().length+' '+(!this._dragPlaceholder));		
+		
+        // No drag placeholder means we don't wan't to add tray
+        // and we are dragging it to its original position
+//        if (!this._dragPlaceholder)
+//            return false;		
+		
+        let link;
+		if (source instanceof myFileIcon) {
+			link = source;		
+		} else {
+			link = null;
+			return false;
+		}
+
+		let links = this._table.get_children();
+
+        let linkPos = 0;
+
+        let children = this._table.get_children();
+        
+        for (let i = 0; i < this._dragPlaceholderPos; i++) {
+            if (this._dragPlaceholder && children[i] == this._dragPlaceholder)
+                continue;
+
+			linkPos++;
+        }
+
+//		link.actor.unparent();
+//		this._table.replace_child(this._dragPlaceholder, link.actor);
+//		this.linksStorage.move_link(link.id, linkPos);
+//		this._clearDragPlaceholder();
+
+
+log('dropped2 '+this._table.get_children().length+'  linkpos '+linkPos);	
+		return true;
+    }         
 });
 
 Signals.addSignalMethods(myLinkTrayMenu.prototype);
-/*
+
 const myFileIcon = new Lang.Class({
     Name: 'myFileIcon',
-    Extends: St.BoxLayout,
 
     _init: function (filepath, size, menu) {
-        this.parent({ vertical: true, clip_to_allocation: true, x_expand: false,
-			margin_top: 5, margin_right: 5, margin_bottom: 5, margin_left: 5});
-        
-        this.iconSize = size;
-        this.menu = menu;
-		let btn = new St.Button({ style_class: 'show-apps',
-									reactive: true,
-									button_mask: St.ButtonMask.ONE | St.ButtonMask.TWO,
-									can_focus: true,
-									x_fill: true,
-									y_fill: true,
-									track_hover: true });
-		btn.file = Gio.file_new_for_path(filepath);
-
-		let icon = new St.Icon({ icon_size: this.iconSize, 
-									style_class: 'show-apps',
-									track_hover: true });
-					
-		let info = btn.file.query_info('standard::icon,thumbnail::path', 0, null);
-					
-		if(info.get_file_type() == Gio.FileType.DIRECTORY) {
-			icon.icon_name = 'folder';
-		} else {
-			let gicon = null;
-			let thumbnail_path = info.get_attribute_as_string('thumbnail::path', 0, null);
-			if (thumbnail_path) {
-				gicon = Gio.icon_new_for_string(thumbnail_path);
-			} else {
-				let icon_internal = info.get_icon()
-				let icon_path = null;
-				if (icon_internal instanceof Gio.ThemedIcon) {
-					icon_path = icon_internal.get_names()[0];
-				} else if (icon_internal instanceof Gio.FileIcon) {
-					icon_path = icon.get_file().get_path();
-				}
-					gicon = Gio.icon_new_for_string(icon_path);
-			}
-			icon.set_gicon(gicon);
-		}
-
-		btn.add_actor(icon);
-					
-		btn.connect('clicked', Lang.bind(this, function () {
-			this.menu.toggle();
-			let handler = btn.file.query_default_handler (null);
-			let result = handler.launch ([btn.file], null);
-		}));
-
-		this.add(btn);
-		let label = new St.Label({text: btn.file.get_basename(), x_align: St.Align.MIDDLE });
-		this.add(label, { x_align: St.Align.MIDDLE });
-    }
-});
-*/
-const myFileIcon = new Lang.Class({
-    Name: 'myFileIcon',
-
-    _init: function (filepath, size) {
-        this.iconSize = size;
 		this.file = Gio.file_new_for_path(filepath);
+		this.iconSize = size;
+		this.menu = menu;
 
         this.actor = new St.Button({ style_class: 'app-well-app',
                                      reactive: true,
@@ -812,22 +983,63 @@ const myFileIcon = new Lang.Class({
                                      y_fill: true });
 		this.actor._delegate = this;
         this.actor.connect('clicked', Lang.bind(this, function () {
+			this.menu.toggle();
 			let handler = this.file.query_default_handler (null);
 			let result = handler.launch ([this.file], null);
 		}));
 
-        this.icon = new IconGrid.BaseIcon(this.file.get_basename(), { setSizeManually: true, 
+        this.icon = new IconGrid.BaseIcon(this.file.get_basename(), { setSizeManually: true,
 			showLabel: true, createIcon: Lang.bind(this, this._createIcon) });
 			
         this.icon.setIconSize(this.iconSize);
         
         // Ensure wider labels get more visual space
-        this.icon.actor.width = 2*this.iconSize;
+//        this.icon.actor.width = 3*this.iconSize;
 
 		this.actor.set_child(this.icon.actor);
 		
 		// Moves the label to the middle		
-		this.icon.actor.get_child().set_x_align(St.Align.MIDDLE);
+//		this.icon.actor.get_child().set_x_align(St.Align.MIDDLE);
+		
+//this.icon.actor.get_child().set_x_expand(true);
+//this.icon.actor.get_child().set_style('background-color: green; text-align: center;');
+//this.icon.actor.get_child().width = 3*this.iconSize;
+
+//this.icon.actor.set_style('background-color: blue;');
+//log('ooooo '+this.icon.actor.get_child());
+
+
+//this.icon.actor.get_child().get_last_child().set_style('background-color: purple;');
+
+
+//this.icon.actor.get_child().get_last_child()
+//.add_style_class_name('overview-icon');
+
+//let themeNode = this.icon.actor.get_child().get_last_child().get_theme_node();
+//let newStyle = 'background-color: purple; text-align: center;';
+
+
+/*
+
+let oldStyle = this.dash._container.get_style();
+this.dash._container.set_style(null);
+
+
+this.icon.actor.get_child().get_last_child().add_style_class_name('overview-icon-with-label');
+this.icon.actor.get_child().get_last_child().add_style_class_name('overview-icon');
+this.icon.actor.get_child().get_last_child().set_style(null);
+this.icon.actor.get_child().get_last_child().set_style(newStyle);
+*/
+
+
+
+//log('zzzzzzzzz '+ themeNode.get_text_align() );
+/*
+let oldStyle = this.icon.actor.get_child().get_last_child().get_style();
+let oldStyle1 = this.icon.actor.get_child().get_style();
+log('..........> '+oldStyle+' '+oldStyle1);
+this.icon.actor.get_child().get_last_child().set_style('max-width: 15px; text-align: center;');
+*/
 				
 		let info = this.file.query_info('standard::icon,thumbnail::path', 0, null);
 					
@@ -850,6 +1062,26 @@ const myFileIcon = new Lang.Class({
 			}
 			this.icon.actor.get_child().get_first_child().get_first_child().set_gicon(gicon);
 		}
+		
+//--------------------------------------------------------------------------
+        this._draggable = DND.makeDraggable(this.actor);       
+        this._draggable.connect('drag-begin', Lang.bind(this,
+            function () {
+                this.menu._removeMenuTimeout();
+				Main.overview.beginItemDrag(this);
+				//this._onDragBegin();
+            }));
+        this._draggable.connect('drag-cancelled', Lang.bind(this,
+            function () {
+				Main.overview.cancelledItemDrag(this);
+				//this._onDragCancelled();
+            }));
+        this._draggable.connect('drag-end', Lang.bind(this,
+            function () {
+				Main.overview.endItemDrag(this);
+				//this._onDragEnd();
+            }));
+//--------------------------------------------------------------------------		
     },
 
     _createIcon: function(size) {
@@ -858,7 +1090,7 @@ const myFileIcon = new Lang.Class({
 								icon_size: size,
 								style_class: 'show-apps-icon',
 								track_hover: true });
-    }, 
+    }
 });
 
 //this.box.set_style('background-color: yellow;');//Debugging
