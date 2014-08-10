@@ -127,7 +127,7 @@ const myLinkTray = new Lang.Class({
 		this.menu_secondary.actor.hide();	  
         
 		this.menuManager.addMenu(this.menu);
-		this.menuManager.addMenu(this.menu_secondary);//ERROR: push Modal: invocation of begin_modal failed: WHY??
+		this.menuManager.addMenu(this.menu_secondary);
 
 //--------------------------------------------------------------------------
         this._draggable = DND.makeDraggable(this.actor);
@@ -378,7 +378,7 @@ const myLinkBox = new Lang.Class({
     Name: 'myLinkBox',
     Extends: St.BoxLayout,
     
-	_init: function(iconSize, settings, functionHookLabel) {
+	_init: function(iconSize, settings, dash) {
 log ('HOOOOORAY');
 
 		if (!dock_horizontal) {
@@ -387,15 +387,17 @@ log ('HOOOOORAY');
 			this.parent({ vertical: false, clip_to_allocation: true });
 		}
 
-        this._boxLinks;
-        if (!dock_horizontal) {
-			this._boxLinks = new St.BoxLayout({ vertical: true, clip_to_allocation: false });
-		} else {
-			this._boxLinks = new St.BoxLayout({ vertical: false, clip_to_allocation: false });
-		}
-		this._boxLinks._delegate = this;
+        this._dragPlaceholder = null;
+        this._dragPlaceholderPos = -1;
+        this._animatingPlaceholdersCount = 0;
 
-		this._appsContainer;
+        this._box;
+        if (!dock_horizontal) {
+			this._box = new St.BoxLayout({ vertical: true, clip_to_allocation: false });
+		} else {
+			this._box = new St.BoxLayout({ vertical: false, clip_to_allocation: false });
+		}
+		this._box._delegate = this;
 
 		this._scrollView = new St.ScrollView({ reactive: true });
         if (!dock_horizontal) {
@@ -406,10 +408,19 @@ log ('HOOOOORAY');
 			this._scrollView.hscroll.hide();
 		}
 
-		this._scrollView.add_actor(this._boxLinks);
+		this._scrollView.add_actor(this._box);
 		this._scrollView.connect('scroll-event', Lang.bind(this, this._onScrollEvent ));
-		//this._appsContainer.add_actor(this._scrollView);
 		this.add_actor(this._scrollView);
+		
+		
+		for (let i = 0; i < 5 ;i++) {
+			this._linkTray = new myLinkTray(iconSize, settings);
+			this._linkTray.childScale = 1;
+			this._linkTray.childOpacity = 255;
+			this._linkTray.icon.setIconSize(iconSize);
+			dash._hookUpLabelForApplets(this._linkTray);
+			this._box.add(this._linkTray.actor);
+		}			
 	},
 	
 	_onScrollEvent: function(actor, event) {
@@ -453,7 +464,234 @@ log ('HOOOOORAY');
 			let hscroll = scroll_actor.get_hscroll_bar();
 			hscroll.get_adjustment().set_value(hscroll.get_adjustment().get_value() + scroll_actor.width);			
 		}
-    },	
+    },
+    
+    _onDragBegin: function() {
+        this._dragCancelled = false;
+        this._dragMonitor = {
+            dragMotion: Lang.bind(this, this._onDragMotion)
+        };
+        DND.addDragMonitor(this._dragMonitor);
+
+        if (this._box.get_n_children() == 0) {
+            this._emptyDropTarget = new Dash.EmptyDropTargetItem();
+            this._box.insert_child_at_index(this._emptyDropTarget, 0);
+            this._emptyDropTarget.show(true);
+        }
+    },
+
+    _onDragCancelled: function() {
+        this._dragCancelled = true;
+        this._endDrag();
+    },
+
+    _onDragEnd: function() {
+        if (this._dragCancelled)
+            return;
+
+        this._endDrag();
+    },
+
+    _endDrag: function() {
+        this._clearDragPlaceholder();
+        this._clearEmptyDropTarget();
+        this._showAppsIcon.setDragApp(null);
+        DND.removeDragMonitor(this._dragMonitor);
+    },
+
+    _onDragMotion: function(dragEvent) {
+        let app = Dash.getAppFromSource(dragEvent.source);
+        if (app == null)
+            return DND.DragMotionResult.CONTINUE;
+
+        let showAppsHovered = this._showAppsIcon.contains(dragEvent.targetActor);
+
+        if (!this._box.contains(dragEvent.targetActor) || showAppsHovered)
+            this._clearDragPlaceholder();
+
+        if (showAppsHovered)
+            this._showAppsIcon.setDragApp(app);
+        else
+            this._showAppsIcon.setDragApp(null);
+
+        return DND.DragMotionResult.CONTINUE;
+    },
+
+    _clearDragPlaceholder: function() {
+        if (this._dragPlaceholder) {
+            this._animatingPlaceholdersCount++;
+            this._dragPlaceholder.animateOutAndDestroy();
+            this._dragPlaceholder.connect('destroy',
+                Lang.bind(this, function() {
+                    this._animatingPlaceholdersCount--;
+                }));
+            this._dragPlaceholder = null;
+        }
+        this._dragPlaceholderPos = -1;
+    },
+
+    _clearEmptyDropTarget: function() {
+        if (this._emptyDropTarget) {
+            this._emptyDropTarget.animateOutAndDestroy();
+            this._emptyDropTarget = null;
+        }
+    },
+
+    handleDragOver : function(source, actor, x, y, time) {
+
+        // Don't allow to add favourites if they are not displayed
+        if( !this._settings.get_boolean('show-favorites') )
+            return DND.DragMotionResult.NO_DROP;
+
+        let app = Dash.getAppFromSource(source);
+
+        // Don't allow favoriting of transient apps
+        if (app == null || app.is_window_backed())
+            return DND.DragMotionResult.NO_DROP;
+
+        let favorites = AppFavorites.getAppFavorites().getFavorites();
+        let numFavorites = favorites.length;
+
+        let favPos = favorites.indexOf(app);
+
+        let children = this._box.get_children();
+        let numChildren = children.length;
+
+		let pos, boxHeight, boxWidth
+		if (!dock_horizontal) {
+			boxHeight = 0;
+			for (let i = 0; i < numChildren; i++) {
+				boxHeight += children[i].height;
+			}
+
+			// Keep the placeholder out of the index calculation; assuming that
+			// the remove target has the same size as "normal" items, we don't
+			// need to do the same adjustment there.
+			if (this._dragPlaceholder) {
+				boxHeight -= this._dragPlaceholder.height;
+				numChildren--;
+			}
+
+			if (!this._emptyDropTarget){
+				pos = Math.floor(y * numChildren / boxHeight);
+				if (pos >  numChildren)
+					pos = numChildren;
+			} else
+				pos = 0; // always insert at the top when dash is empty
+		} else {
+			boxWidth = this._box.width;
+			if (this._dragPlaceholder) {
+				boxWidth -= this._dragPlaceholder.width;
+				numChildren--;
+			}
+
+			if (!this._emptyDropTarget) {
+				pos = Math.floor(x * numChildren / boxWidth);
+			}
+ 
+		}
+
+        if (pos != this._dragPlaceholderPos && pos <= numFavorites && this._animatingPlaceholdersCount == 0) {
+            this._dragPlaceholderPos = pos;
+
+            // Don't allow positioning before or after self
+            if (favPos != -1 && (pos == favPos || pos == favPos + 1)) {
+                this._clearDragPlaceholder();
+                return DND.DragMotionResult.CONTINUE;
+            }
+
+            // If the placeholder already exists, we just move
+            // it, but if we are adding it, expand its size in
+            // an animation
+            let fadeIn;
+            if (this._dragPlaceholder) {
+                this._dragPlaceholder.destroy();
+                fadeIn = false;
+            } else {
+                fadeIn = true;
+            }
+
+            this._dragPlaceholder = new Dash.DragPlaceholderItem();
+			if (!dock_horizontal) {
+				this._dragPlaceholder.child.set_width (this.iconSize);
+				this._dragPlaceholder.child.set_height (this.iconSize / 2);
+
+			} else {
+				this._dragPlaceholder.child.set_width (this.iconSize / 2);
+				this._dragPlaceholder.child.set_height (this.iconSize);
+			}
+            this._box.insert_child_at_index(this._dragPlaceholder,
+                                            this._dragPlaceholderPos);
+            this._dragPlaceholder.show(fadeIn);
+        }
+
+        // Remove the drag placeholder if we are not in the
+        // "favorites zone"
+        if (pos > numFavorites)
+            this._clearDragPlaceholder();
+
+        if (!this._dragPlaceholder)
+            return DND.DragMotionResult.NO_DROP;
+
+        let srcIsFavorite = (favPos != -1);
+
+        if (srcIsFavorite)
+            return DND.DragMotionResult.MOVE_DROP;
+
+        return DND.DragMotionResult.COPY_DROP;
+    },
+
+    // Draggable target interface
+    acceptDrop : function(source, actor, x, y, time) {
+
+        // Don't allow to add favourites if they are not displayed
+        if( !this._settings.get_boolean('show-favorites') )
+            return true;
+
+        let app = Dash.getAppFromSource(source);
+
+        // Don't allow favoriting of transient apps
+        if (app == null || app.is_window_backed()) {
+            return false;
+        }
+
+        let id = app.get_id();
+
+        let favorites = AppFavorites.getAppFavorites().getFavoriteMap();
+
+        let srcIsFavorite = (id in favorites);
+
+        let favPos = 0;
+        let children = this._box.get_children();
+        for (let i = 0; i < this._dragPlaceholderPos; i++) {
+            if (this._dragPlaceholder &&
+                children[i] == this._dragPlaceholder)
+                continue;
+
+            let childId = children[i].child._delegate.app.get_id();
+            if (childId == id)
+                continue;
+            if (childId in favorites)
+                favPos++;
+        }
+
+        // No drag placeholder means we don't wan't to favorite the app
+        // and we are dragging it to its original position
+        if (!this._dragPlaceholder)
+            return true;
+
+        Meta.later_add(Meta.LaterType.BEFORE_REDRAW, Lang.bind(this,
+            function () {
+                let appFavorites = AppFavorites.getAppFavorites();
+                if (srcIsFavorite)
+                    appFavorites.moveFavoriteToPos(id, favPos);
+                else
+                    appFavorites.addFavoriteAtPos(id, favPos);
+                return false;
+            }));
+
+        return true;
+    }	
 });
 
 Signals.addSignalMethods(myLinkBox.prototype);
@@ -518,7 +756,11 @@ this.actor.add_style_class_name('popup-menu-content2');
 		let box = new St.BoxLayout({vertical: true, x_align: Clutter.ActorAlign.CENTER});//TODO: verticality	
 		
 		item.actor.add_child(box);
+		
+		
 		let icon = fav.create_icon_texture(parseInt(this.iconSize, 10));
+//let icon = fav.create_icon_texture(this.iconSize);		
+		
 		box.add(icon, {x_align: Clutter.ActorAlign.CENTER});
 		let label = new St.Label({text: fav.get_name(), x_align: Clutter.ActorAlign.CENTER});
 		

@@ -170,32 +170,7 @@ const myDash = new Lang.Class({
 		this._scrollView.add_actor(this._box);
 		this._scrollView.connect('scroll-event', Lang.bind(this, this._onScrollEvent ));
 		this._appsContainer.add_actor(this._scrollView);
-/*
-        this._boxLinks;
-        if (!dock_horizontal) {
-			this._boxLinks = new St.BoxLayout({ vertical: true, clip_to_allocation: false });
-		} else {
-			this._boxLinks = new St.BoxLayout({ vertical: false, clip_to_allocation: false });
-		}
-		this._boxLinks._delegate = this;
 
-		this._appsContainer2;
-		
-		this._scrollView2 = new St.ScrollView({ reactive: true });
-        if (!dock_horizontal) {
-			this._scrollView2.hscrollbar_policy = Gtk.PolicyType.NEVER;
-			this._scrollView2.vscroll.hide();
-			this._appsContainer2 = new St.BoxLayout({ vertical: true, clip_to_allocation: false });
-		} else {
-			this._scrollView2.vscrollbar_policy = Gtk.PolicyType.NEVER;
-			this._scrollView2.hscroll.hide();
-			this._appsContainer2 = new St.BoxLayout({ vertical: false, clip_to_allocation: true });	
-		}
-
-		this._scrollView2.add_actor(this._boxLinks);
-		this._scrollView2.connect('scroll-event', Lang.bind(this, this._onScrollEvent ));
-		this._appsContainer2.add_actor(this._scrollView2);
-*/
 		// Init Show Apps applet	
 		this.showAppsButton = new St.Button({ toggle_mode: true });
 		this._showAppsIcon = null;
@@ -285,46 +260,10 @@ const myDash = new Lang.Class({
 						break;
 					case 3:
 						if (this._settings.get_boolean('applet-links-tray-visible')) {
-/*
-							this._linkTray = new Widgets.myLinkTray(this.iconSize, this._settings);
-							this._linkTray.childScale = 1;
-							this._linkTray.childOpacity = 255;
-							this._linkTray.icon.setIconSize(this.iconSize);
-							this._hookUpLabelForApplets(this._linkTray);
-							//this._container.add_actor(this._linkTray.actor);//PREVIOUS was direct
-							this._boxLinks.add(this._linkTray.actor);
-							this._container.add_actor(this._appsContainer2);
-*/
-
-/*
-							for (let i = 0; i < 5 ;i++) {
-								this._linkTray = new Widgets.myLinkTray(this.iconSize, this._settings);
-								this._linkTray.childScale = 1;
-								this._linkTray.childOpacity = 255;
-								this._linkTray.icon.setIconSize(this.iconSize);
-								this._hookUpLabelForApplets(this._linkTray);
-								//this._container.add_actor(this._linkTray.actor);//PREVIOUS was direct
-								this._boxLinks.add(this._linkTray.actor);
-							}
-							this._container.add_actor(this._appsContainer2);
-*/							
-
-							this._linksBox = new Widgets.myLinkBox(this.iconSize, this._settings, this._hookUpLabelForApplets);
-							
-							
-							for (let i = 0; i < 5 ;i++) {
-								this._linkTray = new Widgets.myLinkTray(this.iconSize, this._settings);
-								this._linkTray.childScale = 1;
-								this._linkTray.childOpacity = 255;
-								this._linkTray.icon.setIconSize(this.iconSize);
-								//this._hookUpLabelForApplets(this._linkTray);
-								//this._container.add_actor(this._linkTray.actor);//PREVIOUS was direct
-								this._linksBox.add(this._linkTray.actor);
-							}							
-							
-							
-							this._container.add_actor(this._linksBox);
-
+							this._linksBox = new Widgets.myLinkBox(this.iconSize, 
+								this._settings, this);
+														
+							this._container.add_actor(this._linksBox);						
 						}
 						break;
 					case 4:
@@ -352,7 +291,7 @@ const myDash = new Lang.Class({
 				}
 			}
 		} catch (e) {
-			log("Error in adding applets "+e.message);
+			log("Error in adding applets: "+e.message);
 		}
     },
       
@@ -478,7 +417,8 @@ const myDash = new Lang.Class({
         }
     },
 
-    _hookUpLabelForApplets: function(item) {	
+    _hookUpLabelForApplets: function(item) {
+log('WHYYYY IWEEE '+item+'  '+item.actor);		
         item.actor.connect('notify::hover', Lang.bind(this, function() {
             this._syncLabelForApplets(item);
         }));
