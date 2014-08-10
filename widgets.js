@@ -469,62 +469,6 @@ const myLinkBox = new Lang.Class({
 			hscroll.get_adjustment().set_value(hscroll.get_adjustment().get_value() + scroll_actor.width);			
 		}
     },
-    
-    _onDragBegin: function() {
-        this._dragCancelled = false;
-        this._dragMonitor = {
-            dragMotion: Lang.bind(this, this._onDragMotion)
-        };
-        DND.addDragMonitor(this._dragMonitor);
-
-        if (this._box.get_n_children() == 0) {
-            this._emptyDropTarget = new Dash.EmptyDropTargetItem();
-            this._box.insert_child_at_index(this._emptyDropTarget, 0);
-            this._emptyDropTarget.show(true);
-        }
-log('_onDragBegin');
-    },
-
-    _onDragCancelled: function() {
-        this._dragCancelled = true;
-        this._endDrag();
-log('_onDragCancelled');        
-    },
-
-    _onDragEnd: function() {
-        if (this._dragCancelled)
-            return;
-
-        this._endDrag();
-log('_onDragEnd');            
-    },
-
-    _endDrag: function() {
-        this._clearDragPlaceholder();
-        this._clearEmptyDropTarget();
-        this._showAppsIcon.setDragApp(null);
-        DND.removeDragMonitor(this._dragMonitor);
-log('_endDrag');             
-    },
-
-    _onDragMotion: function(dragEvent) {
-        let app = Dash.getAppFromSource(dragEvent.source);
-        if (app == null)
-            return DND.DragMotionResult.CONTINUE;
-
-        let showAppsHovered = this._showAppsIcon.contains(dragEvent.targetActor);
-
-        if (!this._box.contains(dragEvent.targetActor) || showAppsHovered)
-            this._clearDragPlaceholder();
-
-        if (showAppsHovered)
-            this._showAppsIcon.setDragApp(app);
-        else
-            this._showAppsIcon.setDragApp(null);
-
-        return DND.DragMotionResult.CONTINUE;
-log('_onDragMotion');          
-    },
 
     _clearDragPlaceholder: function() {
         if (this._dragPlaceholder) {
@@ -537,21 +481,9 @@ log('_onDragMotion');
             this._dragPlaceholder = null;
         }
         this._dragPlaceholderPos = -1;
-log('_clearDragPlaceholder');        
-    },
-
-    _clearEmptyDropTarget: function() {
-        if (this._emptyDropTarget) {
-            this._emptyDropTarget.animateOutAndDestroy();
-            this._emptyDropTarget = null;
-        }
-log('_clearEmptyDropTarget');           
     },
 
     handleDragOver : function(source, actor, x, y, time) {
-        if( !this._settings.get_boolean('applet-links-tray-visible') )
-            return DND.DragMotionResult.NO_DROP;
-
         let tray;
 		if (source instanceof myLinkTray) {
 			tray = source;
@@ -586,7 +518,7 @@ log('_clearEmptyDropTarget');
 				numChildren--;
 			}
 
-			if (!this._emptyDropTarget){
+			if (!this._emptyDropTarget) {
 				pos = Math.floor(y * numChildren / boxHeight);
 				if (pos >  numChildren)
 					pos = numChildren;
@@ -639,7 +571,7 @@ log('_clearEmptyDropTarget');
         }
 
         // Remove the drag placeholder if we are not in the
-        // "favorites zone"
+        // "tray zone"        
         if (pos > numTrays)
             this._clearDragPlaceholder();
 
@@ -654,15 +586,17 @@ log('_clearEmptyDropTarget');
 
     // Draggable target interface
     acceptDrop : function(source, actor, x, y, time) {
-        if( !this._settings.get_boolean('applet-links-tray-visible') )
-            return true;
-
+        // No drag placeholder means we don't wan't to add tray
+        // and we are dragging it to its original position
+        if (!this._dragPlaceholder)
+            return false;		
+		
         let tray;
 		if (source instanceof myLinkTray) {
 			tray = source;
 		} else {
 			tray = null;
-			return true;
+			return false;
 		}
 
 		let trays = this._box.get_children();
@@ -681,58 +615,12 @@ log('_clearEmptyDropTarget');
 			trayPos++;
         }
 
-        // No drag placeholder means we don't wan't to add tray
-        // and we are dragging it to its original position
-        if (!this._dragPlaceholder)
-            return true;
+		tray.actor.unparent();
+		this._box.replace_child(this._dragPlaceholder, tray.actor);
 
-/*
-log('accFrop new position '+id+' trayPos '+trayPos+'  however '+this._box.get_children().length);
-children.splice(trayPos, 0, app);
-
-log("......> "+app);
-for (let i = 0; i < children.length ;i++) {
-//log("......----> "+i+'  '+children[i]);
-
-log("......----> "+(app == this._box.get_child_at_index(trayPos) ));
-
-}
-*/
-
-//this._box.insert_child_at_index
-//this._box.replace_child(this._dragPlaceholder, tray);
-
-//this._box.replace_child(
-//this._box.get_child_at_index(trayPos),
-//tray);
-
-//this._box.insert_child_at_index(tray.actor, 1);
-
-//-------------------------------------------------------------------------------
-//        if (trayPos == -1)
-//             this._box.push(tray);
-//        else
-//             this._box.splice(trayPos, 0, tray);
-//-------------------------------------------------------------------------------
-
-
-log('aaaaaaaaaaaaa '+this._box.get_children().length+'  trayPos='+trayPos);
-//this._box.splice(trayPos, 0, tray);
-
-
-//this._box.remove_child(this._dragPlaceholder);
-
-//this._box.insert_child_at_index(tray.actor, trayPos);//'child->priv->parent == NULL' failed
-
-log(tray.actor.get_parent() );//
-
-tray.actor.unparent();
-
-this._box.replace_child (this._dragPlaceholder, tray.actor);
-
-
-return true;//removes from par
-//		return false;//always add to the end
+        this._clearDragPlaceholder();
+	
+		return true;
     }	
 });
 

@@ -256,6 +256,7 @@ const myDash = new Lang.Class({
 						}
 						break;
 					case 2:
+						if (this._settings.get_boolean('applet-favourite-apps-visible'))
 						this._container.add_actor(this._appsContainer);
 						break;
 					case 3:

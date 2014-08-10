@@ -569,9 +569,16 @@ const WorkspaceSettingsWidget = new GObject.Class({// FIXME: Why call it this fu
 
 		let FavouriteAppsApplet = new Gtk.Box({orientation: Gtk.Orientation.VERTICAL,
 			margin_top:10, margin_right:10, margin_bottom:0,  margin_left:10})
+			
+		let FavouriteAppsAppletContainer = new Gtk.Box();
 		
 		let FavouriteAppsAppletLabel = new Gtk.Label({label: _("2. Favourite Apps"), hexpand: true, halign: Gtk.Align.START});
-
+		let FavouriteAppsAppletSwitch = new Gtk.Switch({hexpand: true, halign: Gtk.Align.END});
+			FavouriteAppsAppletSwitch.set_active(this.settings.get_boolean('applet-favourite-apps-visible'));
+			FavouriteAppsAppletSwitch.connect('notify::active', Lang.bind(this, function(check){
+					this.settings.set_boolean('applet-favourite-apps-visible', check.get_active());
+				}));
+				
 		let showFavorites =  new Gtk.CheckButton({label: _("Show Favorite applications")});
 			showFavorites.set_active(this.settings.get_boolean('show-favorites'));
 			showFavorites.connect('toggled', Lang.bind(this, function(check){
@@ -585,7 +592,9 @@ const WorkspaceSettingsWidget = new GObject.Class({// FIXME: Why call it this fu
 			}));
 		indentWidget(showRunning);
 		
-		FavouriteAppsApplet.add(FavouriteAppsAppletLabel);
+		FavouriteAppsAppletContainer.add(FavouriteAppsAppletLabel);
+		FavouriteAppsAppletContainer.add(FavouriteAppsAppletSwitch);
+		FavouriteAppsApplet.add(FavouriteAppsAppletContainer);
 		FavouriteAppsApplet.add(showFavorites);
 		FavouriteAppsApplet.add(showRunning);		
 
@@ -709,6 +718,9 @@ const WorkspaceSettingsWidget = new GObject.Class({// FIXME: Why call it this fu
 		OrderOfAppletsButtons.add(btnMoveAppletDown);
 		OrderOfApplets.add(treeOrder);
 		OrderOfApplets.add(OrderOfAppletsButtons);
+		
+		this.settings.bind('applet-favourite-apps-visible', showFavorites, 'sensitive', Gio.SettingsBindFlags.DEFAULT);
+		this.settings.bind('applet-favourite-apps-visible', showRunning, 'sensitive', Gio.SettingsBindFlags.DEFAULT);
 		
 		/* ADDING SETTINGS TO PAGE */
 		
