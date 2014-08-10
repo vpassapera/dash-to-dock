@@ -135,8 +135,8 @@ const myLinkBox = new Lang.Class({
 			this.loadTray(this.linksStorage.links_data.folders[i].collection_id);	
 		}
 
-let item = new myFileIconSPECIAL('/home/pc', this.iconSize);
-this._box.add(item.actor);		
+//let item = new myFileIconSPECIAL('/home/pc', this.iconSize);
+//this._box.add(item.actor);		
 //++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	},
 
@@ -706,7 +706,7 @@ const myLinkTrayMenu = new Lang.Class({
 			for(let icol = 0 ; icol < icols ;icol++) {
 				let item = new myFileIcon(files[i].link, this.iconSize, this);
 										
-				this._table.add(item, { row: irow, col: icol, x_fill: false, y_fill: false, 
+				this._table.add(item.actor, { row: irow, col: icol, x_fill: false, y_fill: false, 
 					x_align: St.Align.MIDDLE, y_align: St.Align.START});
 
 				i++;
@@ -737,7 +737,7 @@ const myLinkTrayMenu = new Lang.Class({
 });
 
 Signals.addSignalMethods(myLinkTrayMenu.prototype);
-
+/*
 const myFileIcon = new Lang.Class({
     Name: 'myFileIcon',
     Extends: St.BoxLayout,
@@ -796,12 +796,12 @@ const myFileIcon = new Lang.Class({
 		this.add(label, { x_align: St.Align.MIDDLE });
     }
 });
-
-const myFileIconSPECIAL = new Lang.Class({
-    Name: 'myFileIconSPECIAL',
+*/
+const myFileIcon = new Lang.Class({
+    Name: 'myFileIcon',
 
     _init: function (filepath, size) {
-        this.iconSize = size;filepath = '/home/pc/extensions_bak';
+        this.iconSize = size;
 		this.file = Gio.file_new_for_path(filepath);
 
         this.actor = new St.Button({ style_class: 'app-well-app',
@@ -816,8 +816,6 @@ const myFileIconSPECIAL = new Lang.Class({
 			let result = handler.launch ([this.file], null);
 		}));
 
-//		this.label = new St.Label({ text: "ssss", x_align: St.Align.MIDDLE }); //this.file.get_basename()
-
         this.icon = new IconGrid.BaseIcon(this.file.get_basename(), { setSizeManually: true, 
 			showLabel: true, createIcon: Lang.bind(this, this._createIcon) });
 			
@@ -825,17 +823,11 @@ const myFileIconSPECIAL = new Lang.Class({
         
         // Ensure wider labels get more visual space
         this.icon.actor.width = 2*this.iconSize;
-        
-//this.icon.label.set_x_align(St.Align.MIDDLE);
-
-
 
 		this.actor.set_child(this.icon.actor);
-
-
-//this.icon.actor.get_child().get_last_child().set_x_align(St.Align.MIDDLE);	
-this.icon.actor.get_child().set_x_align(St.Align.MIDDLE);		
-log('jjjjj '+this.icon.box+'  '+ this.icon.actor.get_child().get_last_child()  );
+		
+		// Moves the label to the middle		
+		this.icon.actor.get_child().set_x_align(St.Align.MIDDLE);
 				
 		let info = this.file.query_info('standard::icon,thumbnail::path', 0, null);
 					
@@ -856,12 +848,13 @@ log('jjjjj '+this.icon.box+'  '+ this.icon.actor.get_child().get_last_child()  )
 				}
 					gicon = Gio.icon_new_for_string(icon_path);
 			}
-//			this.icon.set_gicon(gicon);
+			this.icon.actor.get_child().get_first_child().get_first_child().set_gicon(gicon);
 		}
     },
 
     _createIcon: function(size) {
-        return new St.Icon({ gicon: Gio.icon_new_for_string(Me.path + "/media/links-tray.svg"),
+        return new St.Icon({ //gicon: Gio.icon_new_for_string(Me.path + "/media/links-tray.svg"),
+								icon_name: 'folder',
 								icon_size: size,
 								style_class: 'show-apps-icon',
 								track_hover: true });
