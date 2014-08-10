@@ -102,7 +102,6 @@ const myLinkBox = new Lang.Class({
 
 		this._settings = settings;
 		this.iconSize = iconSize;
-		this._dash = dash;
 
         this._dragPlaceholder = null;
         this._dragPlaceholderPos = -1;
@@ -132,15 +131,26 @@ const myLinkBox = new Lang.Class({
 		this.linksStorage = new Convenience.LinksDB();
 
 		for(let i = 0; i < this.linksStorage.links_data.folders.length ;i++) {
-			this.loadTray(this.linksStorage.links_data.folders[i].collection_id);	
-		}			
+			this._linkTray = new myLinkTray(iconSize, settings, this.linksStorage, i);
+			this._linkTray.childScale = 1;
+			this._linkTray.childOpacity = 255;
+			this._linkTray.icon.setIconSize(iconSize);
+			dash._hookUpLabelForApplets(this._linkTray);
+			this._box.add(this._linkTray.actor);
+		}		
 	},
 
+    destroy: function() {
+        this.actor._delegate = null;            
+        this.actor.destroy();
+        this.emit('destroy');
+    },
+
     loadTray: function(trayId) {
-		this._linkTray = new myLinkTray(this.iconSize, this._settings, this, trayId);
+		this._linkTray = new myLinkTray(this._iconSize, this._settings, this, trayId);
 		this._linkTray.childScale = 1;
 		this._linkTray.childOpacity = 255;
-		this._linkTray.icon.setIconSize(this.iconSize);
+		this._linkTray.icon.setIconSize(this._iconSize);
 		this._dash._hookUpLabelForApplets(this._linkTray);
 		this._box.add(this._linkTray.actor);
     },
@@ -345,11 +355,12 @@ const myLinkBox = new Lang.Class({
 			trayPos++;
         }
 
-	tray.actor.unparent();
-	this._box.replace_child(this._dragPlaceholder, tray.actor);
-	this.linksStorage.move_tray();
-	this._clearDragPlaceholder();
-	return true;
+		tray.actor.unparent();
+		this._box.replace_child(this._dragPlaceholder, tray.actor);
+
+        this._clearDragPlaceholder();
+	
+		return true;
     }	
 });
 
@@ -358,7 +369,7 @@ Signals.addSignalMethods(myLinkBox.prototype);
 const myLinkTray = new Lang.Class({
     Name: 'myLinkTray',
                         
-    _init: function(iconSize, settings, myLinkBoxInstance, id) {
+    _init: function(iconSize, settings, linksStorage, ii) {
 		this._labelText = _("Links Tray");
 		this.label = new St.Label({ style_class: 'dash-label'});
 		this.label.hide();
@@ -366,10 +377,12 @@ const myLinkTray = new Lang.Class({
 		this.label_actor = this.label;
 
 		this._settings = settings;
-		this._iconSize = iconSize;
-		this._myLinkBoxInstance = myLinkBoxInstance;
-		this._id = id;
-		
+		this.iconSize = iconSize;
+		this.linksStorage = linksStorage;
+//TODO: make it unique
+//FIXME: IF THERE ARE NO TRAYS?
+		this.id = this.linksStorage.links_data.folders[ii].collection_order;
+
         this.actor = new St.Button({ style_class: 'app-well-app',
                                      reactive: true,
                                      button_mask: St.ButtonMask.ONE | St.ButtonMask.TWO,
@@ -385,7 +398,7 @@ const myLinkTray = new Lang.Class({
 				
 		this.menuManager = new PopupMenu.PopupMenuManager(this);		
 
-		this.menu = new myLinkTrayMenu(this.actor, this._iconSize, this._myLinkBoxInstance.linksStorage, this._id);
+		this.menu = new myLinkTrayMenu(this.actor, iconSize, this.linksStorage, this.id);
 		this.menu.actor.hide();
 		this.menu_secondary = new PopupMenu.PopupMenu(this.icon.actor, 0.5, St.Side.BOTTOM, 0);
 		this.menu_secondary.blockSourceEvents = true;		
@@ -648,8 +661,8 @@ const myLinkTrayMenu = new Lang.Class({
 		
         // We want to keep the item hovered while the menu is up
         this.blockSourceEvents = true;
-//TODO: possibly not needed        
-		this.actor.set_style(null);
+this.actor.set_style(null);
+//        this.actor.add_style_class_name('app-well-menu2');
         
         // Chain our visibility and lifecycle to that of the source
         source.connect('notify::mapped', Lang.bind(this, function () {

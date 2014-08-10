@@ -102,7 +102,6 @@ const myLinkBox = new Lang.Class({
 
 		this._settings = settings;
 		this.iconSize = iconSize;
-		this._dash = dash;
 
         this._dragPlaceholder = null;
         this._dragPlaceholderPos = -1;
@@ -130,33 +129,17 @@ const myLinkBox = new Lang.Class({
 		this.add_actor(this._scrollView);
 		
 		this.linksStorage = new Convenience.LinksDB();
-
+		
 		for(let i = 0; i < this.linksStorage.links_data.folders.length ;i++) {
-			this.loadTray(this.linksStorage.links_data.folders[i].collection_id);	
-		}			
+			this._linkTray = new myLinkTray(iconSize, settings, this.linksStorage, i);
+			this._linkTray.childScale = 1;
+			this._linkTray.childOpacity = 255;
+			this._linkTray.icon.setIconSize(iconSize);
+			dash._hookUpLabelForApplets(this._linkTray);
+			this._box.add(this._linkTray.actor);
+		}		
 	},
-
-    loadTray: function(trayId) {
-		this._linkTray = new myLinkTray(this.iconSize, this._settings, this, trayId);
-		this._linkTray.childScale = 1;
-		this._linkTray.childOpacity = 255;
-		this._linkTray.icon.setIconSize(this.iconSize);
-		this._dash._hookUpLabelForApplets(this._linkTray);
-		this._box.add(this._linkTray.actor);
-    },
-
-    addTray: function() {
-		let id = Math.random().toString(36).substr(2, 5);
-		this.linksStorage.add_tray(id);
-		this.loadTray(id);
-    },
-
-    removeTray: function(id) {
-		if (this.linksStorage.links_data.folders.length > 1) {
-			this.linksStorage.remove_tray(id);
-		}
-    },
-     	
+	
 	_onScrollEvent: function(actor, event) {
 		switch(event.get_scroll_direction()) {
 			case Clutter.ScrollDirection.UP:
@@ -345,11 +328,12 @@ const myLinkBox = new Lang.Class({
 			trayPos++;
         }
 
-	tray.actor.unparent();
-	this._box.replace_child(this._dragPlaceholder, tray.actor);
-	this.linksStorage.move_tray();
-	this._clearDragPlaceholder();
-	return true;
+		tray.actor.unparent();
+		this._box.replace_child(this._dragPlaceholder, tray.actor);
+
+        this._clearDragPlaceholder();
+	
+		return true;
     }	
 });
 
@@ -358,7 +342,7 @@ Signals.addSignalMethods(myLinkBox.prototype);
 const myLinkTray = new Lang.Class({
     Name: 'myLinkTray',
                         
-    _init: function(iconSize, settings, myLinkBoxInstance, id) {
+    _init: function(iconSize, settings, linksStorage, ii) {
 		this._labelText = _("Links Tray");
 		this.label = new St.Label({ style_class: 'dash-label'});
 		this.label.hide();
@@ -366,10 +350,12 @@ const myLinkTray = new Lang.Class({
 		this.label_actor = this.label;
 
 		this._settings = settings;
-		this._iconSize = iconSize;
-		this._myLinkBoxInstance = myLinkBoxInstance;
-		this._id = id;
-		
+		this.iconSize = iconSize;
+		this.linksStorage = linksStorage;
+//TODO: make it unique
+//FIXME: IF THERE ARE NO TRAYS?
+		this.id = this.linksStorage.links_data.folders[ii].collection_order;
+
         this.actor = new St.Button({ style_class: 'app-well-app',
                                      reactive: true,
                                      button_mask: St.ButtonMask.ONE | St.ButtonMask.TWO,
@@ -385,7 +371,7 @@ const myLinkTray = new Lang.Class({
 				
 		this.menuManager = new PopupMenu.PopupMenuManager(this);		
 
-		this.menu = new myLinkTrayMenu(this.actor, this._iconSize, this._myLinkBoxInstance.linksStorage, this._id);
+		this.menu = new myLinkTrayMenu(this.actor, iconSize, this.linksStorage, this.id);
 		this.menu.actor.hide();
 		this.menu_secondary = new PopupMenu.PopupMenu(this.icon.actor, 0.5, St.Side.BOTTOM, 0);
 		this.menu_secondary.blockSourceEvents = true;		
@@ -423,7 +409,7 @@ Main.overview.endItemDrag(this);
             this.menu.destroy();
             
         if (this.menu_secondary)
-            this.menu_secondary.destroy();            
+            this.menu_secondary.destroy();
             
         this.actor.destroy();
         this.emit('destroy');
@@ -461,23 +447,16 @@ Main.overview.endItemDrag(this);
 		
 		let itemAddTray = new PopupMenu.PopupBaseMenuItem;
 		let labelAddTray = new St.Label({text: _("Add Another Tray")});
-		itemAddTray.connect("activate", Lang.bind(this, function() { this.callHandler(2) }));
+		itemAddTray.connect("activate", Lang.bind(this, this.addTray));
 		itemAddTray.actor.add_child(labelAddTray);
 		this.menu_secondary.addMenuItem(itemAddTray);		
 	},
     
     callHandler: function(conductor) {
-		switch (conductor) {
-			case 0:
-				new ConfirmFreeContentsDialog(this.menu, this._id, this._myLinkBoxInstance.linksStorage).open();
-                break;
-            case 1:
-				new ConfirmRemoveTrayDialog( this._myLinkBoxInstance, this._id, this ).open();
-                break;
-            case 2:
-				this._myLinkBoxInstance.addTray();
-			default:
-                break;
+		if (conductor == 0) {
+			new ConfirmFreeContentsDialog(Lang.bind(this, this.freeContents)).open();
+		} else if (conductor == 1) {
+			new ConfirmRemoveTrayDialog(Lang.bind(this, this.removeTray)).open();
 		}
     },     
 
@@ -507,6 +486,7 @@ Main.overview.endItemDrag(this);
     },    
 
     parseClipboardLinks: function(text) {
+		
 		let array = text.split("\n");
 		
 		for (let i = 0 ; i < array.length; i++) {
@@ -539,16 +519,28 @@ Main.overview.endItemDrag(this);
 
 	/* The file link is added to the tray and LinksDB. */
     addLink: function(file) {
-		let item = new myPopupImageMenuItem(file, this.iconSize);
-		item.lid = Math.random().toString(36).substr(2, 5);		
+		let item = new myPopupImageMenuItem(file, this.iconSize);	
 		this.menu.addMenuItem(item, 0);
 		item.connect('activate', Lang.bind(this, function () {
 			let handler = file.query_default_handler (null);
 			let result = handler.launch ([file], null);
 		}));
-		this._myLinkBoxInstance.linksStorage.add_link_to_tray(this._id, item.lid, file);		
+				
+		//TODO: add to LinkDB
     },
 
+    freeContents: function() {
+
+    },
+    
+    removeTray: function() {
+
+    },
+    
+    addTray: function() {
+
+    },        
+    
     _removeMenuTimeout: function() {
         if (this._menuTimeoutId > 0) {
             Mainloop.source_remove(this._menuTimeoutId);
@@ -648,8 +640,8 @@ const myLinkTrayMenu = new Lang.Class({
 		
         // We want to keep the item hovered while the menu is up
         this.blockSourceEvents = true;
-//TODO: possibly not needed        
-		this.actor.set_style(null);
+this.actor.set_style(null);
+//        this.actor.add_style_class_name('app-well-menu2');
         
         // Chain our visibility and lifecycle to that of the source
         source.connect('notify::mapped', Lang.bind(this, function () {

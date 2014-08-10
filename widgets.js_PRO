@@ -101,7 +101,7 @@ const myLinkBox = new Lang.Class({
 		}
 
 		this._settings = settings;
-		this.iconSize = iconSize;
+		this._iconSize = iconSize;
 		this._dash = dash;
 
         this._dragPlaceholder = null;
@@ -136,11 +136,17 @@ const myLinkBox = new Lang.Class({
 		}			
 	},
 
+    destroy: function() {
+        this.actor._delegate = null;            
+        this.actor.destroy();
+        this.emit('destroy');
+    },
+
     loadTray: function(trayId) {
-		this._linkTray = new myLinkTray(this.iconSize, this._settings, this, trayId);
+		this._linkTray = new myLinkTray(this._iconSize, this._settings, this, trayId);
 		this._linkTray.childScale = 1;
 		this._linkTray.childOpacity = 255;
-		this._linkTray.icon.setIconSize(this.iconSize);
+		this._linkTray.icon.setIconSize(this._iconSize);
 		this._dash._hookUpLabelForApplets(this._linkTray);
 		this._box.add(this._linkTray.actor);
     },
@@ -345,11 +351,11 @@ const myLinkBox = new Lang.Class({
 			trayPos++;
         }
 
-	tray.actor.unparent();
-	this._box.replace_child(this._dragPlaceholder, tray.actor);
-	this.linksStorage.move_tray();
-	this._clearDragPlaceholder();
-	return true;
+//		tray.actor.unparent();
+//		this._box.replace_child(this._dragPlaceholder, tray.actor);
+//		this.linksStorage.move_tray();
+//	this._clearDragPlaceholder();
+		return true;
     }	
 });
 
