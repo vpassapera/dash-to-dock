@@ -6,8 +6,8 @@
  * 
  */
 
-
 const Gettext = imports.gettext;
+const GLib = imports.gi.GLib;
 const Gio = imports.gi.Gio;
 const Lang = imports.lang;
 
@@ -53,11 +53,10 @@ function getSettings(schema) {
 
     const GioSSS = Gio.SettingsSchemaSource;
 
-    // check if this extension was built with "make zip-file", and thus
-    // has the schema files in a subfolder
-    // otherwise assume that extension has been installed in the
-    // same prefix as gnome-shell (and therefore schemas are available
-    // in the standard folders)
+    // Check if this extension was built with "make zip-file", and thus
+    // has the schema files in a subfolder otherwise assume that extension 
+    // has been installed in the same prefix as gnome-shell (and therefore 
+    // schemas are available in the standard folders)
     let schemaDir = extension.dir.get_child('schemas');
     let schemaSource;
     if (schemaDir.query_exists(null))
@@ -75,7 +74,7 @@ function getSettings(schema) {
     return new Gio.Settings({ settings_schema: schemaObj });
 }
 
-// try to simplify global signals handling
+/* Simplify global signals handling */
 const globalSignalHandler = new Lang.Class({
     Name: 'dashToDock.globalSignalHandler',
 
@@ -125,6 +124,71 @@ const globalSignalHandler = new Lang.Class({
             delete this._signals[label];
         }
     }
+});
 
+/**
+ *  File and JSON database management. Stores and parses
+ *  the information needed to make a link to a file or a
+ *  directory. This is primarily used in "linksTray".
+ */
+const LinksDB = new Lang.Class({
+    Name: 'dashToDock.LinksDB',
+    
+    _init: function() {
+		this.check_or_make_directory();
+	},
 
+	check_or_make_directory: function() {
+		log("making a directory...");
+		let path = ExtensionUtils.getCurrentExtension().path+'/data';
+		let dir = Gio.file_new_for_path(path);
+		
+		if (!GLib.file_test(path, GLib.FileTest.EXISTS)) {
+			dir.make_directory(null);
+		} else {
+			this.open_or_make_db();
+		}
+	},
+
+	open_or_make_db: function() {
+		log("making a database...");
+		let path = ExtensionUtils.getCurrentExtension().path+'/data/'+'links_tray_db.json';
+		let file = Gio.file_new_for_path(path);
+
+		if (!GLib.file_test(path, GLib.FileTest.EXISTS)) {		
+			let fstream = file.create(Gio.FileCreateFlags.NONE, null);
+			let default_links = JSON.stringify( { "id": 1, "links": [{"order": 1, "link": "/home/"}]} );
+			fstream.write(default_links, null, default_links.length);
+//			fstream.close(null);
+		} else {
+			log("IT EXisto");
+			let fstream = file.open_readwrite(null).get_input_stream();
+			let size = file.query_info("standard::size",
+				Gio.FileQueryInfoFlags.NONE, null).get_size();
+				
+			let string_data = fstream.read_bytes(size, null).get_data();
+			let links_data
+			try {
+				links_data = JSON.parse(string_data);
+			} catch(e) {
+				log(_("The file "+path+" is not a meaningful JSON database. Check it!"));
+				fstream.close(null);
+//log('DNAME '+file.get_parse_name() );//parse_name is full url
+				file.set_display_name((file.get_basename()+'.'+(Math.round(Math.random()*10000))), null); 
+			}
+			
+			
+//			fstream.close(null);
+			log("data is "+string_data);
+			log( links_data.links[0].order );
+			log( links_data.links[0].link );
+		}
+	},
+	
+	save_db: function(data) { 
+		let default_links = JSON.stringify(data);
+		log ( default_links );
+		fstream.write(default_links, null, default_links.length);
+		fstream.close(null);		
+	}	
 });

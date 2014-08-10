@@ -2,7 +2,6 @@
 
 const Gtk = imports.gi.Gtk;
 const Gio = imports.gi.Gio;
-const ModalDialog = imports.ui.modalDialog;
 
 const Clutter = imports.gi.Clutter;
 const GLib = imports.gi.GLib;
@@ -66,7 +65,11 @@ const myLinkTray = new Lang.Class({
 		this.menuManager.addMenu(this.menu);
 
 //------------------------------------------------------------------
-let clipboard = St.Clipboard.get_default();
+
+let exo = new Convenience.LinksDB();
+
+
+/*let clipboard = St.Clipboard.get_default();
 clipboard.get_text(St.ClipboardType.CLIPBOARD, Lang.bind(this,
 	function(clipboard, text) {
 		if (!text)
@@ -75,6 +78,7 @@ clipboard.get_text(St.ClipboardType.CLIPBOARD, Lang.bind(this,
 log(">>>>>>>>>>>> "+text);                  
 
 }));
+*/
 
 //St.Clipboard.get_default().get_text(St.ClipboardType.PRIMARY);
 //clipboard.get_text();
