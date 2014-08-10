@@ -97,6 +97,8 @@ const myLinkTray = new Lang.Class({
     },
 
 	populate_menu_secondary: function() {
+		this.menu_secondary.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+		
 		let itemScanLinks = new PopupMenu.PopupBaseMenuItem;
 		let labelScanLinks = new St.Label({text: _("Scan Clipboard for Links")});
 		itemScanLinks.connect("activate", Lang.bind(this,  this.scanLinks));
@@ -133,7 +135,21 @@ const myLinkTray = new Lang.Class({
 		}
     },     
 
+	/* 
+	 * Removes the old suggestions and then repopulate menu.
+	 * IMPORTANT: the parameter 5 ro 6 is there to represent
+	 * the items from populate_menu_secondary(). Keep Updated!
+	 */
     scanLinks: function() {
+		if(this.menu_secondary.length > 6) {
+			let items = this.menu_secondary._getMenuItems();
+			for (let i = 0; i < (items.length - 6); i++) {			
+				if (items[i] instanceof PopupMenu.PopupBaseMenuItem) {
+						items[i].destroy();
+				}
+			}
+		}
+
 		let clipboard = St.Clipboard.get_default();
 		clipboard.get_text(St.ClipboardType.CLIPBOARD, Lang.bind(this,
 			function(clipboard, text) {
@@ -146,19 +162,6 @@ const myLinkTray = new Lang.Class({
     parseClipboardLinks: function(text) {
 		
 		let array = text.split("\n");
-		/*
-		array.forEach(function (element) {
-			if (element != null || element != undefined) {
-				element.trim();
-				
-				let file = Gio.file_new_for_path(element);
-				if (GLib.file_test(element, GLib.FileTest.EXISTS)) {
-					//log(">>>>>>>>>>>> "+'YES IT EXISTS');
-					//Now we add to menu options
-					this.addSuggestedLink(element);
-				}
-			}
-		});*/
 		
 		for (let i = 0 ; i < array.length; i++) {
 			if (array[i] != null || array[i] != undefined) {
@@ -181,14 +184,12 @@ const myLinkTray = new Lang.Class({
 	 */
     addSuggestedLink: function(file) {
 		let item = new PopupMenu.PopupBaseMenuItem;
-		let label = new St.Label({text: file.get_basename() });//get_parse_name
-		//item.connect("activate", Lang.bind(this, this.addLink, 1000000));
-		//item.connect("activate", this.addLink(1000000));//works
+		let label = new St.Label({text: file.get_basename() });
 		item.connect("activate", Lang.bind(this, function(){
 			this.addLink(file);
 		}));
 		item.actor.add_child(label);
-		this.menu_secondary.addMenuItem(item);	
+		this.menu_secondary.addMenuItem(item, 0);	
     },
 
 	/* The file link is added to the tray and LinksDB. */
