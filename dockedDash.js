@@ -24,6 +24,8 @@ const MyDash = Me.imports.myDash;
 
 const PRESSURE_TIMEOUT = 1000;
 
+var dock_horizontal = false;
+
 const SlideDirection = {
     LEFT: 0,
     RIGHT: 1,
@@ -34,21 +36,34 @@ const SlideDirection = {
 const myMaxWidthBin = new Lang.Class({
     Name: 'myMaxWidthBin',
     Extends: St.Bin,
-
+    
     vfunc_allocate: function(box, flags) {
-        let themeNode = this.get_theme_node();
-        let maxWidth = themeNode.get_max_width();
-        let availWidth = box.x2 - box.x1;
+		let maxW = Main.layoutManager.primaryMonitor.width;
+		let maxH = Main.layoutManager.primaryMonitor.height;
+        let boxW = box.x2 - box.x1;
+        let boxH = box.y2 - box.y1;
         let adjustedBox = box;
 
-maxWidth = 500;
+		//maxW = 600;//Testing
+		//maxH = 600;
 
-        if (availWidth > maxWidth) {
-            let excessWidth = Math.floor((availWidth - maxWidth)/2);            
-            adjustedBox.x1 += excessWidth;
-            adjustedBox.x2 -= excessWidth;            
-        }
-
+		if (!dock_horizontal) {
+			if (boxH > maxH) {
+				let excessHeight = boxH - maxH;
+				
+				adjustedBox.y1 = 0;
+				adjustedBox.y2 = maxH;
+				
+				adjustedBox.y1 += Math.floor(excessHeight / 2);
+				adjustedBox.y2 -= Math.floor(excessHeight / 2);
+			}
+		} else {
+			if (boxW > maxW) {
+				let excessWidth = boxW - maxW;
+				adjustedBox.x1 += Math.floor(excessWidth / 2);
+				adjustedBox.x2 -= Math.floor(excessWidth / 2);
+			}
+		}
         this.parent(adjustedBox, flags);     
     }
 });
@@ -131,12 +146,7 @@ const DashSlideContainer = new Lang.Class({
 			childBox.y2 = childBox.y1 + childHeight;
 			this._child.allocate(childBox, flags);
 			this._child.set_clip(-childBox.x1, 0, -childBox.x1+availWidth, availHeight);
-		} else {
-let mW = 500;
-let av = box.x2 - box.x1;
-let adjustedBox = box;
-let excessWidth = av - mW;
-				
+		} else {				
 			this.set_allocation(box, flags);
 
 			if (this._child == null)
@@ -146,14 +156,6 @@ let excessWidth = av - mW;
 			let availHeight = box.y2 - box.y1;
 			let [minChildWidth, minChildHeight, natChildWidth, natChildHeight] =
 				this._child.get_preferred_size();
-
-
-if (av > mW) {
-//log('ZAPPPPP1 '+natChildWidth);
-//natChildWidth = mW;
-//log('ZAPPPPP2 '+natChildWidth);
-}
-
 
 			let childWidth = natChildWidth;
 			let childHeight = natChildHeight;
@@ -286,15 +288,18 @@ const dockedDash = new Lang.Class({
         // This is the actor whose hover status us tracked for autohide
         this._dockBox = new St.BoxLayout({ name: 'dashtodockBox', reactive: true, track_hover:true });
         
-this._myWidth = new myMaxWidthBin({ x_fill: true, y_fill: true, child: this._dockBox });
+        dock_horizontal = this._settings.get_boolean('dock-horizontal');
+		this._myConstraint = new myMaxWidthBin({ x_fill: true, y_fill: true, child: this._dockBox });
         
         this._dockBox.connect("notify::hover", Lang.bind(this, this._hoverChanged));
 
         // Create and apply height constraint to the dash. It's controlled by this.actor height
-        this.actor.height = Main.overview.viewSelector.actor.height; // Guess initial reasonable height.
-        this.constrainHeight = new Clutter.BindConstraint({ source: this.actor,
-                                                            coordinate: Clutter.BindCoordinate.HEIGHT });
-        this.dash.actor.add_constraint(this.constrainHeight);      
+        if (this._settings.get_boolean('dock-horizontal')) {
+			this.actor.height = Main.overview.viewSelector.actor.height; // Guess initial reasonable height.
+			this.constrainHeight = new Clutter.BindConstraint({ source: this.actor,
+				coordinate: Clutter.BindCoordinate.HEIGHT });
+			this.dash.actor.add_constraint(this.constrainHeight);
+        }
          
         // Connect global signals
         this._signalHandler = new Convenience.globalSignalHandler();
@@ -386,8 +391,7 @@ this._myWidth = new myMaxWidthBin({ x_fill: true, y_fill: true, child: this._doc
 
         // Add dash container actor and the container to the Chrome.
         this.actor.set_child(this._slider);
-//        this._slider.add_child(this._dockBox);
-this._slider.add_child(this._myWidth);        
+		this._slider.add_child(this._myConstraint);
         this._dockBox.add_actor(this.dash.actor);
 
         // Add aligning container without tracking it for input region (old affectsinputRegion: false that was removed).
@@ -832,7 +836,7 @@ this._slider.add_child(this._myWidth);
     },
 
     _updateYPosition: function() {
-		if (!this._settings.get_boolean('dock-horizontal')) {
+		if (!this._settings.get_boolean('dock-horizontal')) {			
 			let unavailableTopSpace = 0;
 			let unavailableBottomSpace = 0;
 
@@ -864,7 +868,7 @@ this._slider.add_child(this._myWidth);
 			} else {
 				this.dash._container.set_height(-1);
 				this.actor.remove_style_class_name('extended');
-			}			
+			}
 		} else {
 			this.actor.width = this._monitor.width;
 			this.actor.x = this._monitor.x;

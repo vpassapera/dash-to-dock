@@ -234,32 +234,53 @@ const myDash = new Lang.Class({
 			this._box = new St.BoxLayout({ vertical: false, clip_to_allocation: false });
 		}
 		this._box._delegate = this;
-//--------------------------------------------------------------------------------------------------
+
 		this._scrollView = new St.ScrollView({ x_expand: true, y_expand: true,
                                                x_fill: true, y_fill: false, reactive: true });
 
-		this._scrollView.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.NEVER);
-        this._scrollView.hscroll.hide();
+        if (!this._settings.get_boolean('dock-horizontal')) {
+			this._scrollView.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
+			this._scrollView.vscroll.hide();
 
-		this._appsContainer = new St.BoxLayout({ vertical: false, clip_to_allocation: false });
+			this._appsContainer = new St.BoxLayout({ vertical: true, clip_to_allocation: false });
 
-		let leftOrTopArrowIcon = new St.Icon({ icon_name: 'go-previous-symbolic', icon_size: 24 });	
-		let leftOrTopArrow = new St.Button();
-		leftOrTopArrow.set_child(leftOrTopArrowIcon);
-		this._appsContainer.add_actor(leftOrTopArrow);
-		leftOrTopArrow.connect('clicked', Lang.bind(this, this._onScrollBtnLeftOrTop));
+			let leftOrTopArrowIcon = new St.Icon({ icon_name: 'go-up-symbolic', icon_size: 24 });	
+			let leftOrTopArrow = new St.Button();
+			leftOrTopArrow.set_child(leftOrTopArrowIcon);
+			this._appsContainer.add_actor(leftOrTopArrow);
+			leftOrTopArrow.connect('clicked', Lang.bind(this, this._onScrollBtnLeftOrTop));		
 
-		this._scrollView.add_actor(this._box);
-		this._appsContainer.add_actor(this._scrollView);
-		
-		let rightOrBottomArrowIcon = new St.Icon({ icon_name: 'go-next-symbolic', icon_size: 24});
-		let rightOrBottomArrow = new St.Button();
-		rightOrBottomArrow.set_child(rightOrBottomArrowIcon);
-		this._appsContainer.add_actor(rightOrBottomArrow);
-		rightOrBottomArrow.connect('clicked', Lang.bind(this, this._onScrollBtnRightOrBottom));
-		
+			this._scrollView.add_actor(this._box);
+			this._appsContainer.add_actor(this._scrollView);
+			
+			let rightOrBottomArrowIcon = new St.Icon({ icon_name: 'go-down-symbolic', icon_size: 24});
+			let rightOrBottomArrow = new St.Button();
+			rightOrBottomArrow.set_child(rightOrBottomArrowIcon);
+			this._appsContainer.add_actor(rightOrBottomArrow);
+			rightOrBottomArrow.connect('clicked', Lang.bind(this, this._onScrollBtnRightOrBottom));
+		} else {
+			this._scrollView.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.NEVER);
+			this._scrollView.hscroll.hide();
+
+			this._appsContainer = new St.BoxLayout({ vertical: false, clip_to_allocation: false });
+
+			let leftOrTopArrowIcon = new St.Icon({ icon_name: 'go-previous-symbolic', icon_size: 24 });	
+			let leftOrTopArrow = new St.Button();
+			leftOrTopArrow.set_child(leftOrTopArrowIcon);
+			this._appsContainer.add_actor(leftOrTopArrow);
+			leftOrTopArrow.connect('clicked', Lang.bind(this, this._onScrollBtnLeftOrTop));		
+
+			this._scrollView.add_actor(this._box);
+			this._appsContainer.add_actor(this._scrollView);
+			
+			let rightOrBottomArrowIcon = new St.Icon({ icon_name: 'go-next-symbolic', icon_size: 24});
+			let rightOrBottomArrow = new St.Button();
+			rightOrBottomArrow.set_child(rightOrBottomArrowIcon);
+			this._appsContainer.add_actor(rightOrBottomArrow);
+			rightOrBottomArrow.connect('clicked', Lang.bind(this, this._onScrollBtnRightOrBottom));			
+		}
 		this._container.add_actor(this._appsContainer);
-//--------------------------------------------------------------------------------------------------
+
 		if (!this._settings.get_boolean('dock-horizontal')) {
 			this._showAppsIcon = new Dash.ShowAppsIcon();
 		} else {
@@ -274,21 +295,9 @@ const myDash = new Lang.Class({
         this.showAppsButton = this._showAppsIcon.toggleButton;
 
         this._container.add_actor(this._showAppsIcon);
+        
         this.actor = new St.Bin({ child: this._container, y_align: St.Align.START });
-/*        
-        this.actor.connect('notify::height', Lang.bind(this,
-            function() {
-				if (!this._settings.get_boolean('dock-horizontal')) {
-					if (this._maxHeight !== this.actor.height)
-						this._queueRedisplay();
-						this._maxHeight = this.actor.height;		
-				} else {
-					if (this._maxWidth !== this.actor.width)
-						this._queueRedisplay();
-						this._maxWidth = this.actor.width;
-				}
-            }));
-*/
+        
         this._workId = Main.initializeDeferredWork(this._box, Lang.bind(this, this._redisplay));
 
         this._appSystem = Shell.AppSystem.get_default();
@@ -337,13 +346,23 @@ const myDash = new Lang.Class({
     },
     
     _onScrollBtnLeftOrTop: function() {
-		let hscroll = this._scrollView.get_hscroll_bar();
-		hscroll.get_adjustment().set_value(hscroll.get_adjustment().get_value() - this.iconSize*5);
+		if (!this._settings.get_boolean('dock-horizontal')) {
+			let vscroll = this._scrollView.get_vscroll_bar();
+			vscroll.get_adjustment().set_value(vscroll.get_adjustment().get_value() - this._scrollView.height);				
+		} else {
+			let hscroll = this._scrollView.get_hscroll_bar();
+			hscroll.get_adjustment().set_value(hscroll.get_adjustment().get_value() - this._scrollView.width);	
+		}
     },
     
     _onScrollBtnRightOrBottom: function() {
-		let hscroll = this._scrollView.get_hscroll_bar();
-		hscroll.get_adjustment().set_value(hscroll.get_adjustment().get_value() + this.iconSize*5);
+		if (!this._settings.get_boolean('dock-horizontal')) {
+			let vscroll = this._scrollView.get_vscroll_bar();
+			vscroll.get_adjustment().set_value(vscroll.get_adjustment().get_value() + this._scrollView.height);				
+		} else {
+			let hscroll = this._scrollView.get_hscroll_bar();
+			hscroll.get_adjustment().set_value(hscroll.get_adjustment().get_value() + this._scrollView.width);	
+		}
     },
         
     _onDragBegin: function() {
