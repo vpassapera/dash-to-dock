@@ -232,9 +232,8 @@ const myDash = new Lang.Class({
 		this._linkTray = new Widgets.myLinkTray(this.iconSize, this._settings);
 		this._linkTray.childScale = 1;
 		this._linkTray.childOpacity = 255;
-		this._linkTray.icon.setIconSize(this.iconSize);
-//		this._hookUpLabel(this._linkTray);
-		//this._container.add_actor(this._linkTray.actor);
+		this._linkTray.icon.set_icon_size(this.iconSize);
+		this._hookUpLabelForApplets(this._linkTray);
 //-------------->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 		this._showDesktop = new Widgets.myShowDesktop(this.iconSize, this._settings);
 		this._showDesktop.childScale = 1;
@@ -314,7 +313,8 @@ const myDash = new Lang.Class({
 						this._container.add_actor(this._appsContainer);
 						break;			
 					case 3:
-						this._container.add_actor(this._linkTray.actor);
+						//this._container.add_actor(this._linkTray.actor);
+						this._container.add_actor(this._linkTray);
 						break;
 					case 4:
 						this._container.add_actor(this._showDesktop.actor);
@@ -530,14 +530,7 @@ const myDash = new Lang.Class({
     },
 
     _syncLabel: function (item, appIcon) {
-        let shouldShow = appIcon ? appIcon.shouldShowTooltip() : item.child.get_hover();//ORIGINAL
-		
-//		let shouldShow;
-//		if (appIcon != null) {
-//			shouldShow = appIcon ? appIcon.shouldShowTooltip() : item.child.get_hover();
-//		} else {
-//			shouldShow = item.actor.get_hover();
-//		}
+        let shouldShow = appIcon ? appIcon.shouldShowTooltip() : item.child.get_hover();
 
         if (shouldShow) {
             if (this._showLabelTimeoutId == 0) {

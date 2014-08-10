@@ -37,38 +37,48 @@ let dock_horizontal = true;
 
 const myLinkTray = new Lang.Class({
     Name: 'myLinkTray',
-                    
+    Extends: St.Widget,
+                        
     _init: function(iconSize, settings) {
+		this.parent({ style_class: 'dash-item-container' });
+			
+		this._labelText = _("Links Tray");
+		this.label = new St.Label({ style_class: 'dash-label'});
+		this.label.hide();
+		Main.layoutManager.addChrome(this.label);
+		this.label_actor = this.label;
+		
 		this._settings = settings;
-		this.iconSize = iconSize;	
-        this.actor = new St.Button({ style_class: 'app-well-app',
+		this.iconSize = iconSize;
+		
+        this.btn = new St.Button({ style_class: 'app-well-app',
                                      reactive: true,
                                      button_mask: St.ButtonMask.ONE | St.ButtonMask.TWO,
                                      can_focus: true,
                                      x_fill: true,
                                      y_fill: true });
-        this.actor._delegate = this;		
-		
-		this.actor.connect('clicked', Lang.bind(this, this.popupMenu));
-		this.icon_actor = null;
-        this.icon = new IconGrid.BaseIcon(_("Show Applications"),
-                                           { setSizeManually: true, showLabel: false,
-                                             createIcon: Lang.bind(this, this._createIcon) });
-		this.actor.set_child(this.icon.actor);
-
-		let dontCreateMenu = false;//IF no icons? label _("Tray is Empty")
-
+        this.btn._delegate = this;                                     
+		this.btn.connect('button_release_event', Lang.bind(this, this.buttonPressed));
+		this.lt = Gio.icon_new_for_string(Me.path + "/media/links-tray.svg");
+		this.icon = new St.Icon({ gicon: this.lt,
+									icon_size: this.iconSize,
+									style_class: 'show-apps-icon',
+									track_hover: true });                                       
+        this.btn.add_actor(this.icon);
+        this.add_actor(this.btn);
+		this.actor = this.btn;
 		this.menuManager = new PopupMenu.PopupMenuManager(this);
 
-		if (dontCreateMenu) {
-            this.menu = new PopupMenu.PopupDummyMenu(this);
-        } else {
-			this.menu = new myLinkTrayMenu(this, iconSize);
-           
-            this.menu.actor.hide();
-        }
+		this.menu = new myLinkTrayMenu(this.actor, iconSize);
+		this.menu.actor.hide();
+		this.menu_secondary = new PopupMenu.PopupMenu(this, 0.5, St.Side.BOTTOM, 0);
+		this.populate_menu_secondary();
+		this.menu_secondary.actor.add_style_class_name('app-well-menu');
+		Main.uiGroup.add_actor(this.menu_secondary.actor);
+		this.menu_secondary.actor.hide();	  
         
 		this.menuManager.addMenu(this.menu);
+		this.menuManager.addMenu(this.menu_secondary);
 
 //------------------------------------------------------------------
 
@@ -150,24 +160,28 @@ global.logError('' + e);
         if (this.menu)
             this.menu.destroy();
             
+        if (this.menu_secondary)
+            this.menu_secondary.destroy();            
+            
         this.actor.destroy();
         this.emit('destroy');
     },
 
-    _createIcon: function(size) {
-        /*
-        this.icon_actor = new St.Icon({ icon_name: 'go-down-symbolic',
-                                        icon_size: size,
-                                        style_class: 'show-apps-icon',
-                                        track_hover: true });
-		*/
-		let LT = Gio.icon_new_for_string(Me.path + "/media/links-tray.svg");
-        this.icon_actor = new St.Icon({ gicon: LT,
-                                        icon_size: size,
-                                        style_class: 'show-apps-icon',
-                                        track_hover: true });
-        return this.icon_actor;
-    },
+	populate_menu_secondary: function() {
+		let itemDelete = new PopupMenu.PopupBaseMenuItem;
+		let labelDelete = new St.Label({text: _("Delete Binned Files")});
+		//itemDelete.connect("activate", Lang.bind(this, this.deleteBin));
+		itemDelete.actor.add_child(labelDelete);
+		this.menu_secondary.addMenuItem(itemDelete);
+		
+        this.menu_secondary.addMenuItem(new PopupMenu.PopupSeparatorMenuItem());
+
+		let itemOpen = new PopupMenu.PopupBaseMenuItem;
+		let labelOpen = new St.Label({text: _("Open in Nautilus")});
+		//itemOpen.connect("activate", Lang.bind(this, this.openBin));
+		itemOpen.actor.add_child(labelOpen);
+		this.menu_secondary.addMenuItem(itemOpen);
+	},
     
     _removeMenuTimeout: function() {
         if (this._menuTimeoutId > 0) {
@@ -176,39 +190,85 @@ global.logError('' + e);
         }
     },
     
-    popupMenu: function() {
-        this._removeMenuTimeout();
-        this.actor.fake_release();
-//        this._draggable.fakeRelease();
-        this.emit('menu-state-changed', true);
-        this.actor.set_hover(true);
-        this.menu.toggle();
-        this.menuManager.ignoreRelease();
-        this.emit('sync-tooltip');
-
+	buttonPressed: function(actor, event) {
+		if (event.get_button() == 1) {
+			this.popupMenu(true);
+		} else {
+			this.popupMenu(false);
+		}
+	},
+    
+    popupMenu: function(primary) {
+		if (primary) {
+			this._removeMenuTimeout();
+			this.actor.fake_release();
+	        //this._draggable.fakeRelease();
+			this.emit('menu-state-changed', true);
+			this.actor.set_hover(true);
+			this.menu.toggle();
+			this.menuManager.ignoreRelease();
+			this.emit('sync-tooltip');
+		} else {
+			this._removeMenuTimeout();
+			this.actor.fake_release();
+	        //this._draggable.fakeRelease();
+			this.emit('menu-state-changed', true);
+			this.actor.set_hover(true);
+			this.menu_secondary.toggle();
+			this.menuManager.ignoreRelease();
+			this.emit('sync-tooltip');		
+		}
+		
         return false;
     },
 
-    handleDragOver: function(source, actor, x, y, time) {
-		if (source == Main.xdndHandler) {
-			//log('LAUNCHING DIALOG');
+	showLabel: function() {
+		if (!this._labelText) {
+			return;
 		}
-        return DND.DragMotionResult.MOVE_DROP;
-    },
 
-    acceptDrop: function(source, actor, x, y, time) {
-log("ACCEPTER_A_DROP");
-/*
-        let id = app.get_id();
+		this.label.set_text(this._labelText);
+		this.label.opacity = 0;
+		this.label.show();
 
-        Meta.later_add(Meta.LaterType.BEFORE_REDRAW, Lang.bind(this,
-            function () {
-                AppFavorites.getAppFavorites().removeFavorite(id);
-                return false;
-            }));
-*/
-        return true;
-    }    
+//		let [stageX, stageY] = this.actor.get_transformed_position();//works
+//		let [stageX, stageY] = this.icon.get_transformed_position();//works
+		let [stageX, stageY] = this.actor.get_transformed_position();
+
+		let labelHeight = this.label.get_height();
+		let labelWidth = this.label.get_width();
+
+		let node = this.label.get_theme_node();
+		let yOffset = node.get_length('-x-offset');
+
+//		let y = stageY - labelHeight - yOffset;
+		let y = stageY - labelHeight - yOffset;
+log('yNEW '+Math.round(stageY)+' '+labelHeight+' '+yOffset);
+		//let itemWidth = this.allocation.x2 - this.allocation.x1;
+		let itemWidth = this.icon.allocation.x2 - this.icon.allocation.x1;
+		let xOffset = Math.floor((itemWidth - labelWidth) / 2);
+
+		let x = stageX + xOffset;
+
+		this.label.set_position(x, y);
+
+		Tweener.addTween(this.label, {
+			opacity: 255,
+			time: DASH_ITEM_LABEL_SHOW_TIME,
+			transition: 'easeOutQuad',
+		});
+	},
+
+    hideLabel: function () {
+        Tweener.addTween(this.label,
+                         { opacity: 0,
+                           time: DASH_ITEM_LABEL_HIDE_TIME,
+                           transition: 'easeOutQuad',
+                           onComplete: Lang.bind(this, function() {
+                               this.label.hide();
+                           })
+                         });
+    }  
 });
 
 Signals.addSignalMethods(myLinkTray.prototype);
@@ -219,13 +279,11 @@ const myLinkTrayMenu = new Lang.Class({
     Extends: AppDisplay.PopupMenu.PopupMenu,
 
     _init: function(source, iconSize) {
+        this.parent(source, 0.5, St.Side.TOP);//Menu-Arrow-Side
 		this.iconSize = iconSize;
-        this.parent(source.actor, 0.5, St.Side.TOP);//Menu-Arrow-Side
-
+		
         // We want to keep the item hovered while the menu is up
         this.blockSourceEvents = true;
-
-        this._source = source;
 
         this.actor.add_style_class_name('app-well-menu-custom');
 
@@ -233,11 +291,11 @@ this.actor.add_style_class_name('popup-menu-ornament2');
 this.actor.add_style_class_name('popup-menu-content2');
         
         // Chain our visibility and lifecycle to that of the source
-        source.actor.connect('notify::mapped', Lang.bind(this, function () {
-            if (!source.actor.mapped)
+        source.connect('notify::mapped', Lang.bind(this, function () {
+            if (!source.mapped)
                 this.close();
         }));    
-        source.actor.connect('destroy', Lang.bind(this, function () { this.actor.destroy(); }));
+        source.connect('destroy', Lang.bind(this, function () { this.actor.destroy(); }));
         Main.uiGroup.add_actor(this.actor);
         
         this.populate();
@@ -400,7 +458,7 @@ const myRecyclingBin = new Lang.Class({
                     
     _init: function(iconSize, settings) {
 		this.parent({ style_class: 'dash-item-container' });
-				
+			
 		this._labelText = _("Recycling Bin");
 		this.label = new St.Label({ style_class: 'dash-label'});
 		this.label.hide();
@@ -409,43 +467,30 @@ const myRecyclingBin = new Lang.Class({
 		
 		this._settings = settings;
 		this.iconSize = iconSize;
-/*			
-        this.actor = new St.Button({ style_class: 'show-apps',
+		
+        this.btn = new St.Button({ style_class: 'app-well-app',
+									//style_class: 'show-apps',
                                      reactive: true,
                                      button_mask: St.ButtonMask.ONE | St.ButtonMask.TWO,
                                      can_focus: true,
                                      x_fill: true,
                                      y_fill: true });
-        this.actor._delegate = this;		
-		this.actor.connect('clicked', Lang.bind(this, this.popupMenu));
-		this.icon = new St.Icon({ icon_name: 'user-trash',
-                                        icon_size: this.iconSize,
-                                        style_class: 'show-apps-icon',
-                                        track_hover: true });
-		this.actor.set_child(this.icon);
-*/
-        this.btn = new St.Button({ style_class: 'show-apps',
-                                     reactive: true,
-                                     button_mask: St.ButtonMask.ONE | St.ButtonMask.TWO,
-                                     can_focus: true,
-                                     x_fill: true,
-                                     y_fill: true });	
+        this.btn._delegate = this;                                     
 		this.btn.connect('clicked', Lang.bind(this, this.popupMenu));
 		this.icon = new St.Icon({ icon_name: 'user-trash',
-                                        icon_size: this.iconSize,
-                                        style_class: 'show-apps-icon',
-                                        track_hover: true });                                       
-        this.btn.add_actor(this.icon);     
-        this.btn._delegate = this;
+									icon_size: this.iconSize,
+									style_class: 'show-apps-icon',
+									track_hover: true });                                       
+        this.btn.add_actor(this.icon);
         this.add_actor(this.btn);
-
-this.actor = this.btn;
-
+		this.actor = this.btn;
+this.actor.add_style_class_name('app-well-app');
+this.icon.add_style_class_name('app-well-app');
+this.btn.add_style_class_name('app-well-app');
         //this.recycling_bin_path = 'trash:///';//FIXME: BUG in Ubuntu cannot access trash:/// gvfs fuse
         this.recycling_bin_path = '~/.local/share/Trash/files';
         this.recycling_bin_file = Gio.file_new_for_uri(this.recycling_bin_path);
     
-		//this.menuManager = new PopupMenu.PopupMenuManager(this);
 		this.menuManager = new PopupMenu.PopupMenuManager(this);
 		
 		//this.menu = new PopupMenu.PopupMenu(this.icon.actor, 0.5, St.Side.BOTTOM, 0);
@@ -549,22 +594,15 @@ this.actor = this.btn;
 
     popupMenu: function() {
         this._removeMenuTimeout();
-//        this.actor.fake_release();
 		this.btn.fake_release();
         this.emit('menu-state-changed', true);
-//        this.actor.set_hover(true);
         this.btn.set_hover(true);
         this.menu.toggle();
         this.menuManager.ignoreRelease();
-        this.emit('sync-tooltip');//CHECK IF THIS IS this.btn.emit('sync-tooltip');
 
         return false;
     },
     
-	/*
-	 * Changes were made to make the label show on the top.
-	 * SOURCE: simple-dock extension.
-	 */
 	showLabel: function() {
 		if (!this._labelText) {
 			return;
@@ -611,7 +649,7 @@ log('yNEW '+Math.round(stageY)+' '+labelHeight+' '+yOffset);
                                this.label.hide();
                            })
                          });
-    }     
+    }  
 });
 
 Signals.addSignalMethods(myRecyclingBin.prototype);
@@ -621,8 +659,8 @@ const ConfirmClearBinDialog = new Lang.Class({
     Extends: ModalDialog.ModalDialog,
 
 	_init: function(deleteMethod) {
-		ModalDialog.ModalDialog.prototype._init.call(this, { styleClass: null });
-
+		this.parent({ styleClass: null });
+		
 		let mainContentBox = new St.BoxLayout({ style_class: 'polkit-dialog-main-layout',
 			vertical: false });
 		this.contentLayout.add(mainContentBox, { x_fill: true, y_fill: true });
