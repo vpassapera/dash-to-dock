@@ -564,6 +564,7 @@ const myLinkTray = new Lang.Class({
 	        this._draggable.fakeRelease();
 			this.emit('menu-state-changed', true);
 			this.actor.set_hover(true);
+			this.hideLabel();			
 			this.menu_secondary.close();			
 			this.menu.toggle();		
 			this.menuManager.ignoreRelease();
@@ -574,6 +575,7 @@ const myLinkTray = new Lang.Class({
 	        this._draggable.fakeRelease();
 			this.emit('menu-state-changed', true);
 			this.actor.set_hover(true);
+			this.hideLabel();			
 			this.menu.close();	
 			this.menu_secondary.toggle();
 			this.menuManager.ignoreRelease();
