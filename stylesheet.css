@@ -135,3 +135,40 @@
 #dashtodockContainer.dashtodockBTT .running4 {
     background-image: url('./media/four_btt.png');
 }
+
+
+
+
+
+
+/* THIS IS STILL VERY EXPERIMENTAL */
+
+#dashtodockContainer.dashtodockLTR .app-well-menu-custom,
+#dashtodockContainer.dashtodockRTL .app-well-menu-custom,
+#dashtodockContainer.dashtodockTTB .app-well-menu-custom,
+#dashtodockContainer.dashtodockBTT .app-well-menu-custom {
+min-width: 50px;
+    font-size: 15pt;
+    
+    max-width: 50px;
+    width: 0em;
+    color: red;
+    background-color: blue;
+}
+
+#dashtodockContainer.dashtodockLTR .popup-menu-content2,
+#dashtodockContainer.dashtodockRTL .popup-menu-content2,
+#dashtodockContainer.dashtodockTTB .popup-menu-content2,
+#dashtodockContainer.dashtodockBTT .popup-menu-content2 {
+    color: green;
+    background-color: blue;
+}
+
+
+#dashtodockContainer.dashtodockLTR .popup-menu-ornament2,
+#dashtodockContainer.dashtodockRTL .popup-menu-ornament2,
+#dashtodockContainer.dashtodockTTB .popup-menu-ornament2,
+#dashtodockContainer.dashtodockBTT .popup-menu-ornament2 {
+    text-align: right;
+    width: 0em;
+}

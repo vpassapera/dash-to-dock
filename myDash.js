@@ -163,7 +163,7 @@ const myDash = new Lang.Class({
         if (!dock_horizontal) {
 			this._box = new St.BoxLayout({ vertical: true, clip_to_allocation: false });
 		} else {
-			this._box = new St.BoxLayout({ vertical: false, clip_to_allocation: false });
+			this._box = new St.BoxLayout({ vertical: false, clip_to_allocation: true });//FIXME: EXPERIMENTALLLL TROUBLE
 		}
 		this._box._delegate = this;
 
@@ -249,13 +249,13 @@ const myDash = new Lang.Class({
 		this._container.add_actor(this._activeFolder);
 */
 //------------------------------------------------------------------------
-		this._activeFolder = new Widgets.myActiveFolderIcon(this.iconSize);
-		this._activeFolder.childScale = 1;
-		this._activeFolder.childOpacity = 255;
-		this._activeFolder.btnFolderIcon.set_icon_size(this.iconSize);
-//		this._hookUpLabel(this._activeFolder);
+		this._heapTray = new Widgets.myHeapTray(this.iconSize, this._settings);
+		this._heapTray.childScale = 1;
+		this._heapTray.childOpacity = 255;
+		this._heapTray.icon.setIconSize(this.iconSize);
+//		this._hookUpLabel(this._heapTray);
 
-		this._container.add_actor(this._activeFolder);
+		this._container.add_actor(this._heapTray.actor);
 //=========================================================================//
 //------ADDING WIDGETS HERE------------------------------------------------//
 
@@ -303,7 +303,7 @@ const myDash = new Lang.Class({
 
         this.setMaxIconSize(this._settings.get_int('dash-max-icon-size'));
     },
-
+    
     destroy: function() {
         this._signalHandler.disconnect();
     },
