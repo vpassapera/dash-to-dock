@@ -133,7 +133,12 @@ const myLinkBox = new Lang.Class({
 
 		for(let i = 0; i < this.linksStorage.links_data.folders.length ;i++) {		
 			this.loadTray(this.linksStorage.links_data.folders[i].collection_id);	
-		}			
+		}
+
+let item = new myFileIconSPECIAL('/home/pc', this.iconSize);
+
+this._box.add(item.actor);		
+//++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 	},
 
     loadTray: function(trayId) {
@@ -673,41 +678,34 @@ const myLinkTrayMenu = new Lang.Class({
 	populate: function() {
 		for(let i = 0; i < this.linksStorage.links_data.folders.length ;i++) {
 			if (this.trayId == this.linksStorage.links_data.folders[i].collection_id) {
-				if (this.linksStorage.links_data.folders[i].links_array.length > 
-					this.settings.get_int('applet-links-tray-to-grid')) {
-					this._gridview(this.linksStorage.links_data.folders[i].links_array);
-				} else {
-					for(let j = 0; j < this.linksStorage.links_data.folders[i].links_array.length ;j++) {
-						this._appendMenuItem(this.linksStorage.
-							links_data.folders[i].links_array[j].link.trim());
-					}				
-				}
+				this.make_menu(this.linksStorage.links_data.folders[i].links_array,
+					this.linksStorage.links_data.folders[i].links_array.length);
 			}
 		}
 	},
 	
-	/*
-    _redisplay: function() {
-        this.removeAll();
-        this.populate();  
-    },*/
-
-    _gridview: function(files) {
+    make_menu: function(files, file_length) {
 		this.removeAll();
+
+		let icols;
+		if (file_length > this.settings.get_int('applet-links-tray-to-grid'))
+			icols = 3
+		else
+			icols = 1;
 		
 		this._table = new St.Table({ x_expand: true,  y_expand: true, homogeneous: true });
 		let appz = AppFavorites.getAppFavorites().getFavorites();
-		let div = files.length % 3;
+		let div = files.length % icols;
 		let irows = 0;
 		if (div == 0) {
-			irows = files.length / 3;
+			irows = files.length / icols;			
 		} else {
-			irows = (files.length + div) / 3;
+			irows = (files.length + div) / icols;		
 		}		
 		let i = 0;
 		for(let irow = 0 ; irow < irows ;irow++) {
-			for(let icol = 0 ; icol < 3 ;icol++) {
-				let item = new myFileIcon(files[i].link, this.iconSize, this.menu);
+			for(let icol = 0 ; icol < icols ;icol++) {
+				let item = new myFileIcon(files[i].link, this.iconSize, this);
 										
 				this._table.add(item, { row: irow, col: icol, x_fill: false, y_fill: false, 
 					x_align: St.Align.MIDDLE, y_align: St.Align.START});
@@ -732,24 +730,11 @@ const myLinkTrayMenu = new Lang.Class({
 		this._scrollView.add_actor(this.abox);
 
 		// Calculating the (aesthetic) height for ScrollView
-		this._scrollView.height = (this.iconSize+(2*5))*4+12;		
-				
-		this.box.add(this._scrollView);
-    },
-    
-    _appendMenuItem: function(fileuri) {
+		if(icols > 1)
+			this._scrollView.height = (this.iconSize+(2*5))*4+12;//margin=5;for_menu=12
 
-log(':::|  '+this.box.get_children().length+'  '+this.box.height+'  ');		
-		
-		let file = Gio.file_new_for_path(fileuri);
-		let item = new myPopupImageMenuItem(file, this.iconSize);
-		item.connect('activate', Lang.bind(this, function () {
-			let handler = file.query_default_handler (null);
-			let result = handler.launch ([file], null);
-		}));
-		this.addMenuItem(item, 0);
-		return item;
-    }          
+		this.box.add(this._scrollView);     		
+    }      
 });
 
 Signals.addSignalMethods(myLinkTrayMenu.prototype);
@@ -760,18 +745,22 @@ const myFileIcon = new Lang.Class({
 
     _init: function (filepath, size, menu) {
         this.parent({ vertical: true, clip_to_allocation: true, x_expand: false,
-			margin_top: 5, margin_right: 5, margin_bottom: 5, margin_left: 5 });
+			margin_top: 5, margin_right: 5, margin_bottom: 5, margin_left: 5});
         
         this.iconSize = size;
-		let btn = new St.Button({ style_class: 'app-well-app',
+        this.menu = menu;
+		let btn = new St.Button({ style_class: 'show-apps',
 									reactive: true,
 									button_mask: St.ButtonMask.ONE | St.ButtonMask.TWO,
 									can_focus: true,
 									x_fill: true,
-									y_fill: true });
+									y_fill: true,
+									track_hover: true });
 		btn.file = Gio.file_new_for_path(filepath);
 
-		let icon = new St.Icon({ icon_size: this.iconSize, track_hover: true });
+		let icon = new St.Icon({ icon_size: this.iconSize, 
+									style_class: 'show-apps',
+									track_hover: true });
 					
 		let info = btn.file.query_info('standard::icon,thumbnail::path', 0, null);
 					
@@ -798,7 +787,7 @@ const myFileIcon = new Lang.Class({
 		btn.add_actor(icon);
 					
 		btn.connect('clicked', Lang.bind(this, function () {
-			menu.toggle();
+			this.menu.toggle();
 			let handler = btn.file.query_default_handler (null);
 			let result = handler.launch ([btn.file], null);
 		}));
@@ -809,24 +798,60 @@ const myFileIcon = new Lang.Class({
     }
 });
 
-const myPopupImageMenuItem = new Lang.Class({
-    Name: 'myPopupImageMenuItem',
-    Extends: PopupMenu.PopupBaseMenuItem,
+const myFileIconSPECIAL = new Lang.Class({
+    Name: 'myFileIconSPECIAL',
 
-    _init: function (file, size) {		
-        this.parent();
+    _init: function (filepath, size) {
+/*		
+        this.iconSize = size;
+		this.actor = new St.Button({ style_class: 'show-apps',
+										reactive: true,
+										button_mask: St.ButtonMask.ONE | St.ButtonMask.TWO,
+										can_focus: true,
+										x_fill: true,
+										y_fill: true,
+										track_hover: true });
+		this.actor._delegate = this;	
+		this.file = Gio.file_new_for_path(filepath);
+		this.actor.connect('clicked', Lang.bind(this, function () {
+			let handler = this.file.query_default_handler (null);
+			let result = handler.launch ([this.file], null);
+		}));
 
-		this.actor.set_style(null);
-		this._ornamentLabel.set_style(null);
-
-		this._label = new St.Label({ text: file.get_basename() });
-		this._label.set_style('text-align: center;');
-        this._icon = new St.Icon();
+		this.icon = new St.Icon({ icon_size: this.iconSize, 
+									style_class: 'show-apps',
+									track_hover: true });
 		
-        let info = file.query_info('standard::icon,thumbnail::path', 0, null);
-        
+		this.actor.set_child(this.icon);
+*/
+
+
+        this.actor = new St.Button({ style_class: 'app-well-app',
+                                     reactive: true,
+                                     button_mask: St.ButtonMask.ONE | St.ButtonMask.TWO,
+                                     can_focus: true,
+                                     x_fill: true,
+                                     y_fill: true });
+
+        this.actor._delegate = this;
+        this.file = Gio.file_new_for_path(filepath);		
+        this.actor.connect('clicked', Lang.bind(this, function () {
+			let handler = this.file.query_default_handler (null);
+			let result = handler.launch ([this.file], null);
+		}));
+        this.icon = new IconGrid.BaseIcon(this._labelText, { setSizeManually: true, 
+			showLabel: false, createIcon: Lang.bind(this, this._createIcon) });
+		
+		this.actor.set_child(this.icon.actor);
+		
+		
+		
+
+				
+		let info = this.file.query_info('standard::icon,thumbnail::path', 0, null);
+					
 		if(info.get_file_type() == Gio.FileType.DIRECTORY) {
-			this.setIcon('folder');
+			this.icon.icon_name = 'folder';
 		} else {
 			let gicon = null;
 			let thumbnail_path = info.get_attribute_as_string('thumbnail::path', 0, null);
@@ -840,24 +865,24 @@ const myPopupImageMenuItem = new Lang.Class({
 				} else if (icon_internal instanceof Gio.FileIcon) {
 					icon_path = icon.get_file().get_path();
 				}
-				gicon = Gio.icon_new_for_string(icon_path);
+					gicon = Gio.icon_new_for_string(icon_path);
 			}
-			this._icon.set_gicon(gicon);
+//			this.icon.set_gicon(gicon);
 		}
-			
-		this.box = new St.BoxLayout({ vertical: true, x_expand: true });
-		//this.box.set_style('background-color: yellow;');//Debugging
-		this.box.width = 2*size;
-		this.box.add(this._icon, { x_align: St.Align.MIDDLE });
-		this.box.add(this._label, { x_align: St.Align.MIDDLE });		
-		this.actor.add(this.box, { x_align: St.Align.MIDDLE });
+
+		let label = new St.Label({text: this.file.get_basename(), x_align: St.Align.MIDDLE });
+		//this.add_child(label, { x_align: St.Align.MIDDLE });
     },
 
-    setIcon: function(name) {
-        this._icon.icon_name = name;
-    }
+    _createIcon: function(size) {
+        return new St.Icon({ gicon: Gio.icon_new_for_string(Me.path + "/media/links-tray.svg"),
+								icon_size: size,
+								style_class: 'show-apps-icon',
+								track_hover: true });
+    }, 
 });
 
+//this.box.set_style('background-color: yellow;');//Debugging
 const myShowDesktop = new Lang.Class({
 	Name: 'myShowDesktop',
                     
@@ -902,9 +927,9 @@ const myShowDesktop = new Lang.Class({
 
     _createIcon: function(size) {
         return new St.Icon({ icon_name: 'user-desktop',
-                                        icon_size: size,
-                                        style_class: 'show-apps-icon',
-                                        track_hover: true });
+								icon_size: size,
+								style_class: 'show-apps-icon',
+								track_hover: true });
     },
     
 	/* SOURCE: show desktop extension */
@@ -1051,9 +1076,9 @@ const myRecyclingBin = new Lang.Class({
     
     _createIcon: function(size) {
         return new St.Icon({ icon_name: 'user-trash',
-                                        icon_size: size,
-                                        style_class: 'show-apps-icon',
-                                        track_hover: true });
+								icon_size: size,
+								style_class: 'show-apps-icon',
+								track_hover: true });
     },    
     
     _removeMenuTimeout: function() {

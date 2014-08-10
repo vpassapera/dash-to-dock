@@ -1164,7 +1164,7 @@ const dockedDash = new Lang.Class({
         if (this._settings.get_boolean('apply-custom-theme')) {
 			switch (this._settings.get_int('dock-placement')) {
 				case 0:
-					this.actor.add_style_class_name('dashtodockLTR');				
+					this.actor.add_style_class_name('dashtodockLTR');
 					break;
 				case 1:
 					this.actor.add_style_class_name('dashtodockRTL');				
