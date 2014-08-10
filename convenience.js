@@ -135,11 +135,13 @@ const LinksDB = new Lang.Class({
     Name: 'dashToDock.LinksDB',
     
     _init: function() {
+		this.links_data = null;
+		this.string_data = null;
 		this.check_or_make_directory();
+		this.save_db();
 	},
 
 	check_or_make_directory: function() {
-		log("making a directory...");
 		let path = ExtensionUtils.getCurrentExtension().path+'/data';
 		let dir = Gio.file_new_for_path(path);
 		
@@ -151,44 +153,80 @@ const LinksDB = new Lang.Class({
 	},
 
 	open_or_make_db: function() {
-		log("making a database...");
 		let path = ExtensionUtils.getCurrentExtension().path+'/data/'+'links_tray_db.json';
 		let file = Gio.file_new_for_path(path);
 
-		if (!GLib.file_test(path, GLib.FileTest.EXISTS)) {		
-			let fstream = file.create(Gio.FileCreateFlags.NONE, null);
-			let default_links = JSON.stringify( { "id": 1, "links": [{"order": 1, "link": "/home/"}]} );
-			fstream.write(default_links, null, default_links.length);
-//			fstream.close(null);
+		let fstream = null;
+		if (!GLib.file_test(path, GLib.FileTest.EXISTS)) {
+			fstream = file.create(Gio.FileCreateFlags.NONE, null);
+//			this.links_data = { "collection_id": 1, "links_array": [{"order": 1, "link": "/home/"}]};
+//			this.links_data = [{ "collection" : 1}];
+			this.links_data = {"col" :[{ "collection" : 1}]};
+
+
+			this.string_data = JSON.stringify(this.links_data);
+			fstream.write(this.string_data, null, this.string_data.length);
 		} else {
 			log("IT EXisto");
-			let fstream = file.open_readwrite(null).get_input_stream();
+			fstream = file.open_readwrite(null).get_input_stream();
 			let size = file.query_info("standard::size",
 				Gio.FileQueryInfoFlags.NONE, null).get_size();
 				
-			let string_data = fstream.read_bytes(size, null).get_data();
-			let links_data
+			this.string_data = fstream.read_bytes(size, null).get_data();
 			try {
-				links_data = JSON.parse(string_data);
+				this.links_data = JSON.parse(this.string_data);
 			} catch(e) {
 				log(_("The file "+path+" is not a meaningful JSON database. Check it!"));
-				fstream.close(null);
-//log('DNAME '+file.get_parse_name() );//parse_name is full url
 				file.set_display_name((file.get_basename()+'.'+(Math.round(Math.random()*10000))), null); 
 			}
-			
-			
-//			fstream.close(null);
-			log("data is "+string_data);
-			log( links_data.links[0].order );
-			log( links_data.links[0].link );
+
 		}
+//log(this.links_data.collection_id);			
+//log(this.links_data.links_array[0].order);
+//log(this.links_data.links_array[0].link);		
+log("data is "+this.string_data);		
+		fstream.close(null);
 	},
 	
-	save_db: function(data) { 
-		let default_links = JSON.stringify(data);
-		log ( default_links );
-		fstream.write(default_links, null, default_links.length);
-		fstream.close(null);		
+	save_db: function() {
+		//this.links_data.push( { collection_id: "2", "links_array": [{"order": 2, "link": "/home/2"}]} );
+		//delete this.links_data[0] = "";
+		//this.links_data[0] = "[]";
+//		this.links_data.push( { "collection" : 2} );//WORKS:adds
+
+		//this.links_data.push( { "collection" : 2} );
+		//this.links_data.push( { "collection" : 3} );
+		//this.links_data.push( { "collection" : 4} );
+
+//this.links_data.pop( { "collection" : 1} );//only the last
+//delete this.links_data.pull( { "collection" : 4} );		
+//delete this.links_data[0];
+//log('sssssss '+this.links_data[1]);
+
+
+//delete this.links_data.test[keyToDelete];
+
+delete this.links_data.col;
+
+		this.string_data = JSON.stringify(this.links_data);
+	/*
+		log(string_data);
+		if (string_data == '[null]') {
+			log('TROUBLE');
+			string_data = '[]'
+		}
+	*/
+	
+		try {
+log(this.string_data+'<');
+			let path = ExtensionUtils.getCurrentExtension().path+'/data/'+'links_tray_db.json';
+			let file = Gio.file_new_for_path(path);
+			//let fstream = file.open_readwrite(null).get_output_stream();
+			let fstream = file.replace(null, false, Gio.FileCreateFlags.NONE, null);
+			fstream.write(this.string_data, null, this.string_data.length);
+			fstream.close(null);
+		} catch (e) {
+			log("Error when saving file  "+e.message);
+		}
 	}	
 });
