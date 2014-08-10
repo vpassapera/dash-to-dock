@@ -35,10 +35,6 @@ let DASH_ITEM_HOVER_TIMEOUT = Dash.DASH_ITEM_HOVER_TIMEOUT;
 
 let dock_horizontal = true;
 
-let subjectLabel = null;
-let descriptionLabel = null;
-let labelProceedBtn = null;
-
 const myLinkTray = new Lang.Class({
     Name: 'myLinkTray',
     Extends: St.Widget,
@@ -201,17 +197,11 @@ global.logError('' + e);
     
     
     callHandler: function(conductor) {
-			if (conductor == 0) {
-				let subjectLabel = _("A");
-				let descriptionLabel = _("B");
-				let labelProceedBtn = _("C");
-				new ConfirmationDialog(Lang.bind(this, this.freeContents)).open();
-			} else if (conductor == 1) {
-				let subjectLabel = _("A");
-				let descriptionLabel = _("B");
-				let labelProceedBtn = _("C");
-				new ConfirmationDialog(Lang.bind(this, this.removeTray)).open();
-			}
+		if (conductor == 0) {
+			new ConfirmFreeContentsDialog(Lang.bind(this, this.freeContents)).open();
+		} else if (conductor == 1) {
+			new ConfirmRemoveTrayDialog(Lang.bind(this, this.removeTray)).open();
+		}
     },     
 
     scanLinks: function() {
@@ -705,7 +695,7 @@ const ConfirmClearBinDialog = new Lang.Class({
 	Name: 'ConfirmClearBinDialog',
     Extends: ModalDialog.ModalDialog,
 
-	_init: function(deleteMethod) {
+	_init: function(givenMethod) {
 		this.parent({ styleClass: null });
 		
 		let mainContentBox = new St.BoxLayout({ style_class: 'polkit-dialog-main-layout',
@@ -739,18 +729,18 @@ const ConfirmClearBinDialog = new Lang.Class({
 			label: _("Delete"),
 			action: Lang.bind(this, function() {
 			this.close();
-			deleteMethod();
+			givenMethod();
 			})
 		}
 		]);
 	}
 });
 
-const ConfirmationDialog = new Lang.Class({
-	Name: 'ConfirmationDialog',
+const ConfirmFreeContentsDialog = new Lang.Class({
+	Name: 'ConfirmFreeContentsDialog',
     Extends: ModalDialog.ModalDialog,
 
-	_init: function(givenMethod) {	
+	_init: function(givenMethod) {
 		this.parent({ styleClass: null });
 		
 		let mainContentBox = new St.BoxLayout({ style_class: 'polkit-dialog-main-layout',
@@ -762,12 +752,12 @@ const ConfirmationDialog = new Lang.Class({
 		mainContentBox.add(messageBox, { y_align: St.Align.START });
 
 		this._subjectLabel = new St.Label({ style_class: 'polkit-dialog-headline',
-			text: subjectLabel });
+			text: _("Free Contents from Links Tray") });
 
 		messageBox.add(this._subjectLabel, { y_fill:  false, y_align: St.Align.START });
 
 		this._descriptionLabel = new St.Label({ style_class: 'polkit-dialog-description',
-			text: descriptionLabel });
+			text: _("Are you sure you want to remove all of the items in this Links Tray?") });
 
 		messageBox.add(this._descriptionLabel, { y_fill:  true, y_align: St.Align.START });
 
@@ -781,7 +771,52 @@ const ConfirmationDialog = new Lang.Class({
 			key: Clutter.Escape
 		},
 		{
-			label: labelProceedBtn,
+			label: _("Clear"),
+			action: Lang.bind(this, function() {
+			this.close();
+			givenMethod();
+			})
+		}
+		]);
+	}
+});
+
+const ConfirmRemoveTrayDialog = new Lang.Class({
+	Name: 'ConfirmRemoveTrayDialog',
+    Extends: ModalDialog.ModalDialog,
+
+	_init: function(givenMethod) {
+		this.parent({ styleClass: null });
+		
+		let mainContentBox = new St.BoxLayout({ style_class: 'polkit-dialog-main-layout',
+			vertical: false });
+		this.contentLayout.add(mainContentBox, { x_fill: true, y_fill: true });
+
+		let messageBox = new St.BoxLayout({ style_class: 'polkit-dialog-message-layout',
+			vertical: true });
+		mainContentBox.add(messageBox, { y_align: St.Align.START });
+
+		this._subjectLabel = new St.Label({ style_class: 'polkit-dialog-headline',
+			text: _("Remove Links Tray") });
+
+		messageBox.add(this._subjectLabel, { y_fill:  false, y_align: St.Align.START });
+
+		this._descriptionLabel = new St.Label({ style_class: 'polkit-dialog-description',
+			text: _("Are you sure you want to remove this Links Tray instace and all of the items?") });
+
+		messageBox.add(this._descriptionLabel, { y_fill:  true, y_align: St.Align.START });
+
+		this.setButtons(
+		[
+		{
+			label: _("Cancel"),
+			action: Lang.bind(this, function() {
+			this.close();
+			}),
+			key: Clutter.Escape
+		},
+		{
+			label: _("Remove"),
 			action: Lang.bind(this, function() {
 			this.close();
 			givenMethod();
