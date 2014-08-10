@@ -837,27 +837,6 @@ const myDash = new Lang.Class({
 			} else
 				pos = 0; // always insert at the top when dash is empty
 		} else {
-/*			
-			boxWidth = this._box.width;
-			for (let i = 0; i < numChildren; i++) {
-				boxWidth += children[i].width;
-			}
-
-			// Keep the placeholder out of the index calculation; assuming that
-			// the remove target has the same size as "normal" items, we don't
-			// need to do the same adjustment there.
-			if (this._dragPlaceholder) {
-				boxWidth -= this._dragPlaceholder.width;
-				numChildren--;
-			}
-
-			if (!this._emptyDropTarget){
-				pos = Math.floor(x * numChildren / boxWidth);
-				if (pos >  numChildren)
-					pos = numChildren;
-			} else
-				pos = 0; // always insert at the top when dash is empty
-*/
 			boxWidth = this._box.width;
 			if (this._dragPlaceholder) {
 				boxWidth -= this._dragPlaceholder.width;

@@ -31,7 +31,6 @@ const SlideDirection = {
     BOTTOM: 3
 };
 
-
 /*
  * A simple Actor with one child whose allocation takes into account the
  * slide out of its child via the _slidex parameter ([0:1]).
@@ -79,95 +78,75 @@ const DashSlideContainer = new Lang.Class({
         this._slideoutWidth = 1; // minimum width when slided out
     },
 
-/* older code
     vfunc_allocate: function(box, flags) {
+		if (!this._settings.get_boolean('dock-horizontal')) {
+			this.set_allocation(box, flags);
 
-        this.set_allocation(box, flags);
+			if (this._child == null)
+				return;
 
-        if (this._child == null)
-            return;
+			let availWidth = box.x2 - box.x1;
+			let availHeight = box.y2 - box.y1;
+			let [minChildWidth, minChildHeight, natChildWidth, natChildHeight] =
+				this._child.get_preferred_size();
 
-        let availWidth = box.x2 - box.x1;
-        let availHeight = box.y2 - box.y1;
-        let [minChildWidth, minChildHeight, natChildWidth, natChildHeight] =
-            this._child.get_preferred_size();
+			let childWidth = natChildWidth;
+			let childHeight = natChildHeight;
 
-        let childWidth = natChildWidth;
-        let childHeight = natChildHeight;
+			let childBox = new Clutter.ActorBox();
 
-        let childBox = new Clutter.ActorBox();
+			let slideoutWidth = this._slideoutWidth;
 
-        let slideoutWidth = this._slideoutWidth;
+			if (this._direction == SlideDirection.LEFT) {
+				childBox.x1 = (this._slidex -1)*(childWidth - slideoutWidth);
+				childBox.x2 = slideoutWidth + this._slidex*(childWidth - slideoutWidth);
+			} else if (this._direction == SlideDirection.RIGHT) {
+				childBox.x1 = 0;
+				childBox.x2 = childWidth;
+			}
 
-        if (this._direction == SlideDirection.LEFT) {
-            childBox.x1 = (this._slidex -1)*(childWidth - slideoutWidth);
-            childBox.x2 = slideoutWidth + this._slidex*(childWidth - slideoutWidth);
-        } else if (this._direction == SlideDirection.RIGHT) {
-            childBox.x1 = 0;
-            childBox.x2 = childWidth;
-        }
+			childBox.y1 = 0;
+			childBox.y2 = childBox.y1 + childHeight;
+			this._child.allocate(childBox, flags);
+			this._child.set_clip(-childBox.x1, 0, -childBox.x1+availWidth, availHeight);
+		} else {
+			this.set_allocation(box, flags);
 
-        childBox.y1 = 0;
-        childBox.y2 = childBox.y1 + childHeight;
-        this._child.allocate(childBox, flags);
-        this._child.set_clip(-childBox.x1, 0, -childBox.x1+availWidth, availHeight);
+			if (this._child == null)
+				return;
+
+			let availWidth = box.x2 - box.x1;
+			let availHeight = box.y2 - box.y1;
+			let [minChildWidth, minChildHeight, natChildWidth, natChildHeight] =
+				this._child.get_preferred_size();
+
+			let childWidth = natChildWidth;
+			let childHeight = natChildHeight;
+
+			let childBox = new Clutter.ActorBox();
+
+			let slideoutWidth = this._slideoutWidth;
+
+			// Future code for top placement
+			//if (this._direction == SlideDirection.TOP) {
+				//childBox.x1 = 0;
+				//childBox.x2 = childWidth;
+			//} else if (this._direction == SlideDirection.BOTTOM || ) {
+				childBox.x1 = (this._slidex -1)*(childHeight - slideoutWidth);
+				childBox.x2 = slideoutWidth + this._slidex*(childHeight - slideoutWidth);
+			//}			
+			
+			childBox.x1 = 0;
+			childBox.x2 = childBox.x1 + childWidth;
+			this._child.allocate(childBox, flags);
+			this._child.set_clip(-childBox.x1, 0, -childBox.x1+availWidth, availHeight);			
+		}
     },
-*/
-/*
-    vfunc_allocate: function(box, flags) {
-log('_____________________________________________________________________');
-let hideshow = 'IN';//true = 1 showing, false = 0 hiding, for slidex
-if (this._slidex == 0) hideshow = 'OUT';
-log('SlideDirection: '+this._direction+' Situation: '+hideshow);
-log('startbox [x1,y1 = '+box.x1+', '+box.y1+'] [x2,y2 =  '+box.x2+', '+box.y2+']');
-        this.set_allocation(box, flags);
 
-        if (this._child == null)
-            return;
-
-        let availWidth = box.x2 - box.x1;
-        let availHeight = box.y2 - box.y1;
-        let [minChildWidth, minChildHeight, natChildWidth, natChildHeight] =
-            this._child.get_preferred_size();
-log('SIZES minChildWidth='+minChildWidth+'    minChildHeight='+minChildHeight+'    natChildWidth='+natChildWidth+'    natChildHeight='+natChildHeight);
-        let childWidth = natChildWidth;
-        let childHeight = natChildHeight;
-
-        let childBox = new Clutter.ActorBox();
-
-        let slideoutWidth = this._slideoutWidth;
-
-childBox.x1 = 0;
-childBox.x2 = childWidth; 
-
-
-//if (this._slidex == 0) {
-//childHeight = -1*childHeight;
-//}
-
-childBox.y1 = slideoutWidth + (this._slidex - 1)*childHeight;
-childBox.y2 = slideoutWidth + this._slidex*childHeight;
-
-if (childHeight < 0 || childBox.y1 < 0 || childBox.y2 < 0 && this._slidex == 0) {
-log('-----------------------------> '+childHeight+'   '+childBox.y1+'   '+childBox.y2);
-
-if (childHeight < 0 ) childHeight = Math.abs(childHeight);
-
-if (childBox.y1 < 0 ) childBox.y1 = Math.abs(childBox.y1);
-
-if (childBox.y2 < 0 ) childBox.y2 = Math.abs(childBox.y2);
-}
-
-
-        this._child.allocate(childBox, flags);//<--WARNING SPAMMER TODO: fix this!! FIXME: there should be no warnings in the console
-        this._child.set_clip(-childBox.x1, 0, -childBox.x1+availWidth, availHeight);
-log('childBox [x1,y1 = '+childBox.x1+', '+childBox.y1+'] [x2,y2 =  '+childBox.x2+', '+childBox.y2+']');
-    },
-*/    
 
     /* Just the child width but taking into account the slided out part */
     vfunc_get_preferred_width: function(forHeight) {
-        let [minWidth, natWidth ] = this._child.get_preferred_width(forHeight);
+		let [minWidth, natWidth ] = this._child.get_preferred_width(forHeight);   
         if (!this._settings.get_boolean('dock-horizontal')) {
 			minWidth = (minWidth - this._slideoutWidth)*this._slidex + this._slideoutWidth;
 			natWidth = (natWidth - this._slideoutWidth)*this._slidex + this._slideoutWidth;
@@ -178,18 +157,19 @@ log('childBox [x1,y1 = '+childBox.x1+', '+childBox.y1+'] [x2,y2 =  '+childBox.x2
     /* Just the child min height, no border, no positioning etc. */
     vfunc_get_preferred_height: function(forWidth) {
         let [minHeight, natHeight] = this._child.get_preferred_height(forWidth);  
-		log("PING vfunc_get_preferred_heightA: for "+forWidth+'  min '+minHeight+' nat '+natHeight);
+//		log("PING vfunc_get_preferred_heightA: for "+forWidth+'  min '+minHeight+' nat '+natHeight);
 		if (this._settings.get_boolean('dock-horizontal')) {
 			minHeight = (minHeight - this._slideoutWidth)*this._slidex + this._slideoutWidth;
 			natHeight = (natHeight - this._slideoutWidth)*this._slidex + this._slideoutWidth;
 		}
-		log("PING vfunc_get_preferred_heightB: for "+forWidth+'  min '+minHeight+' nat '+natHeight);       
+//		log("PING vfunc_get_preferred_heightB: for "+forWidth+'  min '+minHeight+' nat '+natHeight);       
         return [minHeight, natHeight];
     },
  
-    /* I was expecting it to be a virtual function... stil I don't understand
-       how things work.
-    */
+    /* 
+     * I was expecting it to be a virtual function...
+     * stil I don't understand how things work.
+     */
     add_child: function(actor) {
 
         /* I'm supposed to have only on child */
@@ -262,15 +242,11 @@ const dockedDash = new Lang.Class({
         // centering, turn on track hover
 
         // This is the vertical centering actor
-//        this.actor = new St.Bin({ name: 'dashtodockContainer',reactive: false});
-//            x_align: St.Align.START, y_align: St.Align.START});//TODO:chek if its supposed to be x_align for horizontal
-
 		if (!this._settings.get_boolean('dock-horizontal')) {
 			this.actor = new St.Bin({ name: 'dashtodockContainer',reactive: false,
             y_align: St.Align.MIDDLE})
 		} else {
 			this.actor = new St.Bin({ name: 'dashtodockContainer',reactive: false});
-//            x_align: St.Align.START, y_align: St.Align.START});	
 		}
 
 
