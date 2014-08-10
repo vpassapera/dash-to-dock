@@ -99,7 +99,7 @@ const DashSlideContainer = new Lang.Class({
         let slideoutWidth = this._slideoutWidth;
 log('_____________________________________________________________________');          
 log('SlideDirection: '+this._direction);
-log('COORDS1: startbox [x1,y1 = '+box.x1+', '+box.y2+'] [x2,y2 =  '+box.x2+', '+box.y2+']');
+log('startbox [x1,y1 = '+box.x1+', '+box.y2+'] [x2,y2 =  '+box.x2+', '+box.y2+']');
 
 //almost works
 //childBox.x1 = (this._slidex -1)*(childWidth - 1);
@@ -135,7 +135,7 @@ log('COORDS1: startbox [x1,y1 = '+box.x1+', '+box.y2+'] [x2,y2 =  '+box.x2+', '+
 
 
 //this makes an animation = slide acordeon
-let contentBox = this.get_content_box(box);
+//let contentBox = this.get_content_box(box);
 //childBox.x1 = contentBox.x1;
 //childBox.y1 = contentBox.y1;
 //childBox.x2 = contentBox.x2;
@@ -147,18 +147,21 @@ let contentBox = this.get_content_box(box);
 //childBox.y1 = 0;
 //childBox.y2 = childBox.y1 + childHeight;
 
+//acordeons and goes to the top
+//childBox.x1 = 0;//(this._slidex -1)*(childWidth - slideoutWidth);
+//childBox.x2 = childBox.x1 + childWidth;//slideoutWidth + this._slidex*(childWidth - slideoutWidth);
+//childBox.y1 = (this._slidex -1)*(childHeight - slideoutWidth);//0;
+//childBox.y2 = slideoutWidth + this._slidex*(childHeight - slideoutWidth);//childBox.y1 + childHeight;
+
 childBox.x1 = 0;//(this._slidex -1)*(childWidth - slideoutWidth);
-childBox.x2 = childBox.x1 + childWidth;//slideoutWidth + this._slidex*(childWidth - slideoutWidth);
-childBox.y1 = (this._slidex -1)*(childHeight - slideoutWidth);//0;
-childBox.y2 = slideoutWidth + this._slidex*(childHeight - slideoutWidth);//childBox.y1 + childHeight;
-
-
-log('COORDS2: contnBox [x1,y1 = '+contentBox.x1+', '+contentBox.y2+'] [x2,y2 =  '+contentBox.x2+', '+contentBox.y2+']');
+childBox.x2 = childWidth;//slideoutWidth + this._slidex*(childWidth - slideoutWidth);
+childBox.y1 = -(this._slidex -1)*childHeight;//0;
+childBox.y2 = -this._slidex*childHeight;//childBox.y1 + childHeight;
 
         this._child.allocate(childBox, flags);
         this._child.set_clip(-childBox.x1, 0, -childBox.x1+availWidth, availHeight);//WTF?? //cuts off: A, offTop, C, D
 //this._child.set_clip_to_allocation(true);//+|Experimental..seemed to work at one time
-log('COORDS3: childBox [x1,y1 = '+childBox.x1+', '+childBox.y2+'] [x2,y2 =  '+childBox.x2+', '+childBox.y2+']');
+log('childBox [x1,y1 = '+childBox.x1+', '+childBox.y2+'] [x2,y2 =  '+childBox.x2+', '+childBox.y2+']');
     },
 
 /* older code
@@ -196,14 +199,14 @@ log('COORDS3: childBox [x1,y1 = '+childBox.x1+', '+childBox.y2+'] [x2,y2 =  '+ch
     },
 */
 
-    /* Just the child width but taking into account the slided out part */
+    /* Just the child width but taking into account the slided out part 
     vfunc_get_preferred_width: function(forHeight) {
         let [minWidth, natWidth ] = this._child.get_preferred_width(forHeight);
         minWidth = (minWidth - this._slideoutWidth)*this._slidex + this._slideoutWidth;
         natWidth = (natWidth - this._slideoutWidth)*this._slidex + this._slideoutWidth;
         return [minWidth, natWidth];
     },
- 
+ */
     /* Just the child min height, no border, no positioning etc. 
     vfunc_get_preferred_height: function(forWidth) {
         let [minHeight, natHeight] = this._child.get_preferred_height(forWidth);
