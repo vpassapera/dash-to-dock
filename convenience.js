@@ -220,5 +220,54 @@ log(this.string_data+'<');
 				this.save_db();
 			}
 		}
-	}		
+	},
+	
+	move_tray: function(previous_id, next_id) {
+log('MOVING TRAY IN DB');		
+/*		
+		for(let i = 0; i < this.links_data.folders.length ;i++) {
+			if (id == this.links_data.folders[i].collection_id) {
+				for(let k = 0; k < this.links_data.folders[i].links_array.length ;k++) {
+					//this.links_data.folders[i].links_array[k];
+					//REARRANGEMENT ARRAY SPLICER
+					//this.save_db();
+				}
+			}
+		}
+*/
+	},	
+	
+	/* lid = link id */
+	add_link_to_tray: function(id, lid, file) {
+		for(let i = 0; i < this.links_data.folders.length ;i++) {
+			if (id == this.links_data.folders[i].collection_id) {
+				this.links_data.folders[i].links_array
+					.push({"id":lid,"link":file.get_path()});
+				this.save_db();
+			}
+		}
+	},
+	
+	move_link_in_tray: function(id, lid, new_lid) {
+		for(let i = 0; i < this.links_data.folders.length ;i++) {
+			if (id == this.links_data.folders[i].collection_id) {
+				for(let k = 0; k < this.links_data.folders[i].links_array.length ;k++) {
+					//this.links_data.folders[i].links_array[k];
+					//REARRANGEMENT ARRAY SPLICER
+					//this.save_db();
+				}
+			}
+		}
+	},
+	
+	remove_link_from_tray: function(id, lid) {
+		for(let i = 0; i < this.links_data.folders.length ;i++) {
+			if (id == this.links_data.folders[i].collection_id) {
+				for(let k = 0; k < this.links_data.folders[i].links_array.length ;k++) {
+					delete this.links_data.folders[i].links_array[k];
+					this.save_db();
+				}
+			}
+		}
+	}
 });

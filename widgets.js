@@ -206,6 +206,56 @@ const myLinkBox = new Lang.Class({
 		}
     },
 
+//-------------------------------------------------------------------
+    _onDragBegin: function() {
+        this._dragCancelled = false;
+        this._dragMonitor = {
+            dragMotion: Lang.bind(this, this._onDragMotion)
+        };
+        DND.addDragMonitor(this._dragMonitor);
+
+        if (this._box.get_n_children() == 0) {	
+            this._emptyDropTarget = new Dash.EmptyDropTargetItem();
+            this._box.insert_child_at_index(this._emptyDropTarget, 0);
+            this._emptyDropTarget.show(true);
+        }
+    },
+
+    _onDragCancelled: function() {
+        this._dragCancelled = true;
+        this._endDrag();
+    },
+
+    _onDragEnd: function() {
+        if (this._dragCancelled)
+            return;
+
+        this._endDrag();
+    },
+
+    _endDrag: function() {
+        this._clearDragPlaceholder();
+        this._clearEmptyDropTarget();
+        DND.removeDragMonitor(this._dragMonitor);
+    },
+
+    _onDragMotion: function(dragEvent) {
+        let tray;
+		if (dragEvent.source instanceof myLinkTray) {
+			tray = dragEvent.source;
+		} else {
+			tray = null;
+		}
+      
+        if (tray == null)
+            return DND.DragMotionResult.CONTINUE;
+
+        if (!this._box.contains(dragEvent.targetActor))
+            this._clearDragPlaceholder();
+
+        return DND.DragMotionResult.CONTINUE;
+    },
+
     _clearDragPlaceholder: function() {
         if (this._dragPlaceholder) {
             this._animatingPlaceholdersCount++;
@@ -219,9 +269,16 @@ const myLinkBox = new Lang.Class({
         this._dragPlaceholderPos = -1;
     },
 
+    _clearEmptyDropTarget: function() {
+        if (this._emptyDropTarget) {
+            this._emptyDropTarget.animateOutAndDestroy();
+            this._emptyDropTarget = null;
+        }
+    },
+//-------------------------------------------------------------------
     handleDragOver : function(source, actor, x, y, time) {
         let tray;
-		if (source instanceof myLinkTray) {
+		if (source instanceof myLinkTray) {		
 			tray = source;
 		} else {
 			tray = null;
@@ -291,7 +348,7 @@ const myLinkBox = new Lang.Class({
             } else {
                 fadeIn = true;
             }
-
+log('>>>>>>>>>>>>>>>>1| '+fadeIn);
             this._dragPlaceholder = new Dash.DragPlaceholderItem();
 			if (!dock_horizontal) {
 				this._dragPlaceholder.child.set_width (this.iconSize);
@@ -300,10 +357,27 @@ const myLinkBox = new Lang.Class({
 			} else {
 				this._dragPlaceholder.child.set_width (this.iconSize / 2);
 				this._dragPlaceholder.child.set_height (this.iconSize);
+				
+				log('>>>>>>>>>>>>>>>>2.2| '+this._dragPlaceholder.child.width );
+				log('>>>>>>>>>>>>>>>>2.2| '+this._dragPlaceholder.child.height );
+				
 			}
             this._box.insert_child_at_index(this._dragPlaceholder,
                                             this._dragPlaceholderPos);
+log('>>>>>>>>>>>>>>>>2| '+fadeIn);                                            
             this._dragPlaceholder.show(fadeIn);
+
+for(let i = 0; i < this._box.get_children().length ;i++){
+log('>>>>>>>>>>>>>>>>3| '+this._box.get_child_at_index(i));
+if (!(this._box.get_child_at_index(i) instanceof (St.Button))) {
+log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>4| '+this._box.get_child_at_index(i).width+'  '+this._box.get_child_at_index(i).height);
+
+//this._box.get_child_at_index(i).width = 24
+
+}
+}
+
+            
         }
 
         // Remove the drag placeholder if we are not in the
@@ -325,7 +399,7 @@ const myLinkBox = new Lang.Class({
         // No drag placeholder means we don't wan't to add tray
         // and we are dragging it to its original position
         if (!this._dragPlaceholder)
-            return false;		
+            return true;		
 		
         let tray;
 		if (source instanceof myLinkTray) {
@@ -353,8 +427,7 @@ const myLinkBox = new Lang.Class({
 
 		tray.actor.unparent();
 		this._box.replace_child(this._dragPlaceholder, tray.actor);
-
-        this._clearDragPlaceholder();
+		this.linksStorage.move_tray();
 	
 		return true;
     }	
@@ -408,15 +481,15 @@ const myLinkTray = new Lang.Class({
         this._draggable.connect('drag-begin', Lang.bind(this,
             function () {
                 this._removeMenuTimeout();
-                Main.overview.beginItemDrag(this);
+                this._myLinkBoxInstance._onDragBegin();
             }));
         this._draggable.connect('drag-cancelled', Lang.bind(this,
             function () {
-                Main.overview.cancelledItemDrag(this);
+                this._myLinkBoxInstance._onDragCancelled();
             }));
         this._draggable.connect('drag-end', Lang.bind(this,
             function () {
-               Main.overview.endItemDrag(this);
+               this._myLinkBoxInstance._onDragEnd();
             }));
 	},
 
@@ -543,14 +616,14 @@ const myLinkTray = new Lang.Class({
 
 	/* The file link is added to the tray and LinksDB. */
     addLink: function(file) {
-		let item = new myPopupImageMenuItem(file, this.iconSize);	
+		let item = new myPopupImageMenuItem(file, this.iconSize);
+		item.lid = Math.random().toString(36).substr(2, 5);		
 		this.menu.addMenuItem(item, 0);
 		item.connect('activate', Lang.bind(this, function () {
 			let handler = file.query_default_handler (null);
 			let result = handler.launch ([file], null);
 		}));
-				
-		//TODO: add to LinkDB
+		this._myLinkBoxInstance.linksStorage.add_link_to_tray(this._id, item.lid, file);		
     },
 
     _removeMenuTimeout: function() {
@@ -652,8 +725,6 @@ const myLinkTrayMenu = new Lang.Class({
 		
         // We want to keep the item hovered while the menu is up
         this.blockSourceEvents = true;
-this.actor.set_style(null);
-//        this.actor.add_style_class_name('app-well-menu2');
         
         // Chain our visibility and lifecycle to that of the source
         source.connect('notify::mapped', Lang.bind(this, function () {
@@ -678,12 +749,6 @@ this.actor.set_style(null);
 			}
 		}
 	},
-	
-	/*
-    _redisplay: function() {
-        this.removeAll();
-        this.populate();  
-    },*/
     
     _appendMenuItem: function(fileuri) {		
 		let file = Gio.file_new_for_path(fileuri);
@@ -736,9 +801,7 @@ const myPopupImageMenuItem = new Lang.Class({
 		}
 			
 		this.box = new St.BoxLayout({ vertical: true, x_expand: true });
-		
-//this.box.set_style('background-color: yellow;');
-			
+		//this.box.set_style('background-color: yellow;');//Debugging
 		this.box.width = 2*size;
 		this.box.add(this._icon, { x_align: St.Align.MIDDLE });
 		this.box.add(this._label, { icon_size: size, x_align: St.Align.MIDDLE });
