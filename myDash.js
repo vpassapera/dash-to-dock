@@ -429,7 +429,7 @@ const myDash = new Lang.Class({
 
     _createAppItem: function(app) {
 		let appIcon = new myAppIcon(this._settings, app, 
-			{ setSizeManually: true, showLabel: false });
+			{ setSizeManually: true, showLabel: false });			
         appIcon._draggable.connect('drag-begin',
 			Lang.bind(this, function() {
 				appIcon.actor.opacity = 50;
@@ -1006,7 +1006,6 @@ const myDash = new Lang.Class({
 
 Signals.addSignalMethods(myDash.prototype);
 
-
 /**
  * Extend AppIcon
  *
@@ -1071,13 +1070,23 @@ const myAppIcon = new Lang.Class({
         this.actor.fake_release();
         this._draggable.fakeRelease();
 
-        if (!this._menu) {		
-			if (!dock_horizontal) {
-				this._menu = new AppDisplay.AppIconMenu(this);
-			} else {				
-				this._menu = new myAppIconMenu(this);
+        if (!this._menu) {
+			let side;
+			switch(this._settings.get_int('dock-placement')) {
+				case 0:
+					side = St.Side.LEFT;
+				break;	
+				case 1:
+					side = St.Side.RIGHT;
+				break;
+				case 2:
+					side = St.Side.BOTTOM;
+				break;
+				case 3:
+					side = St.Side.TOP;
+				break;	
 			}
-
+			this._menu = new myAppIconMenu(this, side);
 
             this._menu.connect('activate-window',
                 Lang.bind(this, function (menu, window) {
@@ -1203,8 +1212,8 @@ const myAppIconMenu = new Lang.Class({
     Name: 'AppIconMenu',
     Extends: AppDisplay.PopupMenu.PopupMenu,
 
-    _init: function(source) {
-        let side = St.Side.TOP;
+    _init: function(source, side) {
+        //let side = St.Side.TOP;
         this.parent(source.actor, 0.5, side);
 
         // We want to keep the item hovered while the menu is up
