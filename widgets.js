@@ -137,13 +137,14 @@ const myLinkTray = new Lang.Class({
 
 	/* 
 	 * Removes the old suggestions and then repopulate menu.
-	 * IMPORTANT: the parameter 5 ro 6 is there to represent
-	 * the items from populate_menu_secondary(). Keep Updated!
+	 * IMPORTANT: @keep_items is there to represent the items
+	 * from populate_menu_secondary(). Keep Updated!
 	 */
     scanLinks: function() {
-		if(this.menu_secondary.length > 6) {
+		let keep_items = 6;
+		if(this.menu_secondary.length > keep_items) {
 			let items = this.menu_secondary._getMenuItems();
-			for (let i = 0; i < (items.length - 6); i++) {			
+			for (let i = 0; i < (items.length - keep_items); i++) {			
 				if (items[i] instanceof PopupMenu.PopupBaseMenuItem) {
 						items[i].destroy();
 				}
@@ -194,13 +195,14 @@ const myLinkTray = new Lang.Class({
 
 	/* The file link is added to the tray and LinksDB. */
     addLink: function(file) {
-log("ping ADD LINK ");	
-		/*
-		let item = new PopupMenu.PopupBaseMenuItem;
-		let label = new St.Label({text: _("Add Another Tray")});
-		item.connect("activate", Lang.bind(this, this.addTray));
-		item.actor.add_child(label);
-		this.menu_secondary.addMenuItem(item);*/	
+		let item = new myPopupImageMenuItem(file, this.iconSize);	
+		this.menu.addMenuItem(item, 0);
+		item.connect('activate', Lang.bind(this, function () {
+			var handler = file.query_default_handler (null);
+			var result = handler.launch ([file], null);
+		}));
+				
+		//TODO: add to LinkDB
     },
 
     freeContents: function() {
@@ -333,23 +335,10 @@ this.actor.add_style_class_name('popup-menu-content2');
         this.populate();
     },
     
-	populate: function() {
+	populate: function() {//GET files from LinksDB
 //------------------------------------
-		let item = new PopupMenu.PopupBaseMenuItem;
-		let box = new St.BoxLayout({ vertical: false });
-		// This entry can make an icon, if it is crtl+v an icon or folder on/in it
-		let entryAddLink = new St.Entry({ x_align: St.Align.START });
-		entryAddLink.set_width(20);		
-		box.add(entryAddLink);
-//		let btnAddLink = new St.Button({ label: "+", reactive: true, can_focus: true});	
-//		btnAddLink.connect('clicked', Lang.bind(this, function () { 
-//			log("ADDING LINK "+this.entryAddLink.get_text());
-//		}));
-
-//		box.add(btnAddLink);
-		item.actor.add_child(box);
-		item.connect("activate", function () { log("ADDING LINK "+entryAddLink.get_text()); });		
-		this.addMenuItem(item);
+//		let item = new myPopupImageMenuItem(file,'user-info', null);	
+//		this.addMenuItem(item);
 //------------------------------------	
 		let favs = AppFavorites.getAppFavorites().getFavorites();
 		for(let i = 0; i < favs.length ;i++) {
@@ -375,9 +364,7 @@ this.actor.add_style_class_name('popup-menu-content2');
 
 
 		let item = new PopupMenu.PopupBaseMenuItem;
-//item.width = parseInt(this.iconSize, 10);
 		let box = new St.BoxLayout({vertical: true, x_align: Clutter.ActorAlign.CENTER});//TODO: verticality	
-//box.width = parseInt(this.iconSize, 10);
 		
 		item.actor.add_child(box);
 		let icon = fav.create_icon_texture(parseInt(this.iconSize, 10));
@@ -394,9 +381,28 @@ this.actor.add_style_class_name('popup-menu-content2');
 
 Signals.addSignalMethods(myLinkTrayMenu.prototype);
 
+const myPopupImageMenuItem = new Lang.Class({
+    Name: 'myPopupImageMenuItem',
+    Extends: PopupMenu.PopupBaseMenuItem,
 
-//----------------------------------------------------------------------------------
+    _init: function (file, size) {
+        this.parent();
 
+		this.actor.set_vertical(true);
+
+        this._icon = new St.Icon();
+		this.actor.add(this._icon, { x_align: St.Align.MIDDLE });
+
+        this.label = new St.Label({ text: file.get_basename() });
+        this.actor.add(this.label, { x_align: St.Align.MIDDLE });
+
+        this.setIcon('user-desktop');    
+    },
+
+    setIcon: function(name) {
+        this._icon.icon_name = name;
+    }
+});
 
 const myShowDesktop = new Lang.Class({
     Name: 'myShowDesktop',
