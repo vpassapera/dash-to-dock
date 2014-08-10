@@ -20,14 +20,15 @@ function hide(){
     dock.enableAutoHide();
 }
 
-function resetDockOrientation() {
+function rebootDock() {
 	disable();
 	enable();
 }
 
 function enable() {
     settings = Convenience.getSettings('org.gnome.shell.extensions.dash-to-dock');
-    settings.connect('changed::dock-placement', Lang.bind(this, this.resetDockOrientation));
+    settings.connect('changed::dock-placement', Lang.bind(this, this.rebootDock));
+    settings.connect('changed::applets-order', Lang.bind(this, this.rebootDock));
     dock = new DockedDash.dockedDash(settings);
     intellihide = new Intellihide.Intellihide(show, hide, dock, settings);
 }
