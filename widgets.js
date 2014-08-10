@@ -26,6 +26,7 @@ const Workspace = imports.ui.workspace;
 
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 const Convenience = Me.imports.convenience;
+const ExtensionUtils = imports.misc.extensionUtils;
 
 let dock_horizontal = true;
 
@@ -65,7 +66,12 @@ const myLinkTray = new Lang.Class({
 		this.menuManager.addMenu(this.menu);
 
 //------------------------------------------------------------------
-		let path = '/home/pc/.local/share/gnome-shell/extensions/dash-to-dock@micxgx.gmail.com/new.js1';
+		//let path = '/home/pc/.local/share/gnome-shell/extensions/dash-to-dock@micxgx.gmail.com/new.js1';
+        let path = Gio.file_new_for_path(ExtensionUtils.getCurrentExtension().path);
+log("My Path is1: "+path);
+log("My Path is2: "+ExtensionUtils.getCurrentExtension().path ); 
+     
+		
 		/*if ( GLib.file_test(path, GLib.FileTest.EXISTS) ) {
 			log(">>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>");
 			//return Gio.File.new_for_path(paths[i]);
