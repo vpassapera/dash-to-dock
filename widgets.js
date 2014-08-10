@@ -344,11 +344,7 @@ const myLinkBox = new Lang.Class({
 
 		tray.actor.unparent();
 		this._box.replace_child(this._dragPlaceholder, tray.actor);
-//		this.linksStorage.move_tray();
-
-//		children = this._box.get_children();
-//		this.linksStorage.move_tray(this._box.get_children());
-this.linksStorage.move_tray(tray.id, trayPos);		
+		this.linksStorage.move_tray(tray.id, trayPos);
 		this._clearDragPlaceholder();
 		
 		return true;
@@ -550,7 +546,7 @@ const myLinkTray = new Lang.Class({
 			let handler = file.query_default_handler (null);
 			let result = handler.launch ([file], null);
 		}));
-		this._myLinkBoxInstance.linksStorage.add_link_to_tray(this.id, item.lid, file);		
+		this.myLinkBoxInstance.linksStorage.add_link_to_tray(this.id, item.lid, file);		
     },
 
     _removeMenuTimeout: function() {
