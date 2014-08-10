@@ -37,8 +37,10 @@ let dock_horizontal = true;
 
 const myLinkTray = new Lang.Class({
     Name: 'myLinkTray',
+    Extends: St.Widget,
                         
-    _init: function(iconSize, settings) {			
+    _init: function(iconSize, settings) {
+this.parent();					
 		this._labelText = _("Links Tray");
 		this.label = new St.Label({ style_class: 'dash-label'});
 		this.label.hide();
@@ -65,14 +67,16 @@ const myLinkTray = new Lang.Class({
 
 		this.menu = new myLinkTrayMenu(this.actor, iconSize);
 		this.menu.actor.hide();
-		this.menu_secondary = new PopupMenu.PopupMenu(this.actor, 0.5, St.Side.BOTTOM, 0);
+//		this.menu_secondary = new PopupMenu.PopupMenu(this.actor, 0.5, St.Side.BOTTOM, 0);
+this.menu_secondary = new PopupMenu.PopupMenu(this.icon.actor, 0.5, St.Side.BOTTOM, 0);
+		this.menu_secondary.blockSourceEvents = true;		
 		this.populate_menu_secondary();
 		this.menu_secondary.actor.add_style_class_name('app-well-menu');
 		Main.uiGroup.add_actor(this.menu_secondary.actor);
 		this.menu_secondary.actor.hide();	  
         
 		this.menuManager.addMenu(this.menu);
-		this.menuManager.addMenu(this.menu_secondary);
+		this.menuManager.addMenu(this.menu_secondary);//ERROR: push Modal: invocation of begin_modal failed: WHY??
 
 		this.linksOfTray = new Convenience.LinksDB();
 	},
@@ -91,8 +95,7 @@ const myLinkTray = new Lang.Class({
     },
 
     _createIcon: function(size) {
-		let lt = Gio.icon_new_for_string(Me.path + "/media/links-tray.svg");
-        return new St.Icon({ gicon: lt,
+        return new St.Icon({ gicon: Gio.icon_new_for_string(Me.path + "/media/links-tray.svg"),
 								icon_size: size,
 								style_class: 'show-apps-icon',
 								track_hover: true });
@@ -198,8 +201,8 @@ const myLinkTray = new Lang.Class({
 		let item = new myPopupImageMenuItem(file, this.iconSize);	
 		this.menu.addMenuItem(item, 0);
 		item.connect('activate', Lang.bind(this, function () {
-			var handler = file.query_default_handler (null);
-			var result = handler.launch ([file], null);
+			let handler = file.query_default_handler (null);
+			let result = handler.launch ([file], null);
 		}));
 				
 		//TODO: add to LinkDB
@@ -225,7 +228,7 @@ const myLinkTray = new Lang.Class({
     },
     
 	buttonPressed: function(actor, event) {
-		if (event.get_button() == 1 && event.get_click_count() == 1) {
+		if (event.get_button() == 1) {
 			this.popupMenu(true);
 		} else {
 			this.popupMenu(false);
@@ -239,7 +242,8 @@ const myLinkTray = new Lang.Class({
 	        //this._draggable.fakeRelease();
 			this.emit('menu-state-changed', true);
 			this.actor.set_hover(true);
-			this.menu.toggle();
+this.menu_secondary.close();			
+			this.menu.toggle();		
 			this.menuManager.ignoreRelease();
 			this.emit('sync-tooltip');
 		} else {
@@ -248,6 +252,7 @@ const myLinkTray = new Lang.Class({
 	        //this._draggable.fakeRelease();
 			this.emit('menu-state-changed', true);
 			this.actor.set_hover(true);
+this.menu.close();	
 			this.menu_secondary.toggle();
 			this.menuManager.ignoreRelease();
 			this.emit('sync-tooltip');		
