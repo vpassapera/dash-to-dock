@@ -93,11 +93,14 @@ const myLinkTray = new Lang.Class({
     Name: 'myLinkTray',
                         
     _init: function(iconSize, settings) {
-		this._labelText = _("Links Tray");
+//		this._labelText = _("Links Tray");		
+		this._labelText = 'k'+Math.round(Math.random()*10000);
 		this.label = new St.Label({ style_class: 'dash-label'});
 		this.label.hide();
 		Main.layoutManager.addChrome(this.label);
 		this.label_actor = this.label;
+
+this.id = this._labelText;
 		
 		this._settings = settings;
 		this.iconSize = iconSize;
@@ -379,13 +382,14 @@ const myLinkBox = new Lang.Class({
     Extends: St.BoxLayout,
     
 	_init: function(iconSize, settings, dash) {
-log ('HOOOOORAY');
-
 		if (!dock_horizontal) {
 			this.parent({ vertical: true, clip_to_allocation: true });
 		} else {
 			this.parent({ vertical: false, clip_to_allocation: true });
 		}
+
+		this._settings = settings;
+		this.iconSize = iconSize;
 
         this._dragPlaceholder = null;
         this._dragPlaceholderPos = -1;
@@ -478,11 +482,13 @@ log ('HOOOOORAY');
             this._box.insert_child_at_index(this._emptyDropTarget, 0);
             this._emptyDropTarget.show(true);
         }
+log('_onDragBegin');
     },
 
     _onDragCancelled: function() {
         this._dragCancelled = true;
         this._endDrag();
+log('_onDragCancelled');        
     },
 
     _onDragEnd: function() {
@@ -490,6 +496,7 @@ log ('HOOOOORAY');
             return;
 
         this._endDrag();
+log('_onDragEnd');            
     },
 
     _endDrag: function() {
@@ -497,6 +504,7 @@ log ('HOOOOORAY');
         this._clearEmptyDropTarget();
         this._showAppsIcon.setDragApp(null);
         DND.removeDragMonitor(this._dragMonitor);
+log('_endDrag');             
     },
 
     _onDragMotion: function(dragEvent) {
@@ -515,6 +523,7 @@ log ('HOOOOORAY');
             this._showAppsIcon.setDragApp(null);
 
         return DND.DragMotionResult.CONTINUE;
+log('_onDragMotion');          
     },
 
     _clearDragPlaceholder: function() {
@@ -528,6 +537,7 @@ log ('HOOOOORAY');
             this._dragPlaceholder = null;
         }
         this._dragPlaceholderPos = -1;
+log('_clearDragPlaceholder');        
     },
 
     _clearEmptyDropTarget: function() {
@@ -535,21 +545,27 @@ log ('HOOOOORAY');
             this._emptyDropTarget.animateOutAndDestroy();
             this._emptyDropTarget = null;
         }
+log('_clearEmptyDropTarget');           
     },
 
     handleDragOver : function(source, actor, x, y, time) {
-
+log('handleDragOver'); 
         // Don't allow to add favourites if they are not displayed
-        if( !this._settings.get_boolean('show-favorites') )
+        if( !this._settings.get_boolean('applet-links-tray-visible') )
             return DND.DragMotionResult.NO_DROP;
 
-        let app = Dash.getAppFromSource(source);
+        let app;
+		if (source instanceof myLinkTray) {
+			app = source;
+		} else {
+			app = null;
+		}
 
         // Don't allow favoriting of transient apps
-        if (app == null || app.is_window_backed())
+        if (app == null)
             return DND.DragMotionResult.NO_DROP;
 
-        let favorites = AppFavorites.getAppFavorites().getFavorites();
+        let favorites = this._box.get_children();
         let numFavorites = favorites.length;
 
         let favPos = favorites.indexOf(app);
@@ -639,29 +655,42 @@ log ('HOOOOORAY');
             return DND.DragMotionResult.MOVE_DROP;
 
         return DND.DragMotionResult.COPY_DROP;
+        
+log('handleDragOver_ended');         
     },
 
     // Draggable target interface
-    acceptDrop : function(source, actor, x, y, time) {
-
+    acceptDrop : function(source, actor, x, y, time) {		
+log('acceptDrop '+source);
         // Don't allow to add favourites if they are not displayed
-        if( !this._settings.get_boolean('show-favorites') )
+        if( !this._settings.get_boolean('applet-links-tray-visible') )
             return true;
 
-        let app = Dash.getAppFromSource(source);
+        let app;
+		if (source instanceof myLinkTray) {
+			app = source;
+		} else {
+			app = null;
+			return true;
+		}
 
-        // Don't allow favoriting of transient apps
-        if (app == null || app.is_window_backed()) {
-            return false;
-        }
 
-        let id = app.get_id();
+//let running = Shell.AppSystem.get_default().get_running();
+//log("::::::::::::> "+running[0]+'  '+running[0].get_id() );
+		
+//        let id = app.get_id();
 
-        let favorites = AppFavorites.getAppFavorites().getFavoriteMap();
 
-        let srcIsFavorite = (id in favorites);
+let id = app.id;
+log('_______app__________ '+app+' '+id);
 
-        let favPos = 0;
+//        let favorites = AppFavorites.getAppFavorites().getFavoriteMap();
+		let trays = this._box.get_children();
+
+//        let srcIsTray = (id in trays);
+
+        let trayPos = 0;
+/*
         let children = this._box.get_children();
         for (let i = 0; i < this._dragPlaceholderPos; i++) {
             if (this._dragPlaceholder &&
@@ -672,24 +701,24 @@ log ('HOOOOORAY');
             if (childId == id)
                 continue;
             if (childId in favorites)
-                favPos++;
+                trayPos++;
         }
-
-        // No drag placeholder means we don't wan't to favorite the app
+*/
+        // No drag placeholder means we don't wan't to add tray
         // and we are dragging it to its original position
         if (!this._dragPlaceholder)
             return true;
-
+/*
         Meta.later_add(Meta.LaterType.BEFORE_REDRAW, Lang.bind(this,
             function () {
                 let appFavorites = AppFavorites.getAppFavorites();
-                if (srcIsFavorite)
-                    appFavorites.moveFavoriteToPos(id, favPos);
+                if (srcIsTray)
+                    appFavorites.moveFavoriteToPos(id, trayPos);
                 else
-                    appFavorites.addFavoriteAtPos(id, favPos);
+                    appFavorites.addFavoriteAtPos(id, trayPos);
                 return false;
             }));
-
+*/
         return true;
     }	
 });

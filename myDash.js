@@ -417,8 +417,7 @@ const myDash = new Lang.Class({
         }
     },
 
-    _hookUpLabelForApplets: function(item) {
-log('WHYYYY IWEEE '+item+'  '+item.actor);		
+    _hookUpLabelForApplets: function(item) {	
         item.actor.connect('notify::hover', Lang.bind(this, function() {
             this._syncLabelForApplets(item);
         }));
