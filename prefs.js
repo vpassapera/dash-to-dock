@@ -565,7 +565,93 @@ const WorkspaceSettingsWidget = new GObject.Class({// FIXME: Why call it this fu
 		customization.add(clickMain);
 
 		notebook.append_page(customization, customizationTitle);
+		
+		/* APPLETS PAGE */
 
+		let applets = new Gtk.Box({orientation:Gtk.Orientation.VERTICAL});
+		let appletsTitle = new Gtk.Label({label: _("Applets")});
+		
+		/* SHOW APPS BUTTON APPLET */
+		
+		let ShowAppsApplet = new Gtk.Box({margin_left:10, margin_top:10, margin_bottom:5, margin_right:10});
+
+		let ShowAppsAppletLabel = new Gtk.Label({label: _("1. Show Apps"), hexpand: true, halign: Gtk.Align.START});	
+		let ShowAppsAppletSwitch = new Gtk.Switch({hexpand: true, halign: Gtk.Align.END});
+//			ShowAppsAppletSwitch.set_active(this.settings.get_boolean('apply-custom-theme'));
+//			ShowAppsAppletSwitch.connect('notify::active', Lang.bind(this, function(check){
+//					this.settings.set_boolean('apply-custom-theme', check.get_active());
+//				}));
+
+		ShowAppsApplet.add(ShowAppsAppletLabel);
+		ShowAppsApplet.add(ShowAppsAppletSwitch);
+		applets.add(ShowAppsApplet);
+		
+		/* FAVOURITE APPS APPLET */
+		
+		let FavouriteAppsApplet = new Gtk.Box({margin_left:10, margin_top:10, margin_bottom:5, margin_right:10});
+
+		let FavouriteAppsAppletLabel = new Gtk.Label({label: _("2. Favourite Apps"), hexpand: true, halign: Gtk.Align.START});
+		
+		FavouriteAppsApplet.add(FavouriteAppsAppletLabel);
+		applets.add(FavouriteAppsApplet);	
+
+		/* LINKS TRAY APPLET */
+		
+		let LinksTrayApplet = new Gtk.Box({margin_left:10, margin_top:10, margin_bottom:5, margin_right:10});
+
+		let LinksTrayAppletLabel = new Gtk.Label({label: _("3. Links Tray"), hexpand: true, halign: Gtk.Align.START});	
+		let LinksTrayAppletSwitch = new Gtk.Switch({hexpand: true, halign: Gtk.Align.END});
+//			LinksTrayAppletSwitch.set_active(this.settings.get_boolean('apply-custom-theme'));
+//			LinksTrayAppletSwitch.connect('notify::active', Lang.bind(this, function(check){
+//					this.settings.set_boolean('apply-custom-theme', check.get_active());
+//				}));
+
+		LinksTrayApplet.add(LinksTrayAppletLabel);
+		LinksTrayApplet.add(LinksTrayAppletSwitch);
+		applets.add(LinksTrayApplet);	
+
+		/* SHOW DESKTOP APPLET */
+		
+		let ShowDesktopApplet = new Gtk.Box({margin_left:10, margin_top:10, margin_bottom:5, margin_right:10});
+
+		let ShowDesktopAppletLabel = new Gtk.Label({label: _("4. Show Desktop"), hexpand: true, halign: Gtk.Align.START});	
+		let ShowDesktopAppletSwitch = new Gtk.Switch({hexpand: true, halign: Gtk.Align.END});
+//			ShowDesktopAppletSwitch.set_active(this.settings.get_boolean('apply-custom-theme'));
+//			ShowDesktopAppletSwitch.connect('notify::active', Lang.bind(this, function(check){
+//					this.settings.set_boolean('apply-custom-theme', check.get_active());
+//				}));
+
+		ShowDesktopApplet.add(ShowDesktopAppletLabel);
+		ShowDesktopApplet.add(ShowDesktopAppletSwitch);
+		applets.add(ShowDesktopApplet);	
+		
+		/* RECYCLING BIN APPLET */
+		
+		let RecyclingBinApplet = new Gtk.Box({margin_left:10, margin_top:10, margin_bottom:5, margin_right:10});
+
+		let RecyclingBinAppletLabel = new Gtk.Label({label: _("5. Recycling Bin"), hexpand: true, halign: Gtk.Align.START});	
+		let RecyclingBinAppletSwitch = new Gtk.Switch({hexpand: true, halign: Gtk.Align.END});
+//			RecyclingBinAppletSwitch.set_active(this.settings.get_boolean('apply-custom-theme'));
+//			RecyclingBinAppletSwitch.connect('notify::active', Lang.bind(this, function(check){
+//					this.settings.set_boolean('apply-custom-theme', check.get_active());
+//				}));
+
+		RecyclingBinApplet.add(RecyclingBinAppletLabel);
+		RecyclingBinApplet.add(RecyclingBinAppletSwitch);
+		applets.add(RecyclingBinApplet);			
+
+		/* ORDER OF APPLETS */
+		
+		let OrderOfApplets = new Gtk.Box({margin_left:10, margin_top:10, margin_bottom:5, margin_right:10});
+
+		let OrderOfAppletsLabel = new Gtk.Label({label: _("Order of the applets: "), hexpand: true, halign: Gtk.Align.START});
+        let OrderOfAppletsEntry = new Gtk.Entry({halign: Gtk.Align.END});
+			OrderOfAppletsEntry.set_width_chars(15);
+		OrderOfApplets.add(OrderOfAppletsLabel);
+		OrderOfApplets.add(OrderOfAppletsEntry);
+		applets.add(OrderOfApplets);
+		
+		notebook.append_page(applets, appletsTitle);
 		this.add(notebook);
     }
 });
