@@ -138,7 +138,6 @@ const LinksDB = new Lang.Class({
 		this.links_data = null;
 		this.string_data = null;
 		this.check_or_make_directory();
-//		this.save_db();//TODO: problems
 	},
 
 	check_or_make_directory: function() {
@@ -252,8 +251,7 @@ const LinksDB = new Lang.Class({
 		let trayIndex;
 		let new_lid_position;
 		let old_lid_position;
-		for(let i = 0; i < this.links_data.folders.length ;i++) {
-log('ticker '+trayId+' '+this.links_data.folders[i].collection_id);			
+		for(let i = 0; i < this.links_data.folders.length ;i++) {		
 			if (trayId == this.links_data.folders[i].collection_id) {
 				trayIndex = i;
 				for(let k = 0; k < this.links_data.folders[i].links_array.length ;k++) {
@@ -280,14 +278,22 @@ log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')
 */
 
 
-log( JSON.stringify( this.links_data.folders[trayIndex] ) );
-		var cache = this.links_data.folders[trayIndex].links_array[old_lid_position];
-		this.links_data.folders[trayIndex].links_array[old_lid_position] = this.links_data.folders[new_lid_position];
+//log( JSON.stringify( this.links_data.folders[trayIndex].links_array ) );
+//log();
+//log('populate1: '+this.links_data.folders);
+
+		let cache = this.links_data.folders[trayIndex].links_array[old_lid_position];
+		this.links_data.folders[trayIndex].links_array[old_lid_position] = this.links_data.folders[trayIndex].links_array[new_lid_position];
 		this.links_data.folders[trayIndex].links_array[new_lid_position] = cache;
-log( JSON.stringify( this.links_data.folders[trayIndex] ) );
+
+		this.links_data.folders[trayIndex].links_array = this.links_data
+			.folders[trayIndex].links_array.filter(function(n){ return n != null });
+
+//log('populate1: '+this.links_data.folders);
+//log( JSON.stringify( this.links_data.folders[trayIndex].links_array ) );
 
 		
-//		this.save_db();
+		this.save_db();
 	},
 	
 	remove_link_from_tray: function(id, lid) {
