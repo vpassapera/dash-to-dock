@@ -32,7 +32,7 @@ let DASH_ITEM_HOVER_TIMEOUT = Dash.DASH_ITEM_HOVER_TIMEOUT;
  * Changes are done to make label shows on top side. SOURCE: simple-dock extension.
  */
 const showHoverLabelTop = function() {
-
+    	
     if (!this._labelText) {
         return;
     }
@@ -47,7 +47,7 @@ const showHoverLabelTop = function() {
     let labelWidth = this.label.get_width();
 
     let node = this.label.get_theme_node();
-    let yOffset = node.get_length('-x-offset'); // borrowing from x-offset
+    let yOffset = node.get_length('-x-offset');
 
     let y = stageY - labelHeight - yOffset;
 
@@ -108,7 +108,12 @@ const myDashActor = new Lang.Class({
 
     _init: function(settings) {
         this._settings = settings;
-        let layout = new Clutter.BoxLayout({ orientation: Clutter.Orientation.HORIZONTAL });
+        let layout;
+        if (!this._settings.get_boolean('dock-horizontal')) {
+			layout = new Clutter.BoxLayout({ orientation: Clutter.Orientation.VERTICAL });
+		} else {
+			layout = new Clutter.BoxLayout({ orientation: Clutter.Orientation.HORIZONTAL });
+		}
         this.parent({ name: 'dash',
                       layout_manager: layout,
                       clip_to_allocation: true });
@@ -117,34 +122,60 @@ const myDashActor = new Lang.Class({
     vfunc_allocate: function(box, flags) {
         let contentBox = this.get_theme_node().get_content_box(box);
         let availWidth = contentBox.x2 - contentBox.x1;
+        let availHeight = contentBox.y2 - contentBox.y1;
 
         this.set_allocation(box, flags);
 
         let [appIcons, showAppsButton] = this.get_children();
-        let [showAppsMinWidth, showAppsNatWidth] = showAppsButton.get_preferred_width(availWidth);
-
+ 
         let childBox = new Clutter.ActorBox();
-        if( this._settings.get_boolean('show-apps-at-top') ) {
-			childBox.x1 = contentBox.x1 + showAppsNatWidth;
-			childBox.y1 = contentBox.y1;
-			childBox.x2 = contentBox.x2;
-			childBox.y2 = contentBox.y2;
-			appIcons.allocate(childBox, flags);
+        if (!this._settings.get_boolean('dock-horizontal')) {
+			let [showAppsMinHeight, showAppsNatHeight] = showAppsButton.get_preferred_height(availWidth);
+			if( this._settings.get_boolean('show-apps-at-top') ) {
+				childBox.x1 = contentBox.x1;
+				childBox.y1 = contentBox.y1 + showAppsNatHeight;
+				childBox.x2 = contentBox.x2;
+				childBox.y2 = contentBox.y2;
+				appIcons.allocate(childBox, flags);
 
-			childBox.x1 = contentBox.x1;
-			childBox.x2 = contentBox.x1 + showAppsNatWidth;
-			showAppsButton.allocate(childBox, flags);	
-        } else {
-			childBox.x1 = contentBox.x1;
-			childBox.y1 = contentBox.y1;
-			childBox.x2 = contentBox.x2 - showAppsNatWidth;
-			childBox.y2 = contentBox.y2;
-			appIcons.allocate(childBox, flags);
+				childBox.y1 = contentBox.y1;
+				childBox.y2 = contentBox.y1 + showAppsNatHeight;
+				showAppsButton.allocate(childBox, flags);           
+			} else {
+				childBox.x1 = contentBox.x1;
+				childBox.y1 = contentBox.y1;
+				childBox.x2 = contentBox.x2;
+				childBox.y2 = contentBox.y2 - showAppsNatHeight;
+				appIcons.allocate(childBox, flags);
 
-			childBox.x1 = contentBox.x2 - showAppsNatWidth;
-			childBox.x2 = contentBox.x2;
-			showAppsButton.allocate(childBox, flags);            
-        }
+				childBox.y1 = contentBox.y2 - showAppsNatHeight;
+				childBox.y2 = contentBox.y2;
+				showAppsButton.allocate(childBox, flags);          
+			}			
+		} else {
+			if( this._settings.get_boolean('show-apps-at-top') ) {
+				let [showAppsMinWidth, showAppsNatWidth] = showAppsButton.get_preferred_height(availWidth);
+				childBox.x1 = contentBox.x1 + showAppsNatWidth;
+				childBox.y1 = contentBox.y1;
+				childBox.x2 = contentBox.x2;
+				childBox.y2 = contentBox.y2;
+				appIcons.allocate(childBox, flags);
+
+				childBox.x1 = contentBox.x1;
+				childBox.x2 = contentBox.x1 + showAppsNatWidth;
+				showAppsButton.allocate(childBox, flags);	
+			} else {
+				childBox.x1 = contentBox.x1;
+				childBox.y1 = contentBox.y1;
+				childBox.x2 = contentBox.x2 - showAppsNatWidth;
+				childBox.y2 = contentBox.y2;
+				appIcons.allocate(childBox, flags);
+
+				childBox.x1 = contentBox.x2 - showAppsNatWidth;
+				childBox.x2 = contentBox.x2;
+				showAppsButton.allocate(childBox, flags);            
+			}
+		}
     },
 
     vfunc_get_preferred_height: function(forWidth) {
@@ -180,6 +211,7 @@ const myDash = new Lang.Class({
 
     _init : function(settings) {
         this._maxWidth = -1;
+		this._maxHeight = -1;
         this.iconSize = 64;
         this._avaiableIconSize = Dash.baseIconSizes;
         this._shownInitially = false;
@@ -195,12 +227,21 @@ const myDash = new Lang.Class({
         this._labelShowing = false;
 
         this._container = new myDashActor(settings);
-        this._box = new St.BoxLayout({ vertical: false,
-                                       clip_to_allocation: true });
-        this._box._delegate = this;
-        this._container.add_actor(this._box);
+        this._box;
+        if (!this._settings.get_boolean('dock-horizontal')) {        
+			this._box = new St.BoxLayout({ vertical: true, clip_to_allocation: true });
+		} else {
+			this._box = new St.BoxLayout({ vertical: false, clip_to_allocation: true });
+		}
+			this._box._delegate = this;
+			this._container.add_actor(this._box);
 
-        this._showAppsIcon = new myShowAppsIcon();
+		if (!this._settings.get_boolean('dock-horizontal')) {
+			this._showAppsIcon = new Dash.ShowAppsIcon();
+		} else {
+			this._showAppsIcon = new myShowAppsIcon();
+		}
+
         this._showAppsIcon.childScale = 1;
         this._showAppsIcon.childOpacity = 255;
         this._showAppsIcon.icon.setIconSize(this.iconSize);
@@ -210,13 +251,19 @@ const myDash = new Lang.Class({
 
         this._container.add_actor(this._showAppsIcon);
 
-		this.actor = new St.Bin({ child: this._container, 
-			y_align: St.Align.START});
+        this.actor = new St.Bin({ child: this._container, y_align: St.Align.START });
+        
         this.actor.connect('notify::height', Lang.bind(this,
             function() {
-                if (this._maxWidth !== this.actor.width)
-                    this._queueRedisplay();
-                this._maxWidth = this.actor.width;
+				if (!this._settings.get_boolean('dock-horizontal')) {
+					if (this._maxHeight !== this.actor.height)
+						this._queueRedisplay();
+						this._maxHeight = this.actor.height;		
+				} else {
+					if (this._maxWidth !== this.actor.width)
+						this._queueRedisplay();
+						this._maxWidth = this.actor.width;
+				}
             }));
 
         this._workId = Main.initializeDeferredWork(this._box, Lang.bind(this, this._redisplay));
@@ -260,6 +307,7 @@ const myDash = new Lang.Class({
         );
 
         this.setMaxIconSize(this._settings.get_int('dash-max-icon-size'));
+
     },
 
     destroy: function() {
@@ -304,8 +352,7 @@ const myDash = new Lang.Class({
         if (app == null)
             return DND.DragMotionResult.CONTINUE;
 
-        let showAppsHovered =
-                this._showAppsIcon.contains(dragEvent.targetActor);
+        let showAppsHovered = this._showAppsIcon.contains(dragEvent.targetActor);
 
         if (!this._box.contains(dragEvent.targetActor) || showAppsHovered)
             this._clearDragPlaceholder();
@@ -347,24 +394,28 @@ const myDash = new Lang.Class({
     },
 
     _createAppItem: function(app) {
-        let appIcon = new myAppIcon(this._settings, app,
-                                             { setSizeManually: true,
-                                               showLabel: false });
+		let appIcon = new myAppIcon(this._settings, app, 
+			{ setSizeManually: true, showLabel: false });
         appIcon._draggable.connect('drag-begin',
-                                   Lang.bind(this, function() {
-                                       appIcon.actor.opacity = 50;
-                                   }));
+			Lang.bind(this, function() {
+				appIcon.actor.opacity = 50;
+			}));
         appIcon._draggable.connect('drag-end',
-                                   Lang.bind(this, function() {
-                                       appIcon.actor.opacity = 255;
-                                   }));
+			Lang.bind(this, function() {
+				appIcon.actor.opacity = 255;
+			}));
         appIcon.connect('menu-state-changed',
-                        Lang.bind(this, function(appIcon, opened) {
-                            this._itemMenuStateChanged(item, opened);
-                        }));
+			Lang.bind(this, function(appIcon, opened) {
+				this._itemMenuStateChanged(item, opened);
+			}));
 
-//        let item = new Dash.DashItemContainer();
-		let item = new myDashItemContainer();
+		let item;
+		if (!this._settings.get_boolean('dock-horizontal')) {
+			item = new myDashItemContainer();
+		} else {
+			item = new Dash.DashItemContainer();
+		}
+		
         item.setChild(appIcon.actor);
 
         // Override default AppIcon label_actor, now the
@@ -444,36 +495,59 @@ const myDash = new Lang.Class({
 
         iconChildren.push(this._showAppsIcon);
 
-        if (this._maxWidth == -1)
-            return;
-
+		if (!this._settings.get_boolean('dock-horizontal')) {
+			if (this._maxHeight == -1)
+				return;
+		}else{
+			if (this._maxWidth == -1)
+				return;
+		}
         let themeNode = this._container.get_theme_node();
-        let maxAllocation = new Clutter.ActorBox({ x1: 0, y1: 0,
-                                                   x2: this._maxWidth,
-                                                   y2: 42});
+        let maxAllocation
+		if (!this._settings.get_boolean('dock-horizontal')) {
+			maxAllocation = new Clutter.ActorBox({ x1: 0, y1: 0,
+				x2: 42, y2: this._maxHeight });
+		} else {
+			maxAllocation = new Clutter.ActorBox({ x1: 0, y1: 0,
+				x2: this._maxWidth, y2: 42});
+		}
         let maxContent = themeNode.get_content_box(maxAllocation);
-        let availWidth = maxContent.x2 - maxContent.x1;
+        let availWidth, availHeight;
+		if (!this._settings.get_boolean('dock-horizontal')) {
+			availHeight = maxContent.y2 - maxContent.y1;
+		} else {
+			availWidth = maxContent.x2 - maxContent.x1;
+		}
         let spacing = themeNode.get_length('spacing');
 
         let firstButton = iconChildren[0].child;
         let firstIcon = firstButton._delegate.icon;
 
-        let minWidth, natWidth;
+        let minWidth, natWidth, minHeight, natHeight;
 
         // Enforce the current icon size during the size request
         firstIcon.setIconSize(this.iconSize);
         [minWidth, natWidth] = firstButton.get_preferred_width(-1);
+		[minHeight, natHeight] = firstButton.get_preferred_height(-1);
 
         let scaleFactor = St.ThemeContext.get_for_stage(global.stage).scale_factor;
         let iconSizes = Dash.baseIconSizes.map(function(s) {
             return s * scaleFactor;
         });
+		let availSize;
+		if (!this._settings.get_boolean('dock-horizontal')) {
+			// Subtract icon padding and box spacing from the available height
+			availHeight -= iconChildren.length * (natHeight - this.iconSize * scaleFactor) +
+						   (iconChildren.length - 1) * spacing;
 
-        // Subtract icon padding and box spacing from the available width
-		availWidth -= iconChildren.length * (natWidth - this.iconSize * scaleFactor) +
-            (iconChildren.length - 1) * spacing;                       
+			availSize = availHeight / iconChildren.length;
+		} else {
+			// Subtract icon padding and box spacing from the available width
+			availWidth -= iconChildren.length * (natWidth - this.iconSize * scaleFactor) +
+				(iconChildren.length - 1) * spacing;                       
 
-        let availSize = availWidth / iconChildren.length;
+			availSize = availWidth / iconChildren.length;
+		}
 
         let iconSizes = this._avaiableIconSize;
 
@@ -530,7 +604,7 @@ const myDash = new Lang.Class({
                 return actor.child &&
                        actor.child._delegate &&
                        actor.child._delegate.app;
-            });
+		});
         // Apps currently in the dash
         let oldApps = children.map(function(actor) {
                 return actor.child._delegate.app;
@@ -740,26 +814,49 @@ const myDash = new Lang.Class({
 
         let children = this._box.get_children();
         let numChildren = children.length;
-        let boxWidth = this._box.width;
-        for (let i = 0; i < numChildren; i++) {
-            boxWidth += children[i].width;
-        }
 
-        // Keep the placeholder out of the index calculation; assuming that
-        // the remove target has the same size as "normal" items, we don't
-        // need to do the same adjustment there.
-        if (this._dragPlaceholder) {
-            boxWidth -= this._dragPlaceholder.width;
-            numChildren--;
-        }
+		let pos, boxHeight, boxWidth
+		if (!this._settings.get_boolean('dock-horizontal')) {
+			boxHeight = 0;
+			for (let i = 0; i < numChildren; i++) {
+				boxHeight += children[i].height;
+			}
 
-        let pos;
-        if (!this._emptyDropTarget){
-            pos = Math.floor(x * numChildren / boxWidth);
-            if (pos >  numChildren)
-                pos = numChildren;
-        } else
-            pos = 0; // always insert at the top when dash is empty
+			// Keep the placeholder out of the index calculation; assuming that
+			// the remove target has the same size as "normal" items, we don't
+			// need to do the same adjustment there.
+			if (this._dragPlaceholder) {
+				boxHeight -= this._dragPlaceholder.height;
+				numChildren--;
+			}
+
+			if (!this._emptyDropTarget){
+				pos = Math.floor(y * numChildren / boxHeight);
+				if (pos >  numChildren)
+					pos = numChildren;
+			} else
+				pos = 0; // always insert at the top when dash is empty
+		} else {
+			boxWidth = this._box.width;
+			for (let i = 0; i < numChildren; i++) {
+				boxWidth += children[i].width;
+			}
+
+			// Keep the placeholder out of the index calculation; assuming that
+			// the remove target has the same size as "normal" items, we don't
+			// need to do the same adjustment there.
+			if (this._dragPlaceholder) {
+				boxWidth -= this._dragPlaceholder.width;
+				numChildren--;
+			}
+
+			if (!this._emptyDropTarget){
+				pos = Math.floor(x * numChildren / boxWidth);
+				if (pos >  numChildren)
+					pos = numChildren;
+			} else
+				pos = 0; // always insert at the top when dash is empty
+		}
 
         if (pos != this._dragPlaceholderPos && pos <= numFavorites && this._animatingPlaceholdersCount == 0) {
             this._dragPlaceholderPos = pos;
@@ -782,8 +879,14 @@ const myDash = new Lang.Class({
             }
 
             this._dragPlaceholder = new Dash.DragPlaceholderItem();
-            this._dragPlaceholder.child.set_width (this.iconSize / 2);
-            this._dragPlaceholder.child.set_height (this.iconSize);
+			if (!this._settings.get_boolean('dock-horizontal')) {
+				this._dragPlaceholder.child.set_width (this.iconSize);
+				this._dragPlaceholder.child.set_height (this.iconSize / 2);
+
+			} else {
+				this._dragPlaceholder.child.set_width (this.iconSize / 2);
+				this._dragPlaceholder.child.set_height (this.iconSize);
+			}
             this._box.insert_child_at_index(this._dragPlaceholder,
                                             this._dragPlaceholderPos);
             this._dragPlaceholder.show(fadeIn);
@@ -907,11 +1010,9 @@ const myAppIcon = new Lang.Class({
         }
 
         this._stateChangedId = this.app.connect('windows-changed',
-                                                Lang.bind(this,
-                                                          this._onStateChanged));
+			Lang.bind(this,this._onStateChanged));
         this._focuseAppChangeId = tracker.connect('notify::focus-app',
-                                                Lang.bind(this,
-                                                          this._onFocusAppChanged));
+			Lang.bind(this, this._onFocusAppChanged));
 
     },
 
@@ -930,7 +1031,12 @@ const myAppIcon = new Lang.Class({
         this._draggable.fakeRelease();
 
         if (!this._menu) {
-			this._menu = new myAppIconMenu(this);
+			if (!this._settings.get_boolean('dock-horizontal')) {
+				this._menu = new AppDisplay.AppIconMenu(this);
+			} else {
+				this._menu = new myAppIconMenu(this);				
+			}
+
 
             this._menu.connect('activate-window',
                 Lang.bind(this, function (menu, window) {
@@ -1163,7 +1269,7 @@ const myAppIconMenu = new Lang.Class({
 });
 
 Signals.addSignalMethods(myAppIconMenu.prototype);
-//-----------------------------------------------------------------------
+
 function minimizeWindow(app, param){
     // Param true make all app windows minimize
     let windows = getAppInterestingWindows(app);

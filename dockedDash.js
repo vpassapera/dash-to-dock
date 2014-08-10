@@ -31,6 +31,7 @@ const SlideDirection = {
     BOTTOM: 3
 };
 
+
 /*
  * A simple Actor with one child whose allocation takes into account the
  * slide out of its child via the _slidex parameter ([0:1]).
@@ -52,7 +53,7 @@ const DashSlideContainer = new Lang.Class({
         
         /* Default local params */
         let localDefaults = {
-            direction: SlideDirection.BOTTOM,
+            direction: SlideDirection.LEFT,
             initialSlideValue: 1
         }
 
@@ -166,20 +167,23 @@ log('childBox [x1,y1 = '+childBox.x1+', '+childBox.y1+'] [x2,y2 =  '+childBox.x2
 
     /* Just the child width but taking into account the slided out part */
     vfunc_get_preferred_width: function(forHeight) {
-        let [minWidth, natWidth ] = this._child.get_preferred_width(forHeight);       
+        let [minWidth, natWidth ] = this._child.get_preferred_width(forHeight);
+        if (!this._settings.get_boolean('dock-horizontal')) {
+			minWidth = (minWidth - this._slideoutWidth)*this._slidex + this._slideoutWidth;
+			natWidth = (natWidth - this._slideoutWidth)*this._slidex + this._slideoutWidth;
+		}
         return [minWidth, natWidth];
     },
  
     /* Just the child min height, no border, no positioning etc. */
     vfunc_get_preferred_height: function(forWidth) {
-
-log('NOTICE     '+this._settings.get_boolean('autohide') );
-		
         let [minHeight, natHeight] = this._child.get_preferred_height(forWidth);  
-log("PING vfunc_get_preferred_heightA: for "+forWidth+'  min '+minHeight+' nat '+natHeight);
-minHeight = (minHeight - this._slideoutWidth)*this._slidex + this._slideoutWidth;
-natHeight = (natHeight - this._slideoutWidth)*this._slidex + this._slideoutWidth;  
-log("PING vfunc_get_preferred_heightB: for "+forWidth+'  min '+minHeight+' nat '+natHeight);       
+		log("PING vfunc_get_preferred_heightA: for "+forWidth+'  min '+minHeight+' nat '+natHeight);
+		if (this._settings.get_boolean('dock-horizontal')) {
+			minHeight = (minHeight - this._slideoutWidth)*this._slidex + this._slideoutWidth;
+			natHeight = (natHeight - this._slideoutWidth)*this._slidex + this._slideoutWidth;
+		}
+		log("PING vfunc_get_preferred_heightB: for "+forWidth+'  min '+minHeight+' nat '+natHeight);       
         return [minHeight, natHeight];
     },
  
@@ -258,14 +262,23 @@ const dockedDash = new Lang.Class({
         // centering, turn on track hover
 
         // This is the vertical centering actor
-        this.actor = new St.Bin({ name: 'dashtodockContainer',reactive: false});
+//        this.actor = new St.Bin({ name: 'dashtodockContainer',reactive: false});
 //            x_align: St.Align.START, y_align: St.Align.START});//TODO:chek if its supposed to be x_align for horizontal
+
+		if (!this._settings.get_boolean('dock-horizontal')) {
+			this.actor = new St.Bin({ name: 'dashtodockContainer',reactive: false,
+            y_align: St.Align.MIDDLE})
+		} else {
+			this.actor = new St.Bin({ name: 'dashtodockContainer',reactive: false});
+//            x_align: St.Align.START, y_align: St.Align.START});	
+		}
+
+
         this.actor._delegate = this;
 
         // This is the sliding actor whose allocation is to be tracked for input regions
         this._slider = new DashSlideContainer( {
             direction:this._rtl?SlideDirection.RIGHT:SlideDirection.LEFT}, this._settings
-//			direction:SlideDirection.BOTTOM}//+|
         );
         // This is the actor whose hover status us tracked for autohide
         this._box = new St.BoxLayout({ name: 'dashtodockBox', reactive: true, track_hover:true } );
@@ -391,7 +404,7 @@ const dockedDash = new Lang.Class({
             this.actor.disconnect(this._realizeId);
             this._realizeId=0;
         }
-				
+
         // Set initial position
         this._resetPosition();
 
@@ -402,7 +415,7 @@ const dockedDash = new Lang.Class({
 
         // Now that the dash is on the stage and custom themes should be loaded
         // retrieve its background color
-        this._getBackgroundColor();     
+        this._getBackgroundColor();
         this._updateBackgroundOpacity();
 
         // Show 
@@ -413,7 +426,7 @@ const dockedDash = new Lang.Class({
 
         // Setup pressure barrier (GS38+ only)
         this._updatePressureBarrier();
-        this._updateBarrier();      
+        this._updateBarrier();
     },
 
     destroy: function(){
@@ -577,13 +590,13 @@ const dockedDash = new Lang.Class({
 
         }
     },
-   
+
     _animateIn: function(time, delay) {
- 		
+
         this._animStatus.queue(true);
         Tweener.addTween(this._slider,{
-            slidex: 1,         
-            time: time,         
+            slidex: 1,
+            time: time,
             delay: delay,
             transition: 'easeOutQuad',
             onStart:  Lang.bind(this, function() {
@@ -759,32 +772,34 @@ const dockedDash = new Lang.Class({
         this.dash._queueRedisplay();
         this._getBackgroundColor();
         this._updateBackgroundOpacity();
-		this._adjustBorders();               
+	this._adjustBorders();               
     },
 
 	// Re-themes the corners and borders. SOURCE: simple-dock extension.
     _adjustBorders: function() {
-        // Prevent shell crash if the actor is not on the stage.
-        // It happens enabling/disabling repeatedly the extension
-        if (!this.dash._container.get_stage()) {
-            return;
-        }
+		if (this._settings.get_boolean('dock-horizontal')) {
+			// Prevent shell crash if the actor is not on the stage.
+			// It happens enabling/disabling repeatedly the extension
+			if (!this.dash._container.get_stage()) {
+				return;
+			}
 
-        // Remove prior style edits
-        this.dash._container.set_style(null);
+			// Remove prior style edits
+			this.dash._container.set_style(null);
 
-        let themeNode = this.dash._container.get_theme_node();
-  
-		// Corner rounding
-        let borderColor = themeNode.get_border_color(St.Side.BOTTOM);
-        let borderWidth = themeNode.get_border_width(St.Side.BOTTOM);
-        let borderRadius = themeNode.get_border_radius(St.Corner.TOPRIGHT);
+			let themeNode = this.dash._container.get_theme_node();
+	  
+			// Corner rounding
+			let borderColor = themeNode.get_border_color(St.Side.BOTTOM);
+			let borderWidth = themeNode.get_border_width(St.Side.BOTTOM);
+			let borderRadius = themeNode.get_border_radius(St.Corner.TOPRIGHT);
 
-        let newStyle = 'border-bottom: none;' +
-            'border-radius: ' + borderRadius + 'px ' + borderRadius + 'px 0 0;' +
-            'border-left: ' + borderWidth + 'px solid ' + borderColor.to_string() + ';';
+			let newStyle = 'border-bottom: none;' +
+				'border-radius: ' + borderRadius + 'px ' + borderRadius + 'px 0 0;' +
+				'border-left: ' + borderWidth + 'px solid ' + borderColor.to_string() + ';';
 
-        this.dash._container.set_style(newStyle);
+			this.dash._container.set_style(newStyle);
+		}
     },
 
     _isPrimaryMonitor: function() {
@@ -793,15 +808,50 @@ const dockedDash = new Lang.Class({
     },
 
     _updateYPosition: function() {
-        this.actor.width = this._monitor.width;
-		this.actor.x = this._monitor.x;
-        this.actor.x_align = St.Align.MIDDLE;
+		if (!this._settings.get_boolean('dock-horizontal')) {
+			let unavailableTopSpace = 0;
+			let unavailableBottomSpace = 0;
 
-		this.actor.height = this._monitor.height;
-		this.actor.y = this._monitor.y;
-		this.actor.y_align = St.Align.END;
+			let extendHeight = this._settings.get_boolean('extend-height');
+			let dockFixed = this._settings.get_boolean('dock-fixed');
 
-        this._updateStaticBox();     
+			// check if the dock is on the primary monitor
+			if (this._isPrimaryMonitor()){
+				if (!extendHeight || !dockFixed) {
+					unavailableTopSpace = Main.panel.actor.height;
+				}
+			}
+
+			let availableHeight = this._monitor.height - unavailableTopSpace - unavailableBottomSpace;
+
+			let fraction = this._settings.get_double('height-fraction');
+
+			if(extendHeight)
+				fraction = 1;
+			else if(fraction<0 || fraction >1)
+				fraction = 0.95;
+
+			this.actor.height = Math.round( fraction * availableHeight);
+			this.actor.y = this._monitor.y + unavailableTopSpace + Math.round( (1-fraction)/2 * availableHeight);
+
+			if(extendHeight){
+				this.dash._container.set_height(this.actor.height);
+				this.actor.add_style_class_name('extended');
+			} else {
+				this.dash._container.set_height(-1);
+				this.actor.remove_style_class_name('extended');
+			}			
+		} else {
+			this.actor.width = this._monitor.width;
+			this.actor.x = this._monitor.x;
+			this.actor.x_align = St.Align.MIDDLE;
+
+			this.actor.height = this._monitor.height;
+			this.actor.y = this._monitor.y;
+			this.actor.y_align = St.Align.END;
+		}
+
+        this._updateStaticBox();
     },
 
     // Shift panel position to extend the dash to the full monitor height
@@ -865,10 +915,11 @@ const dockedDash = new Lang.Class({
         } else {
             anchor_point = Clutter.Gravity.NORTH_WEST;
             position = this.staticBox.x1;
-        }   
+        }
 
         this.actor.move_anchor_point_from_gravity(anchor_point);
         this.actor.x = position;
+
 
         this._updateYPosition();
     },
