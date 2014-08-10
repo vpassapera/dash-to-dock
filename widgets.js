@@ -538,9 +538,8 @@ const myLinkTray = new Lang.Class({
     addLink: function(file) {
 		let item = new myFileIcon(file.get_path(), this.iconSize, this.menu);
 		item.lid = Math.random().toString(36).substr(2, 5);
-		
-		this.menu.add_link(item.actor);
 		this.myLinkBoxInstance.linksStorage.add_link_to_tray(this.id, item.lid, file);
+		this.menu.populate();
     },
 
     _removeMenuTimeout: function() {
@@ -660,13 +659,15 @@ const myLinkTrayMenu = new Lang.Class({
     
 	populate: function() {
 		for(let i = 0; i < this.linksStorage.links_data.folders.length ;i++) {		
-			if (this.trayId == this.linksStorage.links_data.folders[i].collection_id) {				
+			if (this.trayId == this.linksStorage.links_data.folders[i].collection_id) {
+log('oooooo 1');			
 				this.make_menu(this.linksStorage.links_data.folders[i].links_array);
+log('oooooo 2');			
 			}
 		}
 	},
 
-    make_menu: function(files) {
+    make_menu: function(files) {		
 		this.box.remove_all_children();
 		
 		this.icols = 0;
@@ -678,26 +679,29 @@ const myLinkTrayMenu = new Lang.Class({
 			this.icols = 1;
 		
 		this._table = new St.Table({ x_expand: true,  y_expand: true, homogeneous: true });
-		let appz = AppFavorites.getAppFavorites().getFavorites();
-		let div = files.length % this.icols;
-		if (div == 0) {
-			this.irows = files.length / this.icols;			
-		} else {
-			this.irows = (files.length + div) / this.icols;		
-		}		
-		let i = 0;
-		for(let irow = 0 ; irow < this.irows ;irow++) {
-			for(let icol = 0 ; icol < this.icols ;icol++) {			
-				let item = new myFileIcon(files[i].link, this.iconSize, this, files[i].id);
-				this._table.add(item.actor, { row: irow, col: icol, x_fill: false, y_fill: false, 
-					x_align: St.Align.MIDDLE, y_align: St.Align.START });
-
-				i++;
-				if(i == files.length)
-					break;
-			}
-		}
 		
+		let nrow = 0;
+		let ncol = 0;
+		let i = 0;
+		while(i < files.length) {
+			let item = new myFileIcon(files[i].link, this.iconSize, this, files[i].id);
+			this._table.add(item.actor, { row: nrow, col: ncol, x_fill: false, y_fill: false, 
+				x_align: St.Align.MIDDLE, y_align: St.Align.START });
+
+			if (this.icols == 1) {
+				nrow++;
+			} else {
+				if (ncol == this.icols) {
+					ncol = 0;
+					nrow++;
+				} else {
+					ncol++;
+				}
+			}
+					
+			i++;
+		}
+	
         this._scrollView = new St.ScrollView({ x_fill: true, y_fill: false });
         let vscroll = this._scrollView.get_vscroll_bar();
         vscroll.connect('scroll-start', Lang.bind(this, function() {
@@ -722,25 +726,6 @@ const myLinkTrayMenu = new Lang.Class({
 		// Calculating the (aesthetic) height for ScrollView. 10 popup menu padding
 		if(this.icols > 1 && this.irows > 3)
 			this._scrollView.height = (this._scrollView.height/this.icols + 10)*3;
-    },
-
-    add_link: function(actor) {
-		let nrow = 0;
-		let ncol = 0;
-		let div = 0;
-		
-		if(this._table.get_n_children() > 0) {
-			div = (this._table.get_n_children() % this._table.get_column_count())
-			if(div == 0) {
-				nrow = this._table.get_row_count(); 
-			} else {
-				nrow = this._table.get_row_count()-1;
-			}
-			ncol = div;
-		}
-		
-		this._table.add(actor, { row: nrow, col: ncol, x_fill: false, y_fill: false, 
-			x_align: St.Align.MIDDLE, y_align: St.Align.START });
     },
     
     _removeMenuTimeout: function() {
