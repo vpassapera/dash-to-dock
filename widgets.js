@@ -66,10 +66,37 @@ const myLinkTray = new Lang.Class({
 		this.menuManager.addMenu(this.menu);
 
 //------------------------------------------------------------------
+let clipboard = St.Clipboard.get_default();
+clipboard.get_text(St.ClipboardType.CLIPBOARD, Lang.bind(this,
+	function(clipboard, text) {
+		if (!text)
+			return;
+			
+log(">>>>>>>>>>>> "+text);                  
+
+}));
+
+//St.Clipboard.get_default().get_text(St.ClipboardType.PRIMARY);
+//clipboard.get_text();
+//log('BOARD TEXT IS: '+ St.Clipboard.get_default().get_text(St.ClipboardType.PRIMARY) );
+
 		//let path = '/home/pc/.local/share/gnome-shell/extensions/dash-to-dock@micxgx.gmail.com/new.js1';
+/*
         let path = Gio.file_new_for_path(ExtensionUtils.getCurrentExtension().path);
+path +='/new';
 log("My Path is1: "+path);
-log("My Path is2: "+ExtensionUtils.getCurrentExtension().path ); 
+log("My Path is2: "+ExtensionUtils.getCurrentExtension().path); 
+
+
+//let userExtensionsPath = GLib.build_filenamev([global.userdatadir, 'extensions']);
+//log("My Path is3: "+userExtensionsPath.path ); 
+//userExtensionsDir = Gio.file_new_for_path(userExtensionsPath);
+try {
+path.make_directory_with_parents(null);
+} catch (e) {
+global.logError('' + e);
+}*/
+
      
 		
 		/*if ( GLib.file_test(path, GLib.FileTest.EXISTS) ) {
