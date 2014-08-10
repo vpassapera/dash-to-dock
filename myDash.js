@@ -37,7 +37,6 @@ let dock_horizontal = true;
  * Changes were made to make the label show on the top. SOURCE: simple-dock extension.
  */
 const showHoverLabelTop = function() {
-    	
     if (!this._labelText) {
         return;
     }
@@ -655,7 +654,6 @@ const myDash = new Lang.Class({
     },
 
     _redisplay: function () {
-	
         let favorites = AppFavorites.getAppFavorites().getFavoriteMap();
 
         let running = this._appSystem.get_running();
@@ -793,7 +791,6 @@ const myDash = new Lang.Class({
     },
 
     setMaxIconSize: function(size) {
-
         if( size>=Dash.baseIconSizes[0] ){
 
             this._avaiableIconSize = Dash.baseIconSizes.filter(
@@ -817,7 +814,6 @@ const myDash = new Lang.Class({
     // Reset the displayed apps icon to mantain the correct order when changing
     // show favorites/show running settings
     resetAppIcons : function() {
-
         let children = this._box.get_children().filter(function(actor) {
             return actor.child &&
                 actor.child._delegate &&
@@ -854,7 +850,6 @@ const myDash = new Lang.Class({
     },
 
     handleDragOver : function(source, actor, x, y, time) {
-
         // Don't allow to add favourites if they are not displayed
         if( !this._settings.get_boolean('show-favorites') )
             return DND.DragMotionResult.NO_DROP;
@@ -959,7 +954,6 @@ const myDash = new Lang.Class({
 
     // Draggable target interface
     acceptDrop : function(source, actor, x, y, time) {
-
         // Don't allow to add favourites if they are not displayed
         if( !this._settings.get_boolean('show-favorites') )
             return true;
@@ -1116,13 +1110,11 @@ const myAppIcon = new Lang.Class({
     },
 
     _onStateChanged: function() {
-
         this.parent();
         this._updateCounterClass();
     },
 
     _onFocusAppChanged: function() {
-
         if(tracker.focus_app == this.app)
             this.actor.add_style_class_name('focused');
         else
@@ -1130,7 +1122,6 @@ const myAppIcon = new Lang.Class({
     },
 
     _onActivate: function(event) {
-
         if ( !this._settings.get_boolean('customize-click') ){
             this.parent(event);
             return;
@@ -1190,7 +1181,6 @@ const myAppIcon = new Lang.Class({
     },
 
     _updateCounterClass: function() {
-
         let n = getAppInterestingWindows(this.app).length;
 
         if(n>this._maxN)
@@ -1339,7 +1329,6 @@ function minimizeWindow(app, param){
  * This activates all windows in the current workspace.
  */
 function activateAllWindows(app){
-
     // First activate first window so workspace is switched if needed.
     app.activate();
 
@@ -1361,7 +1350,6 @@ function activateAllWindows(app){
 }
 
 function cycleThroughWindows(app) {
-
     // Store for a little amount of time last clicked app and its windows
     // since the order changes upon window interaction
     let MEMORY_TIME=3000;
@@ -1392,7 +1380,6 @@ function cycleThroughWindows(app) {
 }
 
 function resetRecentlyClickedApp() {
-
     if(recentlyClickedAppLoopId>0)
         Mainloop.source_remove(recentlyClickedAppLoopId);
     recentlyClickedAppLoopId=0;

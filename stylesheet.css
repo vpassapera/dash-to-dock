@@ -13,14 +13,12 @@
 
 #dashtodockContainer.dashtodockTTB #dash {
 	background: rgba(0,0,0,0.9);
-    /*border-left: 1px;*/
 	border-top: none;
     border-radius: 0px 0px 6px 6px;
 }
 
 #dashtodockContainer.dashtodockBTT #dash {
 	background: rgba(0,0,0,0.9);
-    /*border-left: 1px;*/
 	border-bottom: none;
     border-radius: 6px 6px 0px 0px;
 }

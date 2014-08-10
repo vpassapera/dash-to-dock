@@ -171,7 +171,7 @@ const DashSlideContainer = new Lang.Class({
 			if (this._child == null)
 				return;
 
-			let availWidth = box.x2 - box.x1;	
+			let availWidth = box.x2 - box.x1;		
 			let availHeight = box.y2 - box.y1;
 			let [minChildWidth, minChildHeight, natChildWidth, natChildHeight] =
 				this._child.get_preferred_size();
@@ -219,7 +219,6 @@ const DashSlideContainer = new Lang.Class({
      * stil I don't understand how things work.
      */
     add_child: function(actor) {
-
         /* I'm supposed to have only on child */
         if(this._child !== null) {
             this.remove_child(actor);
@@ -244,8 +243,6 @@ const dockedDash = new Lang.Class({
     Name: 'dockedDash',
     
     _init: function(settings) {
-
-        // Load settings
         this._settings = settings;
         this._bindSettingsChanges();
 
@@ -424,7 +421,6 @@ const dockedDash = new Lang.Class({
     },
 
     _initialize: function() {
-
         if(this._realizeId>0){
             this.actor.disconnect(this._realizeId);
             this._realizeId=0;
@@ -455,7 +451,6 @@ const dockedDash = new Lang.Class({
     },
 
     destroy: function() {
-
         // Disconnect global signals
         this._signalHandler.disconnect();
         // The dash has global signals as well internally
@@ -474,7 +469,6 @@ const dockedDash = new Lang.Class({
     },
 
     _bindSettingsChanges: function() {
-
         this._settings.connect('changed::opaque-background', Lang.bind(this,this._updateBackgroundOpacity));
 
         this._settings.connect('changed::background-opacity', Lang.bind(this,this._updateBackgroundOpacity));
@@ -539,7 +533,6 @@ const dockedDash = new Lang.Class({
     },
 
     _hoverChanged: function() {
-
 		// Ignore hover if pressure barrier being used but pressureSensed not triggered
         if (this._canUsePressure && this._settings.get_boolean('require-pressure-to-show') && this._barrier) {
             if (this._pressureSensed == false) {
@@ -566,8 +559,7 @@ const dockedDash = new Lang.Class({
         }
     },
 
-    _show: function() {  
-
+    _show: function() {
         var anim = this._animStatus;
 
         if( this._autohideStatus && ( anim.hidden() || anim.hiding() ) ){
@@ -589,7 +581,6 @@ const dockedDash = new Lang.Class({
     },
 
     _hide: function() {
-
         var anim = this._animStatus;
 
         // If no hiding animation is running or queued
@@ -618,12 +609,10 @@ const dockedDash = new Lang.Class({
 
             this.emit("hiding");
             this._animateOut(this._settings.get_double('animation-time'), delay);
-
         }
     },
 
     _animateIn: function(time, delay) {
-
         this._animStatus.queue(true);
         Tweener.addTween(this._slider,{
             slidex: 1,
@@ -648,7 +637,6 @@ const dockedDash = new Lang.Class({
     },
 
     _animateOut: function(time, delay){
-
         this._animStatus.queue(false);
         Tweener.addTween(this._slider,{
             slidex: 0,
@@ -776,7 +764,6 @@ const dockedDash = new Lang.Class({
     },
 
     _updateBackgroundOpacity: function() {
-
         let newAlpha = this._settings.get_double('background-opacity');
 
         this._defaultBackground = 'rgba('+
@@ -802,7 +789,6 @@ const dockedDash = new Lang.Class({
     },
 
     _getBackgroundColor: function() {
-
         // Remove custom style
         let oldStyle = this.dash._container.get_style();
         this.dash._container.set_style(null);
@@ -854,48 +840,39 @@ const dockedDash = new Lang.Class({
     },
 
     _updatePosition: function() {
-		if (!dock_horizontal) {
-			let fraction = this._settings.get_double('size-fraction');
-			let extendSize = this._settings.get_boolean('extend-size');
-					
-			if(extendSize)
-				fraction = 1;
-			else if(fraction<0 || fraction >1)
-				fraction = 0.95;
-				
-		} else {
-			let fraction = this._settings.get_double('size-fraction');
-			let extendSize = this._settings.get_boolean('extend-size');
-					
-			if(extendSize)
-				fraction = 1;
-			else if(fraction<0 || fraction >1)
-				fraction = 0.95;
-
+		if (dock_horizontal && this._settings.get_int('dock-placement') == 2) {
 			this.actor.height = this._monitor.height;
 			this.actor.y = this._monitor.y;
-			this.actor.y_align = St.Align.END;		
+			this.actor.y_align = St.Align.START;
+		} else if (dock_horizontal && this._settings.get_int('dock-placement') == 3) {
+			this.actor.height = this._monitor.height;
+			this.actor.y = this._monitor.y;
+			this.actor.y_align = St.Align.END;
 		}
-
+		
         this._updateStaticBox();
     },
 
     // Shift panel position to extend the dash to the full monitor height
     _updateMainPanel: function() {
-        let extendSize = this._settings.get_boolean('extend-size');
-        let dockFixed = this._settings.get_boolean('dock-fixed');
-        let panelActor = Main.panel.actor;
+		if(this._settings.get_int('dock-placement') == 0 || 
+			this._settings.get_int('dock-placement') == 1) {
+						
+			let extendSize = this._settings.get_boolean('extend-size');
+			let dockFixed = this._settings.get_boolean('dock-fixed');
+			let panelActor = Main.panel.actor;
 
-        if (this._isPrimaryMonitor() && extendSize && dockFixed) {
-            panelActor.set_width(this._monitor.width - this._dockBox.width);
-            if (this._settings.get_int('dock-placement') == 1) {
-                panelActor.set_margin_right(this._dockBox.width - 1);
-            } else {
-                panelActor.set_margin_left(this._dockBox.width - 1);
-            }
-        } else {
-            this._revertMainPanel();
-        }
+			if (this._isPrimaryMonitor() && extendSize && dockFixed) {
+				panelActor.set_width(this._monitor.width - this._dockBox.width);
+				if (this._settings.get_int('dock-placement') == 1) {
+					panelActor.set_margin_right(this._dockBox.width - 1);
+				} else {
+					panelActor.set_margin_left(this._dockBox.width - 1);
+				}
+			} else {
+				this._revertMainPanel();
+			}
+		}
     },
 
     _revertMainPanel: function() {
@@ -950,7 +927,6 @@ const dockedDash = new Lang.Class({
     },
 
     _getMonitor: function() {
-
         let monitorIndex = this._settings.get_int('preferred-monitor');
         let monitor;
 
@@ -982,7 +958,6 @@ const dockedDash = new Lang.Class({
     },
 
     _pageChanged: function() {
-
         let activePage = Main.overview.viewSelector.getActivePage();
         let dashVisible = (activePage == ViewSelector.ViewPage.WINDOWS ||
                            activePage == ViewSelector.ViewPage.APPS);
@@ -1001,7 +976,6 @@ const dockedDash = new Lang.Class({
     },
 
     _onShowAppsButtonToggled: function() {
-
         // Sync the status of the default appButtons. Only if the two statuses are
         // different, that means the user interacted with the extension provided
         // application button, cutomize the behaviour. Otherwise the shell has changed the
@@ -1046,7 +1020,6 @@ const dockedDash = new Lang.Class({
 
     // Switch workspace by scrolling over the dock
     _optionalScrollWorkspaceSwitch: function() {
-
         let label = 'optionalScrollWorkspaceSwitch';
 
         this._settings.connect('changed::scroll-switch-workspace',Lang.bind(this, function(){
@@ -1092,7 +1065,6 @@ const dockedDash = new Lang.Class({
 
         // This was inspired to desktop-scroller@obsidien.github.com
         function onScrollEvent(actor, event) {
-
             let activeWs = global.screen.get_active_workspace();
             let direction = 0; // 0: do nothing; +1: up; -1:down.
 

@@ -360,7 +360,6 @@ const myLinkTray = new Lang.Class({
     Name: 'myLinkTray',
 
     _init: function(iconSize, settings, myLinkBoxInstance, id) {
-
 		this._labelText = _("Links Tray");	
 		this.label = new St.Label({ text: this._labelText, style_class: 'dash-label' });	
 		this.label.hide();
