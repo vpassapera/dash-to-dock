@@ -260,8 +260,8 @@ const dockedDash = new Lang.Class({
 
         // This is the sliding actor whose allocation is to be tracked for input regions
         this._slider = new DashSlideContainer( {
-//            direction:this._rtl?SlideDirection.RIGHT:SlideDirection.LEFT}
-			direction:SlideDirection.BOTTOM}//+|
+            direction:this._rtl?SlideDirection.RIGHT:SlideDirection.LEFT}
+//			direction:SlideDirection.BOTTOM}//+|
         );
         // This is the actor whose hover status us tracked for autohide
         this._box = new St.BoxLayout({ name: 'dashtodockBox', reactive: true, track_hover:true } );
@@ -767,32 +767,17 @@ const dockedDash = new Lang.Class({
         }
 
         // Remove prior style edits
-        this.dash._container.set_style(null);//NEEDED?
+        this.dash._container.set_style(null);
 
         let themeNode = this.dash._container.get_theme_node();
   
-//        let borderColor = themeNode.get_border_color(St.Side.BOTTOM);
-//        let borderWidth = themeNode.get_border_width(St.Side.BOTTOM);
+		// Corner rounding
         let borderRadius = themeNode.get_border_radius(St.Corner.TOPRIGHT);
-let background = themeNode.get_background_color();
-
-        /* We're "swapping" bottom border and bottom-right corner styles
-         * to left and top-left corner
-         */
-//        let newStyle = 'border-bottom: none;' +
-//            'border-radius: ' + borderRadius + 'px ' + borderRadius + 'px 0 0;' +
-//            'border-left: ' + borderWidth + 'px solid ' + borderColor.to_string() + ';';
-            
-//        let newStyle = 'border-bottom: none;' +
-//            'border-radius: ' + borderRadius + 'px ' + borderRadius + 'px 0 0;' +
-//            'border-left: ' + borderWidth + 'px solid ' + ';';
 
         let newStyle = 'border-bottom: none;' + 'border-radius: ' + borderRadius + 'px ' 
 			+ borderRadius + 'px 0 0;';// + 'background: ' + background + ';';
 
         this.dash._container.set_style(newStyle);
-        
-//this._updateBackgroundOpacity();
     },
 
     _isPrimaryMonitor: function() {
@@ -801,18 +786,8 @@ let background = themeNode.get_background_color();
     },
 
     _updateYPosition: function() {
-/*
-        if(extendHeight){
-            this.dash._container.set_height(this.actor.height);
-            this.actor.add_style_class_name('extended');
-        } else {
-            this.dash._container.set_height(-1);
-            this.actor.remove_style_class_name('extended');
-        }
-*/
-
         this.actor.width = this._monitor.width;
-        this.actor.x = this._monitor.x;
+		this.actor.x = this._monitor.x;
         this.actor.x_align = St.Align.MIDDLE;
 
 		this.actor.height = this._monitor.height;

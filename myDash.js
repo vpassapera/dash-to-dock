@@ -9,6 +9,7 @@ const Shell = imports.gi.Shell;
 const St = imports.gi.St;
 const Mainloop = imports.mainloop;
 
+const PopupMenu = imports.ui.appDisplay.PopupMenu;
 const AppDisplay = imports.ui.appDisplay;
 const AppFavorites = imports.ui.appFavorites;
 const Dash = imports.ui.dash;
@@ -27,6 +28,51 @@ let DASH_ITEM_LABEL_SHOW_TIME = Dash.DASH_ITEM_LABEL_SHOW_TIME;
 let DASH_ITEM_LABEL_HIDE_TIME = Dash.DASH_ITEM_LABEL_HIDE_TIME;
 let DASH_ITEM_HOVER_TIMEOUT = Dash.DASH_ITEM_HOVER_TIMEOUT;
 
+/* 
+ * This class is a extension of the upstream DashItemContainer class (ui.dash.js).
+ * Changes are done to make label shows on top side. SOURCE: simple-dock extension.
+ */
+const myDashItemContainer = new Lang.Class({
+    Name: 'myDashItemContainer',
+    Extends: Dash.DashItemContainer,
+
+    _init: function() {
+        this.parent();
+    },
+
+	showLabel: function(){
+		if (!this._labelText) {
+			return;
+		}
+
+		this.label.set_text(this._labelText);
+		this.label.opacity = 0;
+		this.label.show();
+
+		let [stageX, stageY] = this.get_transformed_position();
+
+		let labelHeight = this.label.get_height();
+		let labelWidth = this.label.get_width();
+
+		let node = this.label.get_theme_node();
+		let yOffset = node.get_length('-x-offset'); // borrowing from x-offset
+
+		let y = stageY - labelHeight - yOffset;
+
+		let itemWidth = this.allocation.x2 - this.allocation.x1;
+		let xOffset = Math.floor((itemWidth - labelWidth) / 2);
+
+		let x = stageX + xOffset;
+
+		this.label.set_position(x, y);
+
+		Tweener.addTween(this.label, {
+			opacity: 255,
+			time: DASH_ITEM_LABEL_SHOW_TIME,
+			transition: 'easeOutQuad',
+		});
+	}
+});
 
 /* This class is a fork of the upstream DashActor class (ui.dash.js)
  *
@@ -296,7 +342,8 @@ const myDash = new Lang.Class({
                             this._itemMenuStateChanged(item, opened);
                         }));
 
-        let item = new Dash.DashItemContainer();
+//        let item = new Dash.DashItemContainer();
+		let item = new myDashItemContainer();
         item.setChild(appIcon.actor);
 
         // Override default AppIcon label_actor, now the
@@ -856,6 +903,49 @@ const myAppIcon = new Lang.Class({
             tracker.disconnect(this._focusAppId);
     },
 
+//-----------------------------------------------------------------
+    popupMenu: function() {
+        this._removeMenuTimeout();
+        this.actor.fake_release();
+        this._draggable.fakeRelease();
+//HACK
+//this._menu.arrowSide = St.Side.LEFT;
+log('111111111111111111111111111kk');
+        if (!this._menu) {
+//            this._menu = new AtomAppIconMenu(this);
+
+//this._menu = new AppIconMenu(this);
+this._menu = new myAppIconMenu(this);
+//this._menu._arrowSide = St.Side.TOP;
+log('333333333333333kk');
+            this._menu.connect('activate-window',
+                Lang.bind(this, function (menu, window) {
+                    this.activateWindow(window);
+                })
+            );
+
+            this._menu.connect('open-state-changed',
+                Lang.bind(this, function (menu, isPoppedUp) {
+                    if (!isPoppedUp) {
+                        this._onMenuPoppedDown();
+                    }
+                })
+            );
+
+            Main.overview.connect('hiding', Lang.bind(this, this._menu.close));
+
+            this._menuManager.addMenu(this._menu);
+        }
+
+        this.emit('menu-state-changed', true);
+        this.actor.set_hover(true);
+        this._menu.popup();
+        this._menuManager.ignoreRelease();
+        this.emit('sync-tooltip');
+
+        return false;
+    },
+//-----------------------------------------------------------------
     _onStateChanged: function() {
 
         this.parent();
@@ -946,6 +1036,119 @@ const myAppIcon = new Lang.Class({
     }
 });
 
+//-----------------------------------------------------------------------
+//Signals.addSignalMethods(myAppIcon.prototype);
+
+// This class is a extension of the upstream AppIcon class (ui.appDisplay.js).
+const myAppIconMenu = new Lang.Class({
+    Name: 'AppIconMenu',
+    Extends: AppDisplay.PopupMenu.PopupMenu,
+
+    _init: function(source) {
+        let side = St.Side.TOP;
+        this.parent(source.actor, 0.5, side);
+
+        // We want to keep the item hovered while the menu is up
+        this.blockSourceEvents = true;
+
+        this._source = source;
+
+        this.actor.add_style_class_name('app-well-menu');
+
+        // Chain our visibility and lifecycle to that of the source
+        source.actor.connect('notify::mapped', Lang.bind(this, function () {
+            if (!source.actor.mapped)
+                this.close();
+        }));
+        source.actor.connect('destroy', Lang.bind(this, function () { this.actor.destroy(); }));
+
+        Main.uiGroup.add_actor(this.actor);
+    },
+
+    _redisplay: function() {
+        this.removeAll();
+
+        let windows = this._source.app.get_windows().filter(function(w) {
+            return !w.skip_taskbar;
+        });
+
+        // Display the app windows menu items and the separator between windows
+        // of the current desktop and other windows.
+        let activeWorkspace = global.screen.get_active_workspace();
+        let separatorShown = windows.length > 0 && windows[0].get_workspace() != activeWorkspace;
+
+        for (let i = 0; i < windows.length; i++) {
+            let window = windows[i];
+            if (!separatorShown && window.get_workspace() != activeWorkspace) {
+                this._appendSeparator();
+                separatorShown = true;
+            }
+            let item = this._appendMenuItem(window.title);
+            item.connect('activate', Lang.bind(this, function() {
+                this.emit('activate-window', window);
+            }));
+        }
+
+        if (!this._source.app.is_window_backed()) {
+            this._appendSeparator();
+
+            this._newWindowMenuItem = this._appendMenuItem(_("New Window"));
+            this._newWindowMenuItem.connect('activate', Lang.bind(this, function() {
+                this._source.app.open_new_window(-1);
+                this.emit('activate-window', null);
+            }));
+            this._appendSeparator();
+
+            let appInfo = this._source.app.get_app_info();
+            let actions = appInfo.list_actions();
+            for (let i = 0; i < actions.length; i++) {
+                let action = actions[i];
+                let item = this._appendMenuItem(appInfo.get_action_name(action));
+                item.connect('activate', Lang.bind(this, function(emitter, event) {
+                    this._source.app.launch_action(action, event.get_time(), -1);
+                    this.emit('activate-window', null);
+                }));
+            }
+            this._appendSeparator();
+
+            let isFavorite = AppFavorites.getAppFavorites().isFavorite(this._source.app.get_id());
+
+            if (isFavorite) {
+                let item = this._appendMenuItem(_("Remove from Favorites"));
+                item.connect('activate', Lang.bind(this, function() {
+                    let favs = AppFavorites.getAppFavorites();
+                    favs.removeFavorite(this._source.app.get_id());
+                }));
+            } else {
+                let item = this._appendMenuItem(_("Add to Favorites"));
+                item.connect('activate', Lang.bind(this, function() {
+                    let favs = AppFavorites.getAppFavorites();
+                    favs.addFavorite(this._source.app.get_id());
+                }));
+            }
+        }
+    },
+
+    _appendSeparator: function () {
+        let separator = new PopupMenu.PopupSeparatorMenuItem();
+        this.addMenuItem(separator);
+    },
+
+    _appendMenuItem: function(labelText) {
+        // FIXME: app-well-menu-item style
+        let item = new PopupMenu.PopupMenuItem(labelText);
+        this.addMenuItem(item);
+        return item;
+    },
+
+    popup: function(activatingButton) {
+        this._redisplay();
+        this.open();
+    }
+});
+
+//Signals.addSignalMethods(myAppIconMenu.prototype);
+//-----------------------------------------------------------------------
 function minimizeWindow(app, param){
     // Param true make all app windows minimize
     let windows = getAppInterestingWindows(app);
