@@ -41,7 +41,7 @@ const WorkspaceSettingsWidget = new GObject.Class({
 	let dockSettingsPlacement = new Gtk.Box({spacing:30, margin_left:10, margin_top:10, margin_right:10});
 
     let dockPlacement = new Gtk.Box({margin_left:10, margin_top:10, margin_bottom:0, margin_right:10});
-	let dockPlacementLabel = new Gtk.Label({label: _("Dock placement: Left, Right, [No Top], Bottom"), hexpand:true, xalign:0});
+	let dockPlacementLabel = new Gtk.Label({label: _("Dock placement: 0-Left, 1-Right, [No Top], 3-Bottom"), hexpand:true, xalign:0});
     let dockPlacementCombo = new Gtk.ComboBoxText({halign:Gtk.Align.END});
 	dockPlacementCombo.append_text(_("0"));
 	dockPlacementCombo.append_text(_("1"));
@@ -56,7 +56,7 @@ const WorkspaceSettingsWidget = new GObject.Class({
 	dockPlacementCombo.connect('changed', Lang.bind (this, function(widget) {
 		let active = widget.get_active();
 		if (active <= 0)
-			this.settings.set_int('dock-placement', -1);
+			this.settings.set_int('dock-placement', 0);
 		else
 			this.settings.set_int('dock-placement', active );
 	}));
@@ -344,7 +344,7 @@ const WorkspaceSettingsWidget = new GObject.Class({
         showRunning.connect('toggled', Lang.bind(this, function(check){
             this.settings.set_boolean('show-running', check.get_active());
         }));
-    let showAppsAtTop =  new Gtk.CheckButton({label: _("Show applications button at the top or the left")});
+    let showAppsAtTop =  new Gtk.CheckButton({label: _("Show applications button on the other end")});
         showAppsAtTop.set_active(this.settings.get_boolean('show-apps-at-top'));
         showAppsAtTop.connect('toggled', Lang.bind(this, function(check){
             this.settings.set_boolean('show-apps-at-top', check.get_active());

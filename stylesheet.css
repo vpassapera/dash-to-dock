@@ -138,35 +138,35 @@ background: #f2f00;
 }
 
 #dashtodockContainer.dashtodockHorizontal .running1 {
-    background-image: url('./media/one_btt.svg');
+    background-image: url('./media/one_btt.png');
 }
 
 #dashtodockContainer.dashtodockHorizontal:ttb .running1 {
-    background-image: url('./media/one_ttb.svg');
+    background-image: url('./media/one_ttb.png');
 }
 
 #dashtodockContainer.dashtodockHorizontal .running2 {
-    background-image: url('./media/two_btt.svg');
+    background-image: url('./media/two_btt.png');
 }
 
 #dashtodockContainer.dashtodockHorizontal:ttb .running2 {
-    background-image: url('./media/two_ttb.svg');
+    background-image: url('./media/two_ttb.png');
 }
 
 #dashtodockContainer.dashtodockHorizontal .running3 {
-   background-image: url('./media/three_btt.svg');
+   background-image: url('./media/three_btt.png');
 }
 
 #dashtodockContainer.dashtodockHorizontal:ttb .running3 {
-    background-image: url('./media/three_ttb.svg');
+    background-image: url('./media/three_ttb.png');
 }
 
 #dashtodockContainer.dashtodockHorizontal .running4 {
-    background-image: url('./media/four_btt.svg');
+    background-image: url('./media/four_btt.png');
 }
 
 #dashtodockContainer.dashtodockHorizontal:ttb .running4 {
-    background-image: url('./media/four_ttb.svg');
+    background-image: url('./media/four_ttb.png');
 }
 
 #dashtodockContainer.dashtodockHorizontal #dash {

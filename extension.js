@@ -25,13 +25,15 @@ function resetDockOrientation() {
     dock.destroy();
     dock=null;
     intellihide=null;
+    settings = Convenience.getSettings('org.gnome.shell.extensions.dash-to-dock');
+    settings.connect('changed::dock-placement', Lang.bind(this, this.resetDockOrientation));
     dock = new DockedDash.dockedDash(settings);
     intellihide = new Intellihide.Intellihide(show, hide, dock, settings);
 }
 
 function enable() {
     settings = Convenience.getSettings('org.gnome.shell.extensions.dash-to-dock');
-    settings.connect('changed::dock-horizontal', Lang.bind(this, this.resetDockOrientation));
+    settings.connect('changed::dock-placement', Lang.bind(this, this.resetDockOrientation));
     dock = new DockedDash.dockedDash(settings);
     intellihide = new Intellihide.Intellihide(show, hide, dock, settings);
 }

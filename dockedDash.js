@@ -24,7 +24,8 @@ const MyDash = Me.imports.myDash;
 
 const PRESSURE_TIMEOUT = 1000;
 
-var dock_horizontal = false;
+let dock_horizontal = true;
+let dock_placement = 3;
 
 const SlideDirection = {
     LEFT: 0,
@@ -116,7 +117,7 @@ const DashSlideContainer = new Lang.Class({
     },
 
     vfunc_allocate: function(box, flags) {
-		if (!this._settings.get_boolean('dock-horizontal')) {
+		if (!dock_horizontal) {
 			this.set_allocation(box, flags);
 
 			if (this._child == null)
@@ -178,7 +179,7 @@ const DashSlideContainer = new Lang.Class({
     /* Just the child width but taking into account the slided out part */
     vfunc_get_preferred_width: function(forHeight) {
 		let [minWidth, natWidth ] = this._child.get_preferred_width(forHeight);   
-        if (!this._settings.get_boolean('dock-horizontal')) {
+        if (!dock_horizontal) {			
 			minWidth = (minWidth - this._slideoutWidth)*this._slidex + this._slideoutWidth;
 			natWidth = (natWidth - this._slideoutWidth)*this._slidex + this._slideoutWidth;
 		}	
@@ -188,7 +189,7 @@ const DashSlideContainer = new Lang.Class({
     /* Just the child min height, no border, no positioning etc. */
     vfunc_get_preferred_height: function(forWidth) {
         let [minHeight, natHeight] = this._child.get_preferred_height(forWidth);
-		if (this._settings.get_boolean('dock-horizontal')) {
+		if (dock_horizontal) {
 			minHeight = (minHeight - this._slideoutWidth)*this._slidex + this._slideoutWidth;
 			natHeight = (natHeight - this._slideoutWidth)*this._slidex + this._slideoutWidth;
 		} 
@@ -226,11 +227,17 @@ const dockedDash = new Lang.Class({
  
     _init: function(settings) {
 
-        this._rtl = Clutter.get_default_text_direction() == Clutter.TextDirection.RTL;
-
         // Load settings
         this._settings = settings;
         this._bindSettingsChanges();
+
+//        this._rtl = Clutter.get_default_text_direction() == Clutter.TextDirection.RTL;
+//log("RTL    "+this._rtl);
+//this._rtl = Clutter.get_default_text_direction() == Clutter.TextDirection.RTL;
+
+		dock_placement = this._settings.get_int('dock-placement');	
+        if (dock_placement == 0 || dock_placement == 1)
+			dock_horizontal = false;
 
         // authohide current status. Not to be confused with autohide enable/disagle global (g)settings
         this._autohideStatus = this._settings.get_boolean('autohide') && !this._settings.get_boolean('dock-fixed');
@@ -271,7 +278,7 @@ const dockedDash = new Lang.Class({
         // centering, turn on track hover
 
         // This is the vertical centering actor
-		if (!this._settings.get_boolean('dock-horizontal')) {
+		if (!dock_horizontal) {
 			this.actor = new St.Bin({ name: 'dashtodockContainer',reactive: false,
             y_align: St.Align.MIDDLE})
 		} else {
@@ -282,19 +289,19 @@ const dockedDash = new Lang.Class({
         this.actor._delegate = this;
 
         // This is the sliding actor whose allocation is to be tracked for input regions
-        this._slider = new DashSlideContainer( {
-            direction:this._rtl?SlideDirection.RIGHT:SlideDirection.LEFT}, this._settings
+        this._slider = new DashSlideContainer( { direction: dock_placement }, this._settings
+//            direction:this._rtl?SlideDirection.RIGHT:SlideDirection.LEFT}, this._settings
+			
         );
         // This is the actor whose hover status us tracked for autohide
         this._dockBox = new St.BoxLayout({ name: 'dashtodockBox', reactive: true, track_hover:true });
-        
-        dock_horizontal = this._settings.get_boolean('dock-horizontal');
+                
 		this._myConstraint = new myMaxWidthBin({ x_fill: true, y_fill: true, child: this._dockBox });
         
         this._dockBox.connect("notify::hover", Lang.bind(this, this._hoverChanged));
 
-        // Create and apply height constraint to the dash. It's controlled by this.actor height
-        if (this._settings.get_boolean('dock-horizontal')) {
+        if (dock_horizontal) {
+			// Create and apply height constraint to the dash. It's controlled by this.actor height
 			this.actor.height = Main.overview.viewSelector.actor.height; // Guess initial reasonable height.
 			this.constrainHeight = new Clutter.BindConstraint({ source: this.actor,
 				coordinate: Clutter.BindCoordinate.HEIGHT });
@@ -500,17 +507,22 @@ const dockedDash = new Lang.Class({
             // Add or remove barrier depending on if dock-fixed
             this._updateBarrier();
         }));
+        
         this._settings.connect('changed::autohide', Lang.bind(this, function(){
             this.emit('box-changed');
             this._updateBarrier();
         }));
+        
         this._settings.connect('changed::extend-height', Lang.bind(this, this._updateYPosition));
+        
         this._settings.connect('changed::preferred-monitor', Lang.bind(this,this._resetPosition));
+        
         this._settings.connect('changed::height-fraction', Lang.bind(this,this._updateYPosition));
 
         this._settings.connect('changed::apply-custom-theme', Lang.bind(this, this._updateCustomTheme));
 
         this._settings.connect('changed::require-pressure-to-show', Lang.bind(this, this._updateBarrier));
+        
         this._settings.connect('changed::pressure-threshold', Lang.bind(this, function() {
             this._updatePressureBarrier();
             this._updateBarrier();
@@ -708,8 +720,8 @@ const dockedDash = new Lang.Class({
 			&& this._settings.get_boolean('require-pressure-to-show') && !this._settings.get_boolean('dock-fixed')) {
 					
             let x,y, direction;
-			if (!this._settings.get_boolean('dock-horizontal')) {
-				if (this._rtl) {
+			if (!dock_horizontal) {
+				if (dock_placement == 1) {
 					x = this._monitor.x + this._monitor.width;
 					direction = Meta.BarrierDirection.NEGATIVE_X;
 				} else {				
@@ -805,7 +817,7 @@ const dockedDash = new Lang.Class({
 
 	// Re-themes the corners and borders. SOURCE: simple-dock extension.
     _adjustBorders: function() {
-		if (this._settings.get_boolean('dock-horizontal') && !this._settings.get_boolean('apply-custom-theme')) {
+		if (dock_horizontal && !this._settings.get_boolean('apply-custom-theme')) {
 			// Prevent shell crash if the actor is not on the stage.
 			// It happens enabling/disabling repeatedly the extension
 			if (!this.dash._container.get_stage()) {
@@ -836,7 +848,7 @@ const dockedDash = new Lang.Class({
     },
 
     _updateYPosition: function() {
-		if (!this._settings.get_boolean('dock-horizontal')) {			
+		if (!dock_horizontal) {			
 			let unavailableTopSpace = 0;
 			let unavailableBottomSpace = 0;
 
@@ -890,7 +902,7 @@ const dockedDash = new Lang.Class({
 
         if (this._isPrimaryMonitor() && extendHeight && dockFixed) {
             panelActor.set_width(this._monitor.width - this._dockBox.width);
-            if (this._rtl) {
+            if (dock_placement == 1) {
                 panelActor.set_margin_right(this._dockBox.width - 1);
             } else {
                 panelActor.set_margin_left(this._dockBox.width - 1);
@@ -908,9 +920,10 @@ const dockedDash = new Lang.Class({
     },
 
     _updateStaticBox: function() {
-
+//		let dock_placement_question = (dock_placement === 1);
         this.staticBox.init_rect(
-            this._monitor.x + (this._rtl?(this._monitor.width - this._dockBox.width):0),
+//            this._monitor.x + (this._rtl?(this._monitor.width - this._dockBox.width):0),
+			this._monitor.x + ((dock_placement === 1) ? (this._monitor.width - this._dockBox.width):0),
             this.actor.y + this._slider.y + this._dockBox.y,
             this._dockBox.width,
             this._dockBox.height
@@ -937,7 +950,7 @@ const dockedDash = new Lang.Class({
 
         let position, anchor_point;
 
-        if(this._rtl){
+        if(dock_placement == 1){
             anchor_point = Clutter.Gravity.NORTH_EAST;
             position = this.staticBox.x2;
         } else {
@@ -1104,7 +1117,7 @@ const dockedDash = new Lang.Class({
 
                 let [x,y] = event.get_coords();
 
-                if (this._rtl) {
+                if (dock_placement == 1) {
                     if(x < this.staticBox.x2 - 1)
                         return false;
                 } else {
@@ -1170,11 +1183,11 @@ const dockedDash = new Lang.Class({
 
     _updateCustomTheme: function() {
         if (this._settings.get_boolean('apply-custom-theme')) {
-			if (!this._settings.get_boolean('dock-horizontal')) {
+			if (!dock_horizontal) {
 				this.actor.add_style_class_name('dashtodock');
 			} else this.actor.add_style_class_name('dashtodockHorizontal');
         } else {
-			if (!this._settings.get_boolean('dock-horizontal')) {
+			if (!dock_horizontal) {
 				this.actor.remove_style_class_name('dashtodock');
 			} else this.actor.remove_style_class_name('dashtodockHorizontal');
 		}

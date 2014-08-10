@@ -30,6 +30,9 @@ let DASH_ITEM_LABEL_SHOW_TIME = Dash.DASH_ITEM_LABEL_SHOW_TIME;
 let DASH_ITEM_LABEL_HIDE_TIME = Dash.DASH_ITEM_LABEL_HIDE_TIME;
 let DASH_ITEM_HOVER_TIMEOUT = Dash.DASH_ITEM_HOVER_TIMEOUT;
 
+let dock_horizontal = true;
+let dock_placement = 3;
+
 /* This class is a extension of the upstream DashItemContainer class (ui.dash.js).
  * Changes are done to make label shows on top side. SOURCE: simple-dock extension.
  */
@@ -110,7 +113,7 @@ const myDashActor = new Lang.Class({
     _init: function(settings) {
         this._settings = settings;
         let layout;
-        if (!this._settings.get_boolean('dock-horizontal')) {
+        if (!dock_horizontal) {
 			layout = new Clutter.BoxLayout({ orientation: Clutter.Orientation.VERTICAL });
 		} else {
 			layout = new Clutter.BoxLayout({ orientation: Clutter.Orientation.HORIZONTAL });
@@ -130,7 +133,7 @@ const myDashActor = new Lang.Class({
         let [appIcons, showAppsButton] = this.get_children();
  
         let childBox = new Clutter.ActorBox();
-        if (!this._settings.get_boolean('dock-horizontal')) {
+        if (!dock_horizontal) {
 			let [showAppsMinHeight, showAppsNatHeight] = showAppsButton.get_preferred_height(availWidth);
 			if( this._settings.get_boolean('show-apps-at-top') ) {
 				childBox.x1 = contentBox.x1;
@@ -154,8 +157,8 @@ const myDashActor = new Lang.Class({
 				showAppsButton.allocate(childBox, flags);          
 			}
 		} else {
+			let [showAppsMinWidth, showAppsNatWidth] = showAppsButton.get_preferred_height(availWidth);
 			if( this._settings.get_boolean('show-apps-at-top') ) {
-				let [showAppsMinWidth, showAppsNatWidth] = showAppsButton.get_preferred_height(availWidth);
 				childBox.x1 = contentBox.x1 + showAppsNatWidth;
 				childBox.y1 = contentBox.y1;
 				childBox.x2 = contentBox.x2;
@@ -212,6 +215,11 @@ const myDash = new Lang.Class({
 
     _init : function(settings) {
 		this._settings = settings;
+		
+		dock_placement = this._settings.get_int('dock-placement');		
+        if (dock_placement == 0 || dock_placement == 1)
+			dock_horizontal = false;
+					
         this._signalHandler = new Convenience.globalSignalHandler();				
         this._maxWidth = -1;        
 		this._maxHeight = -1;
@@ -228,7 +236,7 @@ const myDash = new Lang.Class({
 
         this._container = new myDashActor(settings);
         this._box;
-        if (!this._settings.get_boolean('dock-horizontal')) {        
+        if (!dock_horizontal) {        
 			this._box = new St.BoxLayout({ vertical: true, clip_to_allocation: false });
 		} else {
 			this._box = new St.BoxLayout({ vertical: false, clip_to_allocation: false });
@@ -238,7 +246,7 @@ const myDash = new Lang.Class({
 		this._scrollView = new St.ScrollView({ x_expand: true, y_expand: true,
                                                x_fill: true, y_fill: false, reactive: true });
 
-        if (!this._settings.get_boolean('dock-horizontal')) {
+        if (!dock_horizontal) {
 			this._scrollView.set_policy(Gtk.PolicyType.NEVER, Gtk.PolicyType.AUTOMATIC);
 			this._scrollView.vscroll.hide();
 
@@ -281,7 +289,7 @@ const myDash = new Lang.Class({
 		}
 		this._container.add_actor(this._appsContainer);
 
-		if (!this._settings.get_boolean('dock-horizontal')) {
+		if (!dock_horizontal) {
 			this._showAppsIcon = new Dash.ShowAppsIcon();
 		} else {
 			this._showAppsIcon = new myShowAppsIcon();
@@ -346,7 +354,7 @@ const myDash = new Lang.Class({
     },
     
     _onScrollBtnLeftOrTop: function() {
-		if (!this._settings.get_boolean('dock-horizontal')) {
+		if (!dock_horizontal) {
 			let vscroll = this._scrollView.get_vscroll_bar();
 			vscroll.get_adjustment().set_value(vscroll.get_adjustment().get_value() - this._scrollView.height);				
 		} else {
@@ -356,7 +364,7 @@ const myDash = new Lang.Class({
     },
     
     _onScrollBtnRightOrBottom: function() {
-		if (!this._settings.get_boolean('dock-horizontal')) {
+		if (!dock_horizontal) {
 			let vscroll = this._scrollView.get_vscroll_bar();
 			vscroll.get_adjustment().set_value(vscroll.get_adjustment().get_value() + this._scrollView.height);				
 		} else {
@@ -461,7 +469,7 @@ const myDash = new Lang.Class({
 			}));
 
 		let item;
-		if (!this._settings.get_boolean('dock-horizontal')) {
+		if (!dock_horizontal) {
 			item = new Dash.DashItemContainer();
 		} else {
 			item = new myDashItemContainer();
@@ -547,7 +555,7 @@ const myDash = new Lang.Class({
 
         iconChildren.push(this._showAppsIcon);
 log('HOW MANY ICONS ARE THERE?  '+iconChildren.length);
-		if (!this._settings.get_boolean('dock-horizontal')) {
+		if (!dock_horizontal) {
 			if (this._maxHeight == -1)
 				return;
 		} else {
@@ -557,7 +565,7 @@ log('HOW MANY ICONS ARE THERE?  '+iconChildren.length);
 log('_adjustIconSize OTHER THAN -1  _maxWidth '+this._maxWidth);		
         let themeNode = this._container.get_theme_node();
         let maxAllocation;
-		if (!this._settings.get_boolean('dock-horizontal')) {
+		if (!dock_horizontal) {
 			maxAllocation = new Clutter.ActorBox({ x1: 0, y1: 0,
 				x2: 64, y2: this._maxHeight });
 		} else {
@@ -566,7 +574,7 @@ log('_adjustIconSize OTHER THAN -1  _maxWidth '+this._maxWidth);
 		}
         let maxContent = themeNode.get_content_box(maxAllocation);
         let availWidth, availHeight;
-		if (!this._settings.get_boolean('dock-horizontal')) {
+		if (!dock_horizontal) {
 			availHeight = maxContent.y2 - maxContent.y1;
 		} else {
 			availWidth = maxContent.x2 - maxContent.x1;
@@ -591,7 +599,7 @@ log('CURRENT SIZE '+this.iconSize);
         });
 		let availSize;
 log('CURRENT SIZES '+iconSizes);  		
-		if (!this._settings.get_boolean('dock-horizontal')) {
+		if (!dock_horizontal) {
 			// Subtract icon padding and box spacing from the available height
 			availHeight -= iconChildren.length * (natHeight - this.iconSize * scaleFactor) +
 						   (iconChildren.length - 1) * spacing;
@@ -879,7 +887,7 @@ log('RESIZED ICON');
         let numChildren = children.length;
 
 		let pos, boxHeight, boxWidth
-		if (!this._settings.get_boolean('dock-horizontal')) {
+		if (!dock_horizontal) {
 			boxHeight = 0;
 			for (let i = 0; i < numChildren; i++) {
 				boxHeight += children[i].height;
@@ -933,7 +941,7 @@ log('RESIZED ICON');
             }
 
             this._dragPlaceholder = new Dash.DragPlaceholderItem();
-			if (!this._settings.get_boolean('dock-horizontal')) {
+			if (!dock_horizontal) {
 				this._dragPlaceholder.child.set_width (this.iconSize);
 				this._dragPlaceholder.child.set_height (this.iconSize / 2);
 
@@ -1085,7 +1093,7 @@ const myAppIcon = new Lang.Class({
         this._draggable.fakeRelease();
 
         if (!this._menu) {
-			if (!this._settings.get_boolean('dock-horizontal')) {
+			if (!dock_horizontal) {
 				this._menu = new AppDisplay.AppIconMenu(this);
 			} else {
 				this._menu = new myAppIconMenu(this);				
