@@ -107,11 +107,6 @@
       <summary>Show favorites apps</summary>
       <description>Show or hide favorite appplications icons in the dash</description>
     </key>
-    <key type="b" name="show-apps-at-top">
-      <default>false</default>
-      <summary>Show application button at top</summary>
-      <description>Show appplication button at top of the dash</description>
-    </key>
     <key type="b" name="bolt-support">
       <default>true</default>
       <summary>Basic compatibility with bolt extensions</summary>
@@ -168,9 +163,9 @@
       <default>false</default>
       <summary>Shows the Recycling Bin Button Applet </summary>
     </key>
-    <key type="ai" name="applets-order">
-      <default>[1,2,3,4,5]</default>
-      <summary>Order of appearance for the enabled applets</summary>
+    <key type="i" name="applets-order">
+      <default>12345</default>
+      <summary>Order of appearance for the enabled applets: 1,2,3,4,5 if enabled</summary>
     </key>
   </schema>
 </schemalist>

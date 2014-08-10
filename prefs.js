@@ -557,10 +557,10 @@ const WorkspaceSettingsWidget = new GObject.Class({// FIXME: Why call it this fu
 
 		let ShowAppsAppletLabel = new Gtk.Label({label: _("1. Show Apps"), hexpand: true, halign: Gtk.Align.START});	
 		let ShowAppsAppletSwitch = new Gtk.Switch({hexpand: true, halign: Gtk.Align.END});
-//			ShowAppsAppletSwitch.set_active(this.settings.get_boolean('apply-custom-theme'));
-//			ShowAppsAppletSwitch.connect('notify::active', Lang.bind(this, function(check){
-//					this.settings.set_boolean('apply-custom-theme', check.get_active());
-//				}));
+			ShowAppsAppletSwitch.set_active(this.settings.get_boolean('applet-show-apps-visible'));
+			ShowAppsAppletSwitch.connect('notify::active', Lang.bind(this, function(check){
+					this.settings.set_boolean('applet-show-apps-visible', check.get_active());
+				}));
 
 		ShowAppsApplet.add(ShowAppsAppletLabel);
 		ShowAppsApplet.add(ShowAppsAppletSwitch);
@@ -568,21 +568,22 @@ const WorkspaceSettingsWidget = new GObject.Class({// FIXME: Why call it this fu
 		/* FAVOURITE APPS APPLET */
 
 		let FavouriteAppsApplet = new Gtk.Box({orientation: Gtk.Orientation.VERTICAL,
-			margin_top:10, margin_right:10, margin_bottom:10,  margin_left:10})
-//		indentWidget(FavouriteAppsApplet);
+			margin_top:10, margin_right:10, margin_bottom:0,  margin_left:10})
 		
 		let FavouriteAppsAppletLabel = new Gtk.Label({label: _("2. Favourite Apps"), hexpand: true, halign: Gtk.Align.START});
 
-		let showFavorites =  new Gtk.CheckButton({label: _("Show favorite application icons")});
+		let showFavorites =  new Gtk.CheckButton({label: _("Show Favorite applications")});
 			showFavorites.set_active(this.settings.get_boolean('show-favorites'));
 			showFavorites.connect('toggled', Lang.bind(this, function(check){
 				this.settings.set_boolean('show-favorites', check.get_active());
 			}));
-		let showRunning =  new Gtk.CheckButton({label: _("Show running application icons")});
+		indentWidget(showFavorites);			
+		let showRunning =  new Gtk.CheckButton({label: _("Show Running applications")});
 			showRunning.set_active(this.settings.get_boolean('show-running'));
 			showRunning.connect('toggled', Lang.bind(this, function(check){
 				this.settings.set_boolean('show-running', check.get_active());
 			}));
+		indentWidget(showRunning);
 		
 		FavouriteAppsApplet.add(FavouriteAppsAppletLabel);
 		FavouriteAppsApplet.add(showFavorites);
@@ -594,10 +595,10 @@ const WorkspaceSettingsWidget = new GObject.Class({// FIXME: Why call it this fu
 
 		let LinksTrayAppletLabel = new Gtk.Label({label: _("3. Links Tray"), hexpand: true, halign: Gtk.Align.START});	
 		let LinksTrayAppletSwitch = new Gtk.Switch({hexpand: true, halign: Gtk.Align.END});
-//			LinksTrayAppletSwitch.set_active(this.settings.get_boolean('apply-custom-theme'));
-//			LinksTrayAppletSwitch.connect('notify::active', Lang.bind(this, function(check){
-//					this.settings.set_boolean('apply-custom-theme', check.get_active());
-//				}));
+			LinksTrayAppletSwitch.set_active(this.settings.get_boolean('applet-links-tray-visible'));
+			LinksTrayAppletSwitch.connect('notify::active', Lang.bind(this, function(check){
+					this.settings.set_boolean('applet-links-tray-visible', check.get_active());
+				}));
 
 		LinksTrayApplet.add(LinksTrayAppletLabel);
 		LinksTrayApplet.add(LinksTrayAppletSwitch);	
@@ -608,10 +609,10 @@ const WorkspaceSettingsWidget = new GObject.Class({// FIXME: Why call it this fu
 
 		let ShowDesktopAppletLabel = new Gtk.Label({label: _("4. Show Desktop"), hexpand: true, halign: Gtk.Align.START});	
 		let ShowDesktopAppletSwitch = new Gtk.Switch({hexpand: true, halign: Gtk.Align.END});
-//			ShowDesktopAppletSwitch.set_active(this.settings.get_boolean('apply-custom-theme'));
-//			ShowDesktopAppletSwitch.connect('notify::active', Lang.bind(this, function(check){
-//					this.settings.set_boolean('apply-custom-theme', check.get_active());
-//				}));
+			ShowDesktopAppletSwitch.set_active(this.settings.get_boolean('applet-show-desktop-visible'));
+			ShowDesktopAppletSwitch.connect('notify::active', Lang.bind(this, function(check){
+					this.settings.set_boolean('applet-show-desktop-visible', check.get_active());
+				}));
 
 		ShowDesktopApplet.add(ShowDesktopAppletLabel);
 		ShowDesktopApplet.add(ShowDesktopAppletSwitch);
@@ -622,10 +623,10 @@ const WorkspaceSettingsWidget = new GObject.Class({// FIXME: Why call it this fu
 
 		let RecyclingBinAppletLabel = new Gtk.Label({label: _("5. Recycling Bin"), hexpand: true, halign: Gtk.Align.START});	
 		let RecyclingBinAppletSwitch = new Gtk.Switch({hexpand: true, halign: Gtk.Align.END});
-//			RecyclingBinAppletSwitch.set_active(this.settings.get_boolean('apply-custom-theme'));
-//			RecyclingBinAppletSwitch.connect('notify::active', Lang.bind(this, function(check){
-//					this.settings.set_boolean('apply-custom-theme', check.get_active());
-//				}));
+			RecyclingBinAppletSwitch.set_active(this.settings.get_boolean('applet-recycling-bin-visible'));
+			RecyclingBinAppletSwitch.connect('notify::active', Lang.bind(this, function(check){
+					this.settings.set_boolean('applet-recycling-bin-visible', check.get_active());
+				}));
 
 		RecyclingBinApplet.add(RecyclingBinAppletLabel);
 		RecyclingBinApplet.add(RecyclingBinAppletSwitch);
@@ -634,11 +635,16 @@ const WorkspaceSettingsWidget = new GObject.Class({// FIXME: Why call it this fu
 		
 		let OrderOfApplets = new Gtk.Box({margin_left:10, margin_top:10, margin_bottom:5, margin_right:10});
 
-		let OrderOfAppletsLabel = new Gtk.Label({label: _("Order of the applets: 1,2,3,4,5"), 
+		let OrderOfAppletsLabel = new Gtk.Label({label: _("Order of the applets: 12345"), 
 			hexpand: true, halign: Gtk.Align.START});
         let OrderOfAppletsEntry = new Gtk.Entry({halign: Gtk.Align.END});
-			OrderOfAppletsEntry.set_width_chars(15);
-			//OrderOfAppletsEntry.set_text();
+			OrderOfAppletsEntry.set_width_chars(5);
+			OrderOfAppletsEntry.set_text(this.settings.get_int('applets-order').toString());
+			OrderOfAppletsEntry.connect('changed', Lang.bind (this, function(widget) {			
+				this.settings.set_int('applets-order', parseInt(widget.get_text()) );
+			}));        
+        
+
 		OrderOfApplets.add(OrderOfAppletsLabel);
 		OrderOfApplets.add(OrderOfAppletsEntry);
 		
