@@ -687,16 +687,17 @@ const myLinkTrayMenu = new Lang.Class({
     _gridview: function(files) {		
 log('gridview switch');		
 		this.removeAll();
-//---------------------------------------------------------------------------------------------------------------------
-		let item = new PopupMenu.PopupBaseMenuItem();
-		   
-		this._table = new St.Table({ homogeneous: true });
+//---------------------------------------------------------------------------------------------------------------------		   
+		this._table = new St.Table({ x_expand: true,  y_expand: true, homogeneous: true });
 
 		let appz = AppFavorites.getAppFavorites().getFavorites();
-		for(let i = 0 ; i < 4 ;i++) {
+		
+		let mar = 3;
+		
+		for(let i = 0 ; i < 3 ;i++) {
 			for(let j = 0 ; j < appz.length ;j++) {
 				let boxOfButton = new St.BoxLayout({ vertical: true, x_expand: false,
-					margin_top: 3, margin_right: 3, margin_bottom: 3, margin_left: 3 });			
+					margin_top: mar, margin_right: mar, margin_bottom: mar, margin_left: mar });			
 				let icon = new St.Icon({ icon_name: 'user-desktop',
                                         icon_size: 48,
                                         style_class: 'show-apps-icon',
@@ -709,7 +710,10 @@ log('gridview switch');
 											x_fill: true,
 											y_fill: true });                                   
 				btn.add_actor(icon);
-				btn.connect('clicked', Lang.bind(this, function () { log('VVVVVVVVVVVVVVV> '); }));
+				btn.connect('clicked', Lang.bind(this, function () { 
+					log('VVVVVVVVVVVVVVV> ');
+					this.toggle();
+				}));
 				boxOfButton.add(btn);
 				let label = new St.Label({text: appz[j].get_name(), x_align: St.Align.MIDDLE });
 				
@@ -722,11 +726,24 @@ log('gridview switch');
 			}
 		}
 		
-//		item.actor.add_child(this._table);
-//		this.addMenuItem(item);//these work
+        this._scrollView = new St.ScrollView({ x_fill: true, y_fill: false });
+        let vscroll = this._scrollView.get_vscroll_bar();
+        vscroll.connect('scroll-start', Lang.bind(this, function() {
+            this.menu.passEvents = true;
+        }));
+        vscroll.connect('scroll-stop', Lang.bind(this, function() {
+            this.menu.passEvents = false;
+        }));
+        
+		this.abox = new St.BoxLayout({ vertical: true, x_expand: true});
+		this.abox.add(this._table, { x_fill:false, y_fill: false });
+		this._scrollView.add_actor(this.abox);
 
-this.box.add(this._table);
-
+		// Calculating the vertical space needed for ScrollView
+		let label_sizer = new St.Label({text: "label_sizer" });		
+		this._scrollView.height = (48+label_sizer.height+(2*mar))*3+12;		
+				
+		this.box.add(this._scrollView);
 //---------------------------------------------------------------------------------------------------------------------       
 /*
 		let file = Gio.file_new_for_path(fileuri);
