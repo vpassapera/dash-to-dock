@@ -95,35 +95,7 @@ const myShowAppsIcon = new Lang.Class({
 
 	showLabel: showHoverLabelTop
 });
-/*
-const myMaxWidthBin = new Lang.Class({
-    Name: 'myMaxWidthBin',
-    Extends: St.Bin,
 
-    vfunc_allocate: function(box, flags) {
-        let themeNode = this.get_theme_node();
-        let maxWidth = themeNode.get_max_width();
-        let availWidth = box.x2 - box.x1;
-        let adjustedBox = box;
-
-maxWidth = 1000;
-
-        if (availWidth > maxWidth) {
-            let excessWidth = availWidth - maxWidth;
-log('::::: excessWidth = availWidth - maxWidth  '+excessWidth+'   '+availWidth+'   '+maxWidth);
-
-//            adjustedBox.x1 -= Math.floor(excessWidth / 2);
-//            adjustedBox.x2 += Math.floor(excessWidth / 2);
-        
-        
-            adjustedBox.x1 += Math.floor(excessWidth / 2);
-            adjustedBox.x2 -= Math.floor(excessWidth / 2);        
-        }
-
-        this.parent(adjustedBox, flags);
-    }
-});
-*/
 /* This class is a fork of the upstream DashActor class (ui.dash.js)
  *
  * Summary of changes:
@@ -147,12 +119,12 @@ const myDashActor = new Lang.Class({
                       layout_manager: layout,
                       clip_to_allocation: true });
     },
-/*
+
     vfunc_allocate: function(box, flags) {	
         let contentBox = this.get_theme_node().get_content_box(box);
         let availWidth = contentBox.x2 - contentBox.x1;        
         let availHeight = contentBox.y2 - contentBox.y1;
-log('IN myDASH vfunc_allocate availWidth  '+availWidth);
+
         this.set_allocation(box, flags);
 
         let [appIcons, showAppsButton] = this.get_children();
@@ -187,8 +159,7 @@ log('IN myDASH vfunc_allocate availWidth  '+availWidth);
 				childBox.x1 = contentBox.x1 + showAppsNatWidth;
 				childBox.y1 = contentBox.y1;
 				childBox.x2 = contentBox.x2;
-				childBox.y2 = contentBox.y2;
-//log('!APPICONS WIDTH FOR DISPAY   x1 x2 totWid '+contentBox.x1+'  '+contentBox.x2+'  '+(contentBox.x2 - contentBox.x1));				
+				childBox.y2 = contentBox.y2;		
 				appIcons.allocate(childBox, flags);
 
 				childBox.x1 = contentBox.x1;
@@ -206,7 +177,7 @@ log('IN myDASH vfunc_allocate availWidth  '+availWidth);
 				showAppsButton.allocate(childBox, flags);            
 			}
 		}	
-    },*/
+    },
 	
     vfunc_get_preferred_height: function(forWidth) {
         // We want to request the natural height of all our children
@@ -263,17 +234,37 @@ const myDash = new Lang.Class({
 			this._box = new St.BoxLayout({ vertical: false, clip_to_allocation: false });
 		}
 		this._box._delegate = this;
-//		this._container.add_actor(this._box);
 //--------------------------------------------------------------------------------------------------
+		this._appsContainer = new St.BoxLayout({ vertical: false, clip_to_allocation: false });
+
+		//let leftArrowIcon = new St.Icon({ icon_name: 'avatar-default-symbolic', icon_size: 24});
+		let leftArrowIcon = new St.Icon({ icon_name: 'go-previous-symbolic', icon_size: 24 });	
+		let leftArrow = new St.Button();
+		leftArrow.set_child(leftArrowIcon);
+		this._appsContainer.add_actor(leftArrow);
+		leftArrow.connect('clicked', function() {
+			log('TO THE LEFT ');
+		});
+
+		this._appsContainer.add_actor(this._box);	  
+
+		let rightArrowIcon = new St.Icon({ icon_name: 'go-next-symbolic', icon_size: 24});
+		let rightArrow = new St.Button();
+		rightArrow.set_child(rightArrowIcon);
+		this._appsContainer.add_actor(rightArrow);
+		rightArrow.connect('clicked', function() {
+			log('TO THE RIGHT ');
+		});
+
         this._scrollView = new St.ScrollView({ x_expand: true, y_expand: true,
                                                x_fill: true, y_fill: false, reactive: true,
                                                hscrollbar_policy: Gtk.PolicyType.AUTOMATIC,
                                                vscrollbar_policy: Gtk.PolicyType.NEVER});
                                                
-		this._scrollView.add_actor(this._box);	                       
+		this._scrollView.add_actor(this._appsContainer);	                       
 		                       
         // Hideing the scrollbars
-        //this._scrollView.hscroll.hide();
+        this._scrollView.hscroll.hide();
         
 		this._scrollView.hscroll.connect('scroll-start', Lang.bind(this, function() {
 			//this.menu.passEvents = true;
@@ -286,14 +277,14 @@ const myDash = new Lang.Class({
 		}));
 		this._scrollView.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.NEVER);
 		this._scrollView.set_mouse_scrolling(true);
+		this._scrollView.hscroll.connect('button-press-event', Lang.bind(this, function(actor, event) {
+			//log("ABOUT TO FREEZE");
+		}));
 		this._scrollView.hscroll.connect('button-release-event', Lang.bind(this, function(actor, event) {
 			//let button = event.get_button();
 			//if (button == 3) { //right click
 			//do some activity...or not
 			//}
-		}));
-		this._scrollView.hscroll.connect('button-press-event', Lang.bind(this, function(actor, event) {
-			//log("ABOUT TO FREEZE");
 		}));
 
 		this._container.add_actor(this._scrollView);
@@ -328,17 +319,6 @@ const myDash = new Lang.Class({
 				}
             }));
 */
-
-
-
-this.actor.connect('notify::height', Lang.bind(this,
-function() {
-log('_________notify::height______  '+this.actor.width);
-//this._box.queue_relayout();
-}));
-
-
-
         this._workId = Main.initializeDeferredWork(this._box, Lang.bind(this, this._redisplay));
 
         this._appSystem = Shell.AppSystem.get_default();

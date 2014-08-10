@@ -31,8 +31,7 @@ const handledWindowTypes = [
  * emit a 'box-changed' signal when this changes.
  * 
 */
-
-const intellihide = new Lang.Class({
+const Intellihide = new Lang.Class({
     Name: 'Intellihide',
 
     _init: function(show, hide, target, settings) {
