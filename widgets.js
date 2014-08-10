@@ -36,130 +36,7 @@ let DASH_ITEM_HOVER_TIMEOUT = MyDash.DASH_ITEM_HOVER_TIMEOUT;
 
 let dock_horizontal = true;
 let tracker = Shell.WindowTracker.get_default();
-/*
-const showHoverLabelLeft = function() {
-	if (!this._labelText)
-		return;
 
-	this.label.set_text(this._labelText);
-	this.label.opacity = 0;
-	this.label.show();
-
-	let [stageX, stageY] = this.actor.get_transformed_position();
-
-	let itemHeight = this.actor.allocation.y2 - this.actor.allocation.y1;
-
-	let labelHeight = this.label.get_height();
-	let yOffset = Math.floor((itemHeight - labelHeight) / 2)
-
-	let y = stageY + yOffset;
-
-	let node = this.label.get_theme_node();
-	let xOffset = node.get_length('-x-offset');
-
-	let x = stageX + this.actor.get_width() + xOffset;
-
-	this.label.set_position(x, y);
-	Tweener.addTween(this.label,
-		{ opacity: 255,
-			time: DASH_ITEM_LABEL_SHOW_TIME,
-			transition: 'easeOutQuad',
-		});
-};
-
-const showHoverLabelRight = function() {
-	if (!this._labelText)
-		return;
-
-	this.label.set_text(this._labelText);
-	this.label.opacity = 0;
-	this.label.show();
-
-	let [stageX, stageY] = this.actor.get_transformed_position();
-
-	let itemHeight = this.actor.allocation.y2 - this.actor.allocation.y1;
-
-	let labelHeight = this.label.get_height();
-	let yOffset = Math.floor((itemHeight - labelHeight) / 2)
-
-	let y = stageY + yOffset;
-
-	let node = this.label.get_theme_node();
-	let xOffset = node.get_length('-x-offset');
-
-	let x = stageX - this.label.get_width() - xOffset;
-
-	this.label.set_position(x, y);
-	Tweener.addTween(this.label,
-		{ opacity: 255,
-			time: DASH_ITEM_LABEL_SHOW_TIME,
-			transition: 'easeOutQuad',
-		});
-};
-
-const showHoverLabelTop = function() {
-	if (!this._labelText) {
-		return;
-	}
-
-	this.label.set_text(this._labelText);
-	this.label.opacity = 0;
-	this.label.show();
-
-	let [stageX, stageY] = this.actor.get_transformed_position();
-
-	let itemWidth = this.actor.allocation.x2 - this.actor.allocation.x1;
-
-	let labelWidth = this.label.get_width();
-	let labelHeight = this.label.get_height();
-
-	let node = this.label.get_theme_node();
-	let yOffset = node.get_length('-x-offset');
-	
-	let y = stageY - labelHeight - yOffset;
-		
-	let xOffset = Math.floor((itemWidth - labelWidth) / 2);
-	let x = stageX + xOffset;
-
-	this.label.set_position(x, y);
-	Tweener.addTween(this.label, 
-		{ opacity: 255,
-			time: DASH_ITEM_LABEL_SHOW_TIME,
-			transition: 'easeOutQuad',
-		});
-};
-
-const showHoverLabelBottom = function() {
-	if (!this._labelText) {
-		return;
-	}
-
-	this.label.set_text(this._labelText);
-	this.label.opacity = 0;
-	this.label.show();
-
-	let [stageX, stageY] = this.actor.get_transformed_position();
-	
-	let itemWidth = this.actor.allocation.x2 - this.actor.allocation.x1;
-
-	let labelWidth = this.label.get_width();
-	let labelHeight = this.label.get_height();
-
-	let node = this.label.get_theme_node();
-
-	let y = stageY + labelHeight + this.iconSize;
-
-	let xOffset = Math.floor((itemWidth - labelWidth) / 2);
-	let x = stageX + xOffset;
-
-	this.label.set_position(x, y);
-	Tweener.addTween(this.label, 
-		{ opacity: 255,
-			time: DASH_ITEM_LABEL_SHOW_TIME,
-			transition: 'easeOutQuad',
-		});
-};
-*/
 const showLabelInDirections = function() {
 	if (!this._labelText) {
 		return;
@@ -174,12 +51,12 @@ const showLabelInDirections = function() {
 
 	let itemWidth = this.actor.allocation.x2 - this.actor.allocation.x1;
 	let itemHeight = this.actor.allocation.y2 - this.actor.allocation.y1;
+	
 	let labelWidth = this.label.get_width();
 	let labelHeight = this.label.get_height();
 	
 	let x, y, xOffset, yOffset;
-		
-log('hovered 1  '+this._settings.get_int('dock-placement') );	
+
 	switch(this._settings.get_int('dock-placement')) {
 		case 0:
 			yOffset = Math.floor((itemHeight - labelHeight) / 2)
@@ -193,21 +70,16 @@ log('hovered 1  '+this._settings.get_int('dock-placement') );
 			xOffset = node.get_length('-x-offset');
 			x = stageX - this.label.get_width() - xOffset;
 			break;
-		case 2:
+		case 3:
 			yOffset = node.get_length('-x-offset');
 			y = stageY - labelHeight - yOffset;	
 			xOffset = Math.floor((itemWidth - labelWidth) / 2);
-			x = stageX + xOffset;
-log('hovered 2  '+x+' '+y+' '+xOffset+' '+yOffset);			
+			x = stageX + xOffset;	
 			break;
-		case 3:
+		case 2:
 			y = stageY + labelHeight + this.iconSize;
 			xOffset = Math.floor((itemWidth - labelWidth) / 2);
-
-log('hovered 3  '+xOffset+'  '+itemWidth+' '+labelWidth);				
-					
-			x = stageX + xOffset;
-log('hovered 3  '+x+' '+y+' '+xOffset+' '+yOffset);				
+			x = stageX + xOffset;		
 			break;	
 	}
 
@@ -709,37 +581,8 @@ const myShowAppsIcon = new Lang.Class({
 
         return true;
     },    
-    
-	showLabel: function() {
-		if (!this._labelText) {
-			return;
-		}
 
-		this.label.set_text(this._labelText);
-		this.label.opacity = 0;
-		this.label.show();
-
-		let [stageX, stageY] = this.actor.get_transformed_position();
-
-		let labelHeight = this.label.get_height();
-		let labelWidth = this.label.get_width();
-
-		let node = this.label.get_theme_node();
-		let yOffset = node.get_length('-x-offset');
-		let y = stageY - labelHeight - yOffset;
-		
-		let itemWidth = this.actor.allocation.x2 - this.actor.allocation.x1;
-		let xOffset = Math.floor((itemWidth - labelWidth) / 2);
-		let x = stageX + xOffset;
-
-		this.label.set_position(x, y);
-
-		Tweener.addTween(this.label, {
-			opacity: 255,
-			time: DASH_ITEM_LABEL_SHOW_TIME,
-			transition: 'easeOutQuad',
-		});
-	},
+	showLabel: showLabelInDirections,
 
     hideLabel: function () {
         Tweener.addTween(this.label,

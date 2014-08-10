@@ -457,18 +457,12 @@ const myDash = new Lang.Class({
 				let pos = parseInt(position[i]);
 				switch (pos) {
 					case 1:
-						if (this._settings.get_boolean('applet-show-apps-visible')) {
-log('bbb1  ');							
-							this._showAppsIcon = new Widgets.myShowAppsIcon(this.iconSize, this._settings);
-log('bbb2  ');							
-							this._showAppsIcon.icon.setIconSize(this.iconSize);
-log('bbb3  ');							
-							this._hookUpLabelForApplets(this._showAppsIcon);
-log('bbb4  ');							
-							this.showAppsButton = this._showAppsIcon.actor;						
-log('bbb5  ');							
-							this._container.add_actor(this._showAppsIcon.actor);
-log('bbb6  ');							
+						if (this._settings.get_boolean('applet-show-apps-visible')) {				
+							this._showAppsIcon = new Widgets.myShowAppsIcon(this.iconSize, this._settings);					
+							this._showAppsIcon.icon.setIconSize(this.iconSize);				
+							this._hookUpLabelForApplets(this._showAppsIcon);							
+							this.showAppsButton = this._showAppsIcon.actor;					
+							this._container.add_actor(this._showAppsIcon.actor);							
 						}
 						break;
 					case 2:
