@@ -110,7 +110,7 @@ const DashSlideContainer = new Lang.Class({
 				box.y1 = Math.floor(lack / 2) + panelHeight;
 				box.y2 = Math.floor(lack / 2) + panelHeight + boxH;
 			}
-//--------------------------------------------------------------------------------
+
 			this.set_allocation(box, flags);
 
 			if (this._child == null)
@@ -141,6 +141,32 @@ const DashSlideContainer = new Lang.Class({
 			this._child.allocate(childBox, flags);
 			this._child.set_clip(-childBox.x1, 0, -childBox.x1+availWidth, availHeight);
 		} else {
+			let maxW = Main.layoutManager.primaryMonitor.width;
+			let boxW = box.x2 - box.x1;
+
+			let fraction = this._settings.get_double('size-fraction');
+			let extendSize = this._settings.get_boolean('extend-size');
+								
+			if(extendSize)
+				fraction = 1;
+			else if(fraction<0 || fraction >1)
+				fraction = 0.95;
+
+			if (boxW > Math.floor(maxW * fraction)) {
+				boxW = Math.floor(maxW * fraction);
+				let excess = maxW - boxW;
+				box.x1 = Math.floor(excess / 2);
+				box.x2 = Math.floor(excess / 2) + (maxW * fraction);
+			} else if (fraction == 1) {
+				box.x1 = 0;
+				box.x2 = maxW;
+			} else {
+				boxW = Math.floor(maxW * fraction);
+				let lack = maxW - boxW;
+				box.x1 = Math.floor(lack / 2);
+				box.x2 = Math.floor(lack / 2) + boxW;
+			}
+		
 			this.set_allocation(box, flags);
 
 			if (this._child == null)
@@ -851,21 +877,19 @@ const dockedDash = new Lang.Class({
 		} else {
 			let fraction = this._settings.get_double('size-fraction');
 			let extendSize = this._settings.get_boolean('extend-size');
-			
+
+			let availableWidth = this._monitor.width;
+					
 			if(extendSize)
 				fraction = 1;
 			else if(fraction<0 || fraction >1)
 				fraction = 0.95;
-			
-//			this._dockBox.width = this._monitor.width*fraction;
-
-			this.actor.width = this._monitor.width;
-			this.actor.x = this._monitor.x;
-			this.actor.x_align = St.Align.MIDDLE;
+				
+			this.dash._container.set_width(availableWidth * fraction);
 
 			this.actor.height = this._monitor.height;
 			this.actor.y = this._monitor.y;
-			this.actor.y_align = St.Align.END;
+			this.actor.y_align = St.Align.END;			
 		}
 
         this._updateStaticBox();
