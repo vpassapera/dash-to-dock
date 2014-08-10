@@ -217,8 +217,11 @@ const myDash = new Lang.Class({
 		this._settings = settings;
 		
 		dock_placement = this._settings.get_int('dock-placement');		
-        if (dock_placement == 0 || dock_placement == 1)
+        if (dock_placement == 0 || dock_placement == 1) {
 			dock_horizontal = false;
+		} else if (dock_placement == 2 || dock_placement == 3) {
+			dock_horizontal = true;
+		}
 					
         this._signalHandler = new Convenience.globalSignalHandler();				
         this._maxWidth = -1;        

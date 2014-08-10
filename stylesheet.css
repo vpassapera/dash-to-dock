@@ -1,21 +1,25 @@
 /* Shrink the dash by reducing padding and border radius */
 #dashtodockContainer.dashtodockLTR #dash {
+	background: rgba(0,0,0,0.9);
     border-left: none;
     border-radius: 0px 6px 6px 0px;
 }
 
 #dashtodockContainer.dashtodockRTL #dash {
+	background: rgba(0,0,0,0.9);
 	border-right: none;
     border-radius: 6px 0px 0px 6px;
 }
 
 #dashtodockContainer.dashtodockTTB #dash {
+	background: rgba(0,0,0,0.9);
     border-left: 1px;
 	border-top: none;
     border-radius: 0px 0px 6px 6px;
 }
 
 #dashtodockContainer.dashtodockBTT #dash {
+	background: rgba(0,0,0,0.9);
     border-left: 1px;
 	border-bottom: none;
     border-radius: 6px 6px 0px 0px;
@@ -33,7 +37,7 @@
 #dashtodockContainer.dashtodockRTL .dash-item-container > StButton,
 #dashtodockContainer.dashtodockTTB .dash-item-container > StButton,
 #dashtodockContainer.dashtodockBTT .dash-item-container > StButton {
-   padding: 1px 2px;
+   padding: 1px;
 }
 
 /* Dash height extended to the whole available vertical space */
@@ -131,13 +135,3 @@
 #dashtodockContainer.dashtodockBTT .running4 {
     background-image: url('./media/four_btt.png');
 }
-/*
-#dashtodockContainer.dashtodockLTR,
-#dashtodockContainer.dashtodockRTL,
-#dashtodockContainer.dashtodockTTB,
-#dashtodockContainer.dashtodockBTT,
-#dash
-{
-    background: rgba(0,0,0,0.9);
-}
-*/

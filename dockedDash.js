@@ -34,8 +34,8 @@ const SlideDirection = {
     BOTTOM: 3
 };
 
-const myMaxWidthBin = new Lang.Class({
-    Name: 'myMaxWidthBin',
+const myMaxSizeBin = new Lang.Class({
+    Name: 'myMaxSizeBin',
     Extends: St.Bin,
     
     vfunc_allocate: function(box, flags) {
@@ -80,7 +80,7 @@ const myMaxWidthBin = new Lang.Class({
  *
  * The slidex parameter can be used to directly animate the sliding. The parent
  * must have a WEST anchor_point to achieve the sliding in the RIGHT direction.
-*/
+ */
 const DashSlideContainer = new Lang.Class({
     Name: 'DashSlideContainer',
     Extends: Clutter.Actor,
@@ -96,9 +96,9 @@ const DashSlideContainer = new Lang.Class({
 
         let localParams = Params.parse(params, localDefaults, true);
 
-        if (params){
-            /* Remove local params before passing the params to the parent
-               constructor to avoid errors. */
+        if (params){ 
+            // Remove local params before passing the params
+            // to the parent constructor to avoid errors.
             let prop;
             for (prop in localDefaults) {
                 if ((prop in params))
@@ -231,17 +231,20 @@ const dockedDash = new Lang.Class({
         this._settings = settings;
         this._bindSettingsChanges();
 
-		dock_placement = this._settings.get_int('dock-placement');	
-        if (dock_placement == 0 || dock_placement == 1)
+		dock_placement = this._settings.get_int('dock-placement');		
+        if (dock_placement == 0 || dock_placement == 1) {
 			dock_horizontal = false;
+		} else if (dock_placement == 2 || dock_placement == 3) {
+			dock_horizontal = true;
+		}
 
-        // authohide current status. Not to be confused with autohide enable/disagle global (g)settings
+        // Authohide current status. Not to be confused with autohide enable/disagle global (g)settings
         this._autohideStatus = this._settings.get_boolean('autohide') && !this._settings.get_boolean('dock-fixed');
 
-        // initialize animation status object
+        // Initialize animation status object
         this._animStatus = new animationStatus(true);
 
-        /* status variable: true when the overview is shown through the dash
+        /* Status variable: true when the overview is shown through the dash
          * applications button.
          */
         this.forcedOverview = false;
@@ -249,11 +252,11 @@ const dockedDash = new Lang.Class({
         // Put dock on the primary monitor
         this._monitor = Main.layoutManager.primaryMonitor;
 
-        // this store size and the position where the dash is shown;
-        // used by intellihide module to check window overlap.
+        // This stores size and the position where the dash is shown.
+        // It's used by intellihide module to check window overlap.
         this.staticBox = new Clutter.ActorBox();
 
-        // initialize colors with generic values
+        // Initialize colors with generic values
         this._defaultBackground = {red: 0, green:0, blue: 0, alpha:0};
         this._defaultBackgroundColor = {red: 0, green:0, blue: 0, alpha:0};
         this._customizedBackground = {red: 0, green:0, blue: 0, alpha:0};
@@ -290,7 +293,7 @@ const dockedDash = new Lang.Class({
         // This is the actor whose hover status us tracked for autohide
         this._dockBox = new St.BoxLayout({ name: 'dashtodockBox', reactive: true, track_hover:true });
                 
-		this._myConstraint = new myMaxWidthBin({ x_fill: true, y_fill: true, child: this._dockBox });
+		this._myMaxSize = new myMaxSizeBin({ x_fill: true, y_fill: true, child: this._dockBox });
         
         this._dockBox.connect("notify::hover", Lang.bind(this, this._hoverChanged));
 
@@ -301,7 +304,7 @@ const dockedDash = new Lang.Class({
 				coordinate: Clutter.BindCoordinate.HEIGHT });
 			this.dash.actor.add_constraint(this.constrainHeight);
         }
-         
+      
         // Connect global signals
         this._signalHandler = new Convenience.globalSignalHandler();
         this._signalHandler.push(
@@ -391,8 +394,8 @@ const dockedDash = new Lang.Class({
         Main.overview._controls._dashSlider.actor.hide();
 
         // Add dash container actor and the container to the Chrome.
-        this.actor.set_child(this._slider);
-		this._slider.add_child(this._myConstraint);
+        this.actor.set_child(this._slider);      
+		this._slider.add_child(this._myMaxSize);
         this._dockBox.add_actor(this.dash.actor);
 
         // Add aligning container without tracking it for input region (old affectsinputRegion: false that was removed).
@@ -404,7 +407,7 @@ const dockedDash = new Lang.Class({
         if ( this._settings.get_boolean('dock-fixed') )
           Main.layoutManager._trackActor(this.dash._dockBox, {affectsStruts: true});
 
-        // pretend this._slider is isToplevel child so that fullscreen is actually tracked
+        // Pretend this._slider is isToplevel child so that fullscreen is actually tracked
         let index = Main.layoutManager._findActor(this._slider);
         Main.layoutManager._trackedActors[index].isToplevel = true;
     },
@@ -1177,24 +1180,19 @@ const dockedDash = new Lang.Class({
         if (this._settings.get_boolean('apply-custom-theme')) {
 			switch (dock_placement) {
 				case 0:
-					this.actor.add_style_class_name('dashtodockLTR');
-log('CASE   '+0+'   '+dock_placement);					
+					this.actor.add_style_class_name('dashtodockLTR');				
 					break;
 				case 1:
-					this.actor.add_style_class_name('dashtodockRTL');
-log('CASE   '+1+'   '+dock_placement);					
+					this.actor.add_style_class_name('dashtodockRTL');				
 					break;			
 				case 2:
-					this.actor.add_style_class_name('dashtodockTTB');
-log('CASE   '+2+'   '+dock_placement);						
+					this.actor.add_style_class_name('dashtodockTTB');					
 					break;
 				case 3:
 					this.actor.add_style_class_name('dashtodockBTT');
-log('CASE   '+3+'   '+dock_placement);						
 					break;								
 				default:
 					this.actor.add_style_class_name('dashtodockBTT');
-log('CASE   '+'DEF'+'   '+dock_placement);						
 					break;
 			}
         } else {

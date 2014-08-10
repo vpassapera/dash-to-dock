@@ -5,6 +5,7 @@ const Convenience = Me.imports.convenience;
 const Intellihide = Me.imports.intellihide;
 const DockedDash = Me.imports.dockedDash;
 const Lang = imports.lang;
+const Main = imports.ui.main;
 
 let settings;
 let intellihide;
@@ -21,15 +22,8 @@ function hide(){
 }
 
 function resetDockOrientation() {
-    intellihide.destroy();
-    dock.destroy();
-    dock=null;
-    intellihide=null;
-    settings=null;
-    settings = Convenience.getSettings('org.gnome.shell.extensions.dash-to-dock');
-    settings.connect('changed::dock-placement', Lang.bind(this, this.resetDockOrientation));
-    dock = new DockedDash.dockedDash(settings);
-    intellihide = new Intellihide.Intellihide(show, hide, dock, settings);
+	disable();
+	enable();
 }
 
 function enable() {
