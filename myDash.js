@@ -345,7 +345,7 @@ const myDash = new Lang.Class({
 			vscroll.get_adjustment().set_value(vscroll.get_adjustment().get_value() + this._scrollView.height);				
 		} else {
 			let hscroll = this._scrollView.get_hscroll_bar();
-			hscroll.get_adjustment().set_value(hscroll.get_adjustment().get_value() + this._scrollView.width);	
+			hscroll.get_adjustment().set_value(hscroll.get_adjustment().get_value() + this._scrollView.width);			
 		}
     },
         
@@ -801,19 +801,19 @@ const myDash = new Lang.Class({
         // Workaround for https://bugzilla.gnome.org/show_bug.cgi?id=692744
         // Without it, StBoxLayout may use a stale size cache
         this._box.queue_relayout();
-
+/*
 		// Hiding/showing the arrows if required
 		if(this._container.get_stage()) {
 			if (!dock_horizontal) {
 				if (this._scrollView.height != this._scrollView.get_vscroll_bar().height) {
 					this._leftOrTopArrow.show();
-					this._rightOrBottomArrow.show();	
+					this._rightOrBottomArrow.show();
 				} else {
 					this._leftOrTopArrow.hide();
 					this._rightOrBottomArrow.hide();			
 				}
 			} else {
-				if (this._scrollView.width != this._scrollView.get_hscroll_bar().width) {				
+				if (this._scrollView.width != this._scrollView.get_hscroll_bar().width) {
 					this._leftOrTopArrow.show();
 					this._rightOrBottomArrow.show();	
 				} else {
@@ -821,7 +821,7 @@ const myDash = new Lang.Class({
 					this._rightOrBottomArrow.hide();
 				}
 			}
-		}
+		}*/
     },
 
     setMaxIconSize: function(size) {

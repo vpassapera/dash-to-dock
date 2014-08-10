@@ -190,7 +190,9 @@ const DashSlideContainer = new Lang.Class({
 			childBox.x2 = childBox.x1 + childWidth;
 
 			this._child.allocate(childBox, flags);
-			this._child.set_clip(-childBox.x1, 0, -childBox.x1+availWidth, availHeight);			
+			this._child.set_clip(-childBox.x1, 0, -childBox.x1+availWidth, availHeight);
+			
+log("slider: "+(-childBox.x1+availWidth));			
 		}
     },
 
