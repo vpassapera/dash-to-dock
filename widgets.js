@@ -36,6 +36,188 @@ let DASH_ITEM_HOVER_TIMEOUT = MyDash.DASH_ITEM_HOVER_TIMEOUT;
 
 let dock_horizontal = true;
 let tracker = Shell.WindowTracker.get_default();
+/*
+const showHoverLabelLeft = function() {
+	if (!this._labelText)
+		return;
+
+	this.label.set_text(this._labelText);
+	this.label.opacity = 0;
+	this.label.show();
+
+	let [stageX, stageY] = this.actor.get_transformed_position();
+
+	let itemHeight = this.actor.allocation.y2 - this.actor.allocation.y1;
+
+	let labelHeight = this.label.get_height();
+	let yOffset = Math.floor((itemHeight - labelHeight) / 2)
+
+	let y = stageY + yOffset;
+
+	let node = this.label.get_theme_node();
+	let xOffset = node.get_length('-x-offset');
+
+	let x = stageX + this.actor.get_width() + xOffset;
+
+	this.label.set_position(x, y);
+	Tweener.addTween(this.label,
+		{ opacity: 255,
+			time: DASH_ITEM_LABEL_SHOW_TIME,
+			transition: 'easeOutQuad',
+		});
+};
+
+const showHoverLabelRight = function() {
+	if (!this._labelText)
+		return;
+
+	this.label.set_text(this._labelText);
+	this.label.opacity = 0;
+	this.label.show();
+
+	let [stageX, stageY] = this.actor.get_transformed_position();
+
+	let itemHeight = this.actor.allocation.y2 - this.actor.allocation.y1;
+
+	let labelHeight = this.label.get_height();
+	let yOffset = Math.floor((itemHeight - labelHeight) / 2)
+
+	let y = stageY + yOffset;
+
+	let node = this.label.get_theme_node();
+	let xOffset = node.get_length('-x-offset');
+
+	let x = stageX - this.label.get_width() - xOffset;
+
+	this.label.set_position(x, y);
+	Tweener.addTween(this.label,
+		{ opacity: 255,
+			time: DASH_ITEM_LABEL_SHOW_TIME,
+			transition: 'easeOutQuad',
+		});
+};
+
+const showHoverLabelTop = function() {
+	if (!this._labelText) {
+		return;
+	}
+
+	this.label.set_text(this._labelText);
+	this.label.opacity = 0;
+	this.label.show();
+
+	let [stageX, stageY] = this.actor.get_transformed_position();
+
+	let itemWidth = this.actor.allocation.x2 - this.actor.allocation.x1;
+
+	let labelWidth = this.label.get_width();
+	let labelHeight = this.label.get_height();
+
+	let node = this.label.get_theme_node();
+	let yOffset = node.get_length('-x-offset');
+	
+	let y = stageY - labelHeight - yOffset;
+		
+	let xOffset = Math.floor((itemWidth - labelWidth) / 2);
+	let x = stageX + xOffset;
+
+	this.label.set_position(x, y);
+	Tweener.addTween(this.label, 
+		{ opacity: 255,
+			time: DASH_ITEM_LABEL_SHOW_TIME,
+			transition: 'easeOutQuad',
+		});
+};
+
+const showHoverLabelBottom = function() {
+	if (!this._labelText) {
+		return;
+	}
+
+	this.label.set_text(this._labelText);
+	this.label.opacity = 0;
+	this.label.show();
+
+	let [stageX, stageY] = this.actor.get_transformed_position();
+	
+	let itemWidth = this.actor.allocation.x2 - this.actor.allocation.x1;
+
+	let labelWidth = this.label.get_width();
+	let labelHeight = this.label.get_height();
+
+	let node = this.label.get_theme_node();
+
+	let y = stageY + labelHeight + this.iconSize;
+
+	let xOffset = Math.floor((itemWidth - labelWidth) / 2);
+	let x = stageX + xOffset;
+
+	this.label.set_position(x, y);
+	Tweener.addTween(this.label, 
+		{ opacity: 255,
+			time: DASH_ITEM_LABEL_SHOW_TIME,
+			transition: 'easeOutQuad',
+		});
+};
+*/
+const showLabelInDirections = function() {
+	if (!this._labelText) {
+		return;
+	}
+
+	this.label.set_text(this._labelText);
+	this.label.opacity = 0;
+	this.label.show();
+
+	let [stageX, stageY] = this.actor.get_transformed_position();
+	let node = this.label.get_theme_node();
+
+	let itemWidth = this.actor.allocation.x2 - this.actor.allocation.x1;
+	let itemHeight = this.actor.allocation.y2 - this.actor.allocation.y1;
+	let labelWidth = this.label.get_width();
+	let labelHeight = this.label.get_height();
+	
+	let x, y, xOffset, yOffset;
+		
+log('hovered 1  '+this._settings.get_int('dock-placement') );	
+	switch(this._settings.get_int('dock-placement')) {
+		case 0:
+			yOffset = Math.floor((itemHeight - labelHeight) / 2)
+			y = stageY + yOffset;
+			xOffset = node.get_length('-x-offset');
+			x = stageX + this.actor.get_width() + xOffset;
+			break;	
+		case 1:
+			yOffset = Math.floor((itemHeight - labelHeight) / 2)
+			y = stageY + yOffset;
+			xOffset = node.get_length('-x-offset');
+			x = stageX - this.label.get_width() - xOffset;
+			break;
+		case 2:
+			yOffset = node.get_length('-x-offset');
+			y = stageY - labelHeight - yOffset;	
+			xOffset = Math.floor((itemWidth - labelWidth) / 2);
+			x = stageX + xOffset;
+log('hovered 2  '+x+' '+y+' '+xOffset+' '+yOffset);			
+			break;
+		case 3:
+			y = stageY + labelHeight + this.iconSize;
+			xOffset = Math.floor((itemWidth - labelWidth) / 2);
+
+log('hovered 3  '+xOffset+'  '+itemWidth+' '+labelWidth);				
+					
+			x = stageX + xOffset;
+log('hovered 3  '+x+' '+y+' '+xOffset+' '+yOffset);				
+			break;	
+	}
+
+	this.label.set_position(x, y);
+	Tweener.addTween(this.label, 
+		{ opacity: 255,
+			time: DASH_ITEM_LABEL_SHOW_TIME,
+			transition: 'easeOutQuad',
+		});
+};
 
 /**
  * Extends AppIcon:
@@ -459,6 +641,8 @@ const myShowAppsIcon = new Lang.Class({
         this.icon = new IconGrid.BaseIcon(this._labelText, { setSizeManually: true, 
 			showLabel: false, createIcon: Lang.bind(this, this._createIcon) });
 		this.actor.set_child(this.icon.actor);
+		
+		this.showLabel = showLabelInDirections;
 	},
 
     destroy: function() {
@@ -569,146 +753,6 @@ const myShowAppsIcon = new Lang.Class({
     } 
 });
 
-/*
-const myShowAppsIcon = new Lang.Class({
-    Name: 'myShowAppsIcon',
-    Extends: MyDash.myDashItemContainer,
-
-    _init: function() {
-log('1111111111111111111');		
-        this.parent();
-log('2222222222222222222');
-        this.toggleButton = new St.Button({ style_class: 'show-apps',
-                                            track_hover: true,
-                                            can_focus: true,
-                                            toggle_mode: true });
-log('3333333333333333333');                                            
-        this._iconActor = null;
-log('4444444444444444444');        
-        this.icon = new IconGrid.BaseIcon(_("Show Applications"),
-                                           { setSizeManually: true,
-                                             showLabel: false,
-                                             createIcon: Lang.bind(this, this._createIcon) });
-log('5555555555555555555');
-        this.toggleButton.add_actor(this.icon.actor);
-log('6666666666666666666');        
-        this.toggleButton._delegate = this;
-log('7777777777777777777');
-//        this.setChild(this.toggleButton);
-log('8888888888888888888');        
-        this.setDragApp(null);
-log('9999999999999999999');
-    },
-
-    _createIcon: function(size) {
-        this._iconActor = new St.Icon({ icon_name: 'view-grid-symbolic',
-                                        icon_size: size,
-                                        style_class: 'show-apps-icon',
-                                        track_hover: true });
-        return this._iconActor;
-    },
-
-    _canRemoveApp: function(app) {
-        if (app == null)
-            return false;
-
-        let id = app.get_id();
-        let isFavorite = AppFavorites.getAppFavorites().isFavorite(id);
-        return isFavorite;
-    },
-
-    setDragApp: function(app) {
-        let canRemove = this._canRemoveApp(app);
-
-        this.toggleButton.set_hover(canRemove);
-        if (this._iconActor)
-            this._iconActor.set_hover(canRemove);
-
-        if (canRemove)
-            this.setLabelText(_("Remove from Favorites"));
-        else
-            this.setLabelText(_("Show Applications"));
-    },
-
-    handleDragOver: function(source, actor, x, y, time) {
-        if (!this._canRemoveApp(getAppFromSource(source)))
-            return DND.DragMotionResult.NO_DROP;
-
-        return DND.DragMotionResult.MOVE_DROP;
-    },
-
-    acceptDrop: function(source, actor, x, y, time) {
-        let app = getAppFromSource(source);
-        if (!this._canRemoveApp(app))
-            return false;
-
-        let id = app.get_id();
-
-        Meta.later_add(Meta.LaterType.BEFORE_REDRAW, Lang.bind(this,
-            function () {
-                AppFavorites.getAppFavorites().removeFavorite(id);
-                return false;
-            }));
-
-        return true;
-    }
-});
-*/
-
-/* This class is a extension of the upstream ShowAppsIcon class (ui.dash.js).
-const myShowAppsIcon = new Lang.Class({
-    Name: 'myShowAppsIcon',
-    Extends: Dash.ShowAppsIcon,
-
-    _init: function() {
-        this.parent();
-    },
-
-	showLabel: function() {
-		if (!this._labelText) {
-			return;
-		}
-
-		this.label.set_text(this._labelText);
-		this.label.opacity = 0;
-		this.label.show();
-
-		//let [stageX, stageY] = this.actor.get_transformed_position();
-		let [stageX, stageY] = this.get_transformed_position();
-
-		let labelHeight = this.label.get_height();
-		let labelWidth = this.label.get_width();
-
-		let node = this.label.get_theme_node();
-		let yOffset = node.get_length('-x-offset');
-		let y = stageY - labelHeight - yOffset;
-		
-		//let itemWidth = this.actor.allocation.x2 - this.actor.allocation.x1;
-		let itemWidth = this.allocation.x2 - this.allocation.x1;
-		let xOffset = Math.floor((itemWidth - labelWidth) / 2);
-		let x = stageX + xOffset;
-
-		this.label.set_position(x, y);
-
-		Tweener.addTween(this.label, {
-			opacity: 255,
-			time: DASH_ITEM_LABEL_SHOW_TIME,
-			transition: 'easeOutQuad',
-		});
-	},
-
-    hideLabel: function () {
-        Tweener.addTween(this.label,
-                         { opacity: 0,
-                           time: DASH_ITEM_LABEL_HIDE_TIME,
-                           transition: 'easeOutQuad',
-                           onComplete: Lang.bind(this, function() {
-                               this.label.hide();
-                           })
-		});
-    }
-});
-*/
 const myLinkBox = new Lang.Class({
     Name: 'myLinkBox',
     Extends: St.BoxLayout,
@@ -1049,8 +1093,7 @@ const myLinkTray = new Lang.Class({
     },
 
     _createIcon: function(size) {
-        return new St.Icon({ //gicon: Gio.icon_new_for_string(Me.path + "/media/links-tray.svg"),
-								icon_name: 'view-list-symbolic',
+        return new St.Icon({ icon_name: 'view-list-symbolic',
 								icon_size: size,
 								style_class: 'show-apps-icon',
 								track_hover: true });

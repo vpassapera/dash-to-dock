@@ -458,11 +458,17 @@ const myDash = new Lang.Class({
 				switch (pos) {
 					case 1:
 						if (this._settings.get_boolean('applet-show-apps-visible')) {
+log('bbb1  ');							
 							this._showAppsIcon = new Widgets.myShowAppsIcon(this.iconSize, this._settings);
+log('bbb2  ');							
 							this._showAppsIcon.icon.setIconSize(this.iconSize);
+log('bbb3  ');							
 							this._hookUpLabelForApplets(this._showAppsIcon);
+log('bbb4  ');							
 							this.showAppsButton = this._showAppsIcon.actor;						
+log('bbb5  ');							
 							this._container.add_actor(this._showAppsIcon.actor);
+log('bbb6  ');							
 						}
 						break;
 					case 2:
@@ -487,11 +493,11 @@ const myDash = new Lang.Class({
 						break;
 					case 5:
 						if (this._settings.get_boolean('applet-recycling-bin-visible')) {
-							this._recyclingBin = new Widgets.myRecyclingBin(this.iconSize, this._settings);
+/*							this._recyclingBin = new Widgets.myRecyclingBin(this.iconSize, this._settings);
 							this._recyclingBin.icon.setIconSize(this.iconSize);	
 							this._hookUpLabelForApplets(this._recyclingBin);
 							this._container.add_actor(this._recyclingBin.actor);
-						}
+*/						}
 						break;												
 					default:
 						break;
