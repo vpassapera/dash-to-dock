@@ -1057,19 +1057,20 @@ const myRecyclingBin = new Lang.Class({
                                      y_fill: true });
         this.actor._delegate = this;		
         this.actor.connect('clicked', Lang.bind(this, this.popupMenu));
+        this.icon_actor_access = this.icon_actor_access = new St.Icon({ icon_name: 'user-trash',
+												icon_size: this.iconSize,
+												style_class: 'show-apps-icon',
+												track_hover: true });
         this.icon = new IconGrid.BaseIcon(this._labelText, { setSizeManually: true, 
 			showLabel: false, createIcon: Lang.bind(this, this._createIcon) });
-			
+		
 		this.actor.set_child(this.icon.actor);
 
-        //this.recycling_bin_path = 'trash:///';//FIXME: BUG in Ubuntu cannot access trash:/// gvfs fuse
         this.recycling_bin_path = '~/.local/share/Trash/files';
         this.recycling_bin_file = Gio.file_new_for_uri(this.recycling_bin_path);
     
 		this.menuManager = new PopupMenu.PopupMenuManager(this);
 		
-		//this.menu = new PopupMenu.PopupMenu(this.icon.actor, 0.5, St.Side.BOTTOM, 0);
-		//this.menu = new PopupMenu.PopupMenu(this.actor, 0.5, St.Side.BOTTOM, 0);//good without st.widget
 		this.menu = new PopupMenu.PopupMenu(this.actor, 0.5, St.Side.BOTTOM, 0);
 		this.blockSourceEvents = true;
 		this.menu.actor.add_style_class_name('app-well-menu');
@@ -1079,8 +1080,8 @@ const myRecyclingBin = new Lang.Class({
 		this.menuManager.addMenu(this.menu);
 		this.populate();
 	
-        //this.setupWatch();			
-        //this.binChange();          
+        this.setupWatch();			
+        this.binChange();
 	},
 
     destroy: function() {
@@ -1094,10 +1095,7 @@ const myRecyclingBin = new Lang.Class({
     },
     
     _createIcon: function(size) {
-        return new St.Icon({ icon_name: 'user-trash',
-								icon_size: size,
-								style_class: 'show-apps-icon',
-								track_hover: true });
+        return this.icon_actor_access;
     },    
     
     _removeMenuTimeout: function() {
@@ -1125,40 +1123,38 @@ const myRecyclingBin = new Lang.Class({
  
     setupWatch: function() {
 		log(1);
-        this.binMonitor = this.recycling_bin_file.monitor_directory(0, null, null);
+		
+		this.trash_path = 'trash:///';
+        this.trash_file = Gio.file_new_for_uri(this.trash_path);
+		this.binMonitor = this.trash_file.monitor_directory(0, null, null);
         this.binMonitor.connect('changed', Lang.bind(this, this.binChange));
     },
 
     binChange: function() {
-		log(2);
-		let binItems = this.recycling_bin_file.enumerate_children('*', 0, null, null);
+		this.trash_path = 'trash:///';
+        this.trash_file = Gio.file_new_for_uri(this.trash_path);		
+		let binItems = this.trash_file.enumerate_children('*', 0, null, null);	
 		let count = 0;
 		let file_info = null;
 		while ((file_info = binItems.next_file(null, null)) != null) {
 			count++;
 		}
+//if(this.icon_actor_access != null) {		
 		if (count > 0) {
-			this.icon.set_icon_name('user-trash-full');
+			this.icon_actor_access.set_icon_name('user-trash-full');
 		} else {
-			this.icon.set_icon_name('user-trash');
-		}	
+			this.icon_actor_access.set_icon_name('user-trash');
+		}
+//}
     },
 
     openBin: function() {
-		/* 
-		 * Gio.IOErrorEnum: Operation not supported
-		 * this.recycling_bin_path = 'trash:///';
-         * this.recycling_bin_file = Gio.file_new_for_uri(this.recycling_bin_path);
-         * Gio.app_info_launch_default_for_uri(this.recycling_bin_file.get_uri(), null);
-         * 
-         * FIXED by either:
-         * 1. let app = Gio.app_info_create_from_commandline
-         * 		("nautilus trash:///", null, Gio.AppInfoCreateFlags.NONE)
-         * 		.launch([],null);//[] : files to launch, list element expected
-         * 
-         * 2. sudo apt-get install --reinstall nautilus
-         */
-		Gio.app_info_launch_default_for_uri(this.recycling_bin_file.get_uri(), null);         
+		//let app = Gio.app_info_create_from_commandline("gvfs-open trash:///", 
+			//null, Gio.AppInfoCreateFlags.NONE).launch([],null);
+
+		this.trash_path = 'trash:///';
+		this.trash_file = Gio.file_new_for_uri(this.trash_path);
+		Gio.app_info_launch_default_for_uri(this.trash_path, null);
     },
 
 	deleteBin: function() {
@@ -1166,12 +1162,8 @@ const myRecyclingBin = new Lang.Class({
     },
 
 	doDeleteBin: function() {		
-		let children = this.recycling_bin_file.enumerate_children('*', 0, null, null);
-		let child_info = null;
-		while ((child_info = children.next_file(null, null)) != null) {
-			let child = this.recycling_bin_file.get_child(child_info.get_name());
-			child.delete(null);
-		}
+		let app = Gio.app_info_create_from_commandline("gvfs-trash --empty", 
+			null, Gio.AppInfoCreateFlags.NONE).launch([],null);		
     },
 
     popupMenu: function() {
