@@ -394,9 +394,93 @@ const myPopupImageMenuItem = new Lang.Class({
 		this.actor.add(this._icon, { x_align: St.Align.MIDDLE });
 
         this.label = new St.Label({ text: file.get_basename() });
-        this.actor.add(this.label, { x_align: St.Align.MIDDLE });
+        this.actor.add(this.label, { icon_size: size, x_align: St.Align.MIDDLE });
 
-        this.setIcon('user-desktop');    
+        let info = file.query_info('standard::type', 0, null);
+        
+		if(info.get_file_type() == Gio.FileType.DIRECTORY) {
+			this.setIcon('folder');
+		} else {
+//			this.setIcon('text-x-generic-symbolic');
+//log('BROWNIE  '+file.query_info("standard::icon", 0, null).get_icon());//GThemedIcon
+			let gicon = file.query_info("standard::icon", 0, null).get_icon();//thumbnail??
+			this._icon.set_gicon(gicon);		
+		}
+
+
+
+     
+		/*
+		f = gio.File(path='/home/whatever/you/want.jpg')
+		info = f.query_info('*')
+
+		# We check if there's a thumbnail for our file
+		preview = info.get_attribute_byte_string ("thumbnail::path")
+
+		image = None
+		if preview:
+			image = gtk.image_new_from_file (preview)
+		else:
+			# If there's no thumbnail, we check get_icon, who checks the
+			# file's mimetype, and returns the correct stock icon.
+			icon = info.get_icon()
+			image = gtk.image_new_from_gicon (icon, gtk.ICON_SIZE_MENU)
+		*/
+		
+		
+		/*
+		let AppInfo = file.query_info('*');
+		let thumbnail = AppInfo.get_attribute_byte_string ("thumbnail::path");
+		if (thumbnail) {
+			log("THUMBNAIL EXISTS");
+			//let image = gtk.image_new_from_file (preview);
+		} else {
+			log("THUMBNAIL NOT EXISTS");
+			//let ico = info.get_icon()
+			//let image = gtk.image_new_from_gicon (ico, gtk.ICON_SIZE_MENU)
+		}
+		*/
+    
+    
+		//Does add an Icon?, but is invisible?
+		//let gicon = new Gio.FileIcon({ file: file });
+		//this._icon.set_gicon(gicon);
+		
+/*
+		while (cursor != null && cursor.next(null)) {
+			var urn = cursor.get_string(0)[0];
+			var uri = cursor.get_string(1)[0];
+			var title = cursor.get_string(2)[0];
+			var parentUri = cursor.get_string(3)[0];
+			var lastMod = cursor.get_string(4)[0];
+			var lastMod = lastMod.split('T')[0];
+			var filename = decodeURI(uri.split('/').pop());
+			// if file does not exist, it won't be shown
+			var f = Gio.file_new_for_uri(uri);
+			if(!f.query_exists(null)) {continue;}
+			var path = f.get_path();
+			// clean up path
+			var prettyPath = path.substr(0,path.length - filename.length).replace("/home/" + GLib.get_user_name() , "~");
+			// contentType is an array, the index "1" set true,
+			// if function is uncertain if type is the right one
+			let contentType = Gio.content_type_guess(path, null);
+			var newContentType = contentType[0];
+			if(contentType[1]) {
+				if(newContentType == "application/octet-stream") {
+					let fileInfo = Gio.file_new_for_path(path).query_info('standard::type', 0, null);
+					// for some reason 'content_type_guess' returns a wrong mime type for folders
+					if(fileInfo.get_file_type() == Gio.FileType.DIRECTORY) {
+						newContentType = "inode/directory";
+					} else {
+						// unrecognized mime-types are set to text, so that later an icon can be picked
+						newContentType = "text/x-log";
+					}
+				}
+			}
+			results.push({'id' : uri, 'name' : title, 'path' : path, 'filename': filename, 'lastMod' : lastMod, 
+				'prettyPath' : prettyPath, 'contentType' : newContentType});
+			} 
+*/		
     },
 
     setIcon: function(name) {
