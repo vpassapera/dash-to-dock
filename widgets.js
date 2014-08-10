@@ -272,11 +272,11 @@ const myAppIcon = new Lang.Class({
     _updateCounterClass: function() {
         let n = this.getAppInterestingWindows(this.app).length;
 
-        if(n>this._maxN)
+        if(n > this._maxN)
              n = this._maxN;
 
         for(let i = 1; i <= this._maxN; i++){
-            let className = 'running'+i;
+            let className = 'running' + i;
             if(i!=n)
                 this.actor.remove_style_class_name(className);
             else
@@ -794,7 +794,7 @@ const myLinkBox = new Lang.Class({
                 fadeIn = true;
             }
 
-            this._dragPlaceholder = new myDash.myDragPlaceholderItem();
+            this._dragPlaceholder = new MyDash.myDragPlaceholderItem(null, null);
 			if (!dock_horizontal) {
 				this._dragPlaceholder.child.set_width (this.iconSize);
 				this._dragPlaceholder.child.set_height (this.iconSize / 2);
