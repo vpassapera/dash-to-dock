@@ -744,7 +744,9 @@ const myFileIcon = new Lang.Class({
     Name: 'myFileIcon',
 
     _init: function (filepath, size, menu, id) {
+		let existent = GLib.file_test(filepath, GLib.FileTest.EXISTS);
 		this.file = Gio.file_new_for_path(filepath);
+		
 		this.iconSize = size;
 		this.menu = menu;
 		this.id = id;
@@ -762,33 +764,41 @@ const myFileIcon = new Lang.Class({
 			let result = handler.launch ([this.file], null);
 		}));
 
-        this.icon = new IconGrid.BaseIcon(this.file.get_basename(), { setSizeManually: true,
+		let title;
+		if(existent)
+			title = this.file.get_basename();
+		else
+			title = filepath;
+			
+        this.icon = new IconGrid.BaseIcon(title, { setSizeManually: true,
 			showLabel: true, createIcon: Lang.bind(this, this._createIcon) });
 			
         this.icon.setIconSize(this.iconSize);
-        
+       
 		this.actor.set_child(this.icon.actor);
-				
-		let info = this.file.query_info('standard::icon,thumbnail::path', 0, null);
+
+		if(existent) {
+			let info = this.file.query_info('standard::icon,thumbnail::path', 0, null);
 					
-		if(info.get_file_type() == Gio.FileType.DIRECTORY) {
-			this.icon.icon_name = 'folder';
-		} else {
-			let gicon = null;
-			let thumbnail_path = info.get_attribute_as_string('thumbnail::path', 0, null);
-			if (thumbnail_path) {
-				gicon = Gio.icon_new_for_string(thumbnail_path);
+			if(info.get_file_type() == Gio.FileType.DIRECTORY) {
+				this.icon.icon_name = 'folder';
 			} else {
-				let icon_internal = info.get_icon()
-				let icon_path = null;
-				if (icon_internal instanceof Gio.ThemedIcon) {
-					icon_path = icon_internal.get_names()[0];
-				} else if (icon_internal instanceof Gio.FileIcon) {
-					icon_path = icon.get_file().get_path();
+				let gicon = null;
+				let thumbnail_path = info.get_attribute_as_string('thumbnail::path', 0, null);
+				if (thumbnail_path) {
+					gicon = Gio.icon_new_for_string(thumbnail_path);
+				} else {
+					let icon_internal = info.get_icon()
+					let icon_path = null;
+					if (icon_internal instanceof Gio.ThemedIcon) {
+						icon_path = icon_internal.get_names()[0];
+					} else if (icon_internal instanceof Gio.FileIcon) {
+						icon_path = icon.get_file().get_path();
+					}
+						gicon = Gio.icon_new_for_string(icon_path);
 				}
-					gicon = Gio.icon_new_for_string(icon_path);
+				this.icon.actor.get_child().get_first_child().get_first_child().set_gicon(gicon);
 			}
-			this.icon.actor.get_child().get_first_child().get_first_child().set_gicon(gicon);
 		}
 		
         this._draggable = DND.makeDraggable(this.actor);
@@ -809,7 +819,7 @@ const myFileIcon = new Lang.Class({
     },
 
     _createIcon: function(size) {
-        return new St.Icon({ icon_name: 'folder',
+        return new St.Icon({ icon_name: 'emblem-important',
 								icon_size: size,
 								style_class: 'show-apps-icon',
 								track_hover: true });
