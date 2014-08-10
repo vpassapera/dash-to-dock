@@ -258,9 +258,9 @@ const myDash = new Lang.Class({
         this._container = new myDashActor(settings);
         this._box;
         if (!this._settings.get_boolean('dock-horizontal')) {        
-			this._box = new St.BoxLayout({ vertical: true, clip_to_allocation: true });
+			this._box = new St.BoxLayout({ vertical: true, clip_to_allocation: false });
 		} else {
-			this._box = new St.BoxLayout({ vertical: false, clip_to_allocation: true });
+			this._box = new St.BoxLayout({ vertical: false, clip_to_allocation: false });
 		}
 		this._box._delegate = this;
 //		this._container.add_actor(this._box);
@@ -274,41 +274,29 @@ const myDash = new Lang.Class({
 		                       
         // Hideing the scrollbars
         //this._scrollView.hscroll.hide();
+        
+		this._scrollView.hscroll.connect('scroll-start', Lang.bind(this, function() {
+			//this.menu.passEvents = true;
+			log('BBOX elem-B '+this._box.get_children().length);
+			log('BOX WIDTH ' + this._box.width );
+			log('SCROLL VIEW WIDTH ' + this._scrollView.width );
+		}));
+		this._scrollView.hscroll.connect('scroll-stop', Lang.bind(this, function() {
+			//this.menu.passEvents = false;
+		}));
+		this._scrollView.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.NEVER);
+		this._scrollView.set_mouse_scrolling(true);
+		this._scrollView.hscroll.connect('button-release-event', Lang.bind(this, function(actor, event) {
+			//let button = event.get_button();
+			//if (button == 3) { //right click
+			//do some activity...or not
+			//}
+		}));
+		this._scrollView.hscroll.connect('button-press-event', Lang.bind(this, function(actor, event) {
+			//log("ABOUT TO FREEZE");
+		}));
 
-//placing it somewhere where the size can be monitored
-//this._contentBin = new myMaxWidthBin({ name: 'searchResultsBin',
-//                                             x_fill: true,
-//                                             y_fill: true,
-//                                             child: this._scrollView });
-
-//this._contentBin.add_actor(this._scrollView);
-//this._container.add_actor(this._scrollView, { x_fill: true, y_fill: true, expand: true });
-
-this._scrollView.hscroll.connect('scroll-start', Lang.bind(this, function() {
-//this.menu.passEvents = true;
-log('BBOX elem-B '+this._box.get_children().length);
-log ( 'BOX WIDTH   ' + this._box.width );
-log ( 'SCROLL VIEW WIDTH   ' + this._scrollView.width );
-}));
-this._scrollView.hscroll.connect('scroll-stop', Lang.bind(this, function() {
-//this.menu.passEvents = false;
-}));
-this._scrollView.set_policy(Gtk.PolicyType.AUTOMATIC, Gtk.PolicyType.NEVER);
-this._scrollView.set_mouse_scrolling(true);
-this._scrollView.hscroll.connect('button-release-event', Lang.bind(this, function(actor, event) {
-//let button = event.get_button();
-//if (button == 3) { //right click
-//do some activity...or not
-//}
-}));
-this._scrollView.hscroll.connect('button-press-event', Lang.bind(this, function(actor, event) {
-//log("ABOUT TO FREEZE");
-}));
-
-
-//this._myWidth = new myMaxWidthBin({ x_fill: true, y_fill: true, child: this._scrollView });
-//this._container.add_actor(this._myWidth, { expand: false });
-this._container.add_actor(this._scrollView);//, { expand: true });
+		this._container.add_actor(this._scrollView);
 //--------------------------------------------------------------------------------------------------
 		if (!this._settings.get_boolean('dock-horizontal')) {
 			this._showAppsIcon = new Dash.ShowAppsIcon();
