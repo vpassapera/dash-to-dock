@@ -514,11 +514,11 @@ const dockedDash = new Lang.Class({
             this._updateBarrier();
         }));
         
-        this._settings.connect('changed::extend-height', Lang.bind(this, this._updatePosition));
+        this._settings.connect('changed::extend-size', Lang.bind(this, this._updatePosition));
         
         this._settings.connect('changed::preferred-monitor', Lang.bind(this,this._resetPosition));
         
-        this._settings.connect('changed::height-fraction', Lang.bind(this,this._updatePosition));
+        this._settings.connect('changed::size-fraction', Lang.bind(this,this._updatePosition));
 
         this._settings.connect('changed::apply-custom-theme', Lang.bind(this, this._updateCustomTheme));
 
@@ -908,11 +908,11 @@ this.actor.y_align = St.Align.MIDDLE;
 
     // Shift panel position to extend the dash to the full monitor height
     _updateMainPanel: function() {
-        let extendHeight = this._settings.get_boolean('extend-height');
+        let extendSize = this._settings.get_boolean('extend-size');
         let dockFixed = this._settings.get_boolean('dock-fixed');
         let panelActor = Main.panel.actor;
 
-        if (this._isPrimaryMonitor() && extendHeight && dockFixed) {
+        if (this._isPrimaryMonitor() && extendSize && dockFixed) {
             panelActor.set_width(this._monitor.width - this._dockBox.width);
             if (dock_placement == 1) {
                 panelActor.set_margin_right(this._dockBox.width - 1);
