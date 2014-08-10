@@ -34,7 +34,7 @@ let DASH_ITEM_HOVER_TIMEOUT = Dash.DASH_ITEM_HOVER_TIMEOUT;
 let dock_horizontal = true;
 
 /* This class is a extension of the upstream DashItemContainer class (ui.dash.js).
- * Changes are done to make label shows on top side. SOURCE: simple-dock extension.
+ * Changes were made to make the label show on the top. SOURCE: simple-dock extension.
  */
 const showHoverLabelTop = function() {
     	
@@ -241,13 +241,13 @@ const myDash = new Lang.Class({
 		this._showDesktop.childOpacity = 255;
 		this._showDesktop.icon.setIconSize(this.iconSize);
 //		this._hookUpLabel(this._showDesktop);
-
+//-------------->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 		this._recyclingBin = new Widgets.myRecyclingBin(this.iconSize, this._settings);
 		this._recyclingBin.childScale = 1;
 		this._recyclingBin.childOpacity = 255;
-		this._recyclingBin.icon.setIconSize(this.iconSize);
-//		this._hookUpLabel(this._recyclingBin);
-
+		this._recyclingBin.icon.set_icon_size(this.iconSize);
+		this._hookUpLabelForApplets(this._recyclingBin);
+//-------------->>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 		this.make_dock();	
 //=========================================================================//
 //------ADDING WIDGETS HERE------------------------------------------------//
@@ -413,7 +413,7 @@ const myDash = new Lang.Class({
         Main.queueDeferredWork(this._workId);
     },
 
-    _hookUpLabel: function(item, appIcon) {
+    _hookUpLabel: function(item, appIcon) {	
         item.child.connect('notify::hover', Lang.bind(this, function() {
             this._syncLabel(item, appIcon);
         }));
@@ -429,6 +429,51 @@ const myDash = new Lang.Class({
             }));
         }
     },
+
+    _hookUpLabelForApplets: function(item) {	
+        item.actor.connect('notify::hover', Lang.bind(this, function() {
+            //this._syncLabel(item, null);
+            //let shouldShow = appIcon ? appIcon.shouldShowTooltip() : item.child.get_hover();//ORIGINAL in _sync
+		
+			let shouldShow = item.actor.get_hover();
+
+			if (shouldShow) {
+				if (this._showLabelTimeoutId == 0) {
+					let timeout = this._labelShowing ? 0 : DASH_ITEM_HOVER_TIMEOUT;
+					this._showLabelTimeoutId = Mainloop.timeout_add(timeout,
+						Lang.bind(this, function() {
+							this._labelShowing = true;
+							item.showLabel();
+							this._showLabelTimeoutId = 0;
+							return GLib.SOURCE_REMOVE;
+						}));
+					if (this._resetHoverTimeoutId > 0) {
+						Mainloop.source_remove(this._resetHoverTimeoutId);
+						this._resetHoverTimeoutId = 0;
+					}
+				}
+			} else {
+				if (this._showLabelTimeoutId > 0)
+					Mainloop.source_remove(this._showLabelTimeoutId);
+					this._showLabelTimeoutId = 0;
+					item.hideLabel();
+					if (this._labelShowing) {
+						this._resetHoverTimeoutId = Mainloop.timeout_add(DASH_ITEM_HOVER_TIMEOUT,
+							Lang.bind(this, function() {
+								this._labelShowing = false;
+								this._resetHoverTimeoutId = 0;
+								return GLib.SOURCE_REMOVE;
+							}));
+					}
+			}
+        }));
+
+        Main.overview.connect('hiding', Lang.bind(this, function() {
+            this._labelShowing = false;
+            item.hideLabel();
+        }));
+    },
+
 
     _createAppItem: function(app) {
 		let appIcon = new myAppIcon(this._settings, app, 
@@ -485,7 +530,14 @@ const myDash = new Lang.Class({
     },
 
     _syncLabel: function (item, appIcon) {
-        let shouldShow = appIcon ? appIcon.shouldShowTooltip() : item.child.get_hover();
+        let shouldShow = appIcon ? appIcon.shouldShowTooltip() : item.child.get_hover();//ORIGINAL
+		
+//		let shouldShow;
+//		if (appIcon != null) {
+//			shouldShow = appIcon ? appIcon.shouldShowTooltip() : item.child.get_hover();
+//		} else {
+//			shouldShow = item.actor.get_hover();
+//		}
 
         if (shouldShow) {
             if (this._showLabelTimeoutId == 0) {
