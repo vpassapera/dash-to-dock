@@ -396,9 +396,11 @@ Signals.addSignalMethods(myShowDesktop.prototype);
  */
 const myRecyclingBin = new Lang.Class({
     Name: 'myRecyclingBin',
+    Extends: St.Widget,
                     
     _init: function(iconSize, settings) {
-		
+		this.parent({ style_class: 'dash-item-container' });
+				
 		this._labelText = _("Recycling Bin");
 		this.label = new St.Label({ style_class: 'dash-label'});
 		this.label.hide();
@@ -406,18 +408,16 @@ const myRecyclingBin = new Lang.Class({
 		this.label_actor = this.label;
 		
 		this._settings = settings;
-		this.iconSize = iconSize;	
-        this.actor = new St.Button({ //style_class: 'app-well-app',
-									 style_class: 'show-apps',
+		this.iconSize = iconSize;
+			
+        this.actor = new St.Button({ style_class: 'show-apps',
                                      reactive: true,
                                      button_mask: St.ButtonMask.ONE | St.ButtonMask.TWO,
                                      can_focus: true,
                                      x_fill: true,
                                      y_fill: true });
         this.actor._delegate = this;		
-		
 		this.actor.connect('clicked', Lang.bind(this, this.popupMenu));
-								
 		this.icon = new St.Icon({ icon_name: 'user-trash',
                                         icon_size: this.iconSize,
                                         style_class: 'show-apps-icon',
@@ -452,13 +452,6 @@ const myRecyclingBin = new Lang.Class({
             
         this.actor.destroy();
         this.emit('destroy');
-    },
-
-    _createIcon: function(size) {
-        return new St.Icon({ icon_name: 'user-trash',
-                                        icon_size: size,
-                                        style_class: 'show-apps-icon',
-                                        track_hover: true });
     },
     
     _removeMenuTimeout: function() {
@@ -561,7 +554,8 @@ const myRecyclingBin = new Lang.Class({
 		this.label.show();
 
 //		let [stageX, stageY] = this.actor.get_transformed_position();//works
-		let [stageX, stageY] = this.icon.get_transformed_position();//works
+//		let [stageX, stageY] = this.icon.get_transformed_position();//works
+		let [stageX, stageY] = this.actor.get_transformed_position();
 
 		let labelHeight = this.label.get_height();
 		let labelWidth = this.label.get_width();
@@ -570,16 +564,11 @@ const myRecyclingBin = new Lang.Class({
 		let yOffset = node.get_length('-x-offset');
 
 //		let y = stageY - labelHeight - yOffset;
-		let y = stageY - labelHeight - yOffset - 8;
-log('y '+y+' '+stageY+' '+labelHeight+' '+yOffset);
-
+		let y = stageY - labelHeight - yOffset;
+log('yNEW '+Math.round(stageY)+' '+labelHeight+' '+yOffset);
 		//let itemWidth = this.allocation.x2 - this.allocation.x1;
-		let	itemWidth = this.label.width;
-//		let xOffset = Math.floor((itemWidth - labelWidth) / 2);
-
-log('x-len '+labelWidth);
-//let xOffset = 0;//Math.floor(labelWidth / 2);
-let xOffset = -(labelWidth/2)+25;
+		let itemWidth = this.icon.allocation.x2 - this.icon.allocation.x1;
+		let xOffset = Math.floor((itemWidth - labelWidth) / 2);
 
 		let x = stageX + xOffset;
 
