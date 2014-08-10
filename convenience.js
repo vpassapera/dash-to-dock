@@ -230,11 +230,9 @@ const LinksDB = new Lang.Class({
 			}
 		}
 
-		print( JSON.stringify(this.links_data) );
 		var cache = this.links_data.folders[current_position];
 		this.links_data.folders[current_position] = this.links_data.folders[trayPos];
 		this.links_data.folders[trayPos] = cache;
-		print( JSON.stringify(this.links_data) );
 
 		this.save_db();
 	},	
@@ -250,16 +248,46 @@ const LinksDB = new Lang.Class({
 		}
 	},
 	
-	move_link_in_tray: function(id, lid, new_lid) {
+	move_link_in_tray: function(trayId, new_lid, old_lid) {	
+		let trayIndex;
+		let new_lid_position;
+		let old_lid_position;
 		for(let i = 0; i < this.links_data.folders.length ;i++) {
-			if (id == this.links_data.folders[i].collection_id) {
+log('ticker '+trayId+' '+this.links_data.folders[i].collection_id);			
+			if (trayId == this.links_data.folders[i].collection_id) {
+				trayIndex = i;
 				for(let k = 0; k < this.links_data.folders[i].links_array.length ;k++) {
-					//this.links_data.folders[i].links_array[k];
-					//REARRANGEMENT ARRAY SPLICER
-					//this.save_db();
+					for(let j = 0; j < this.links_data.folders[i].links_array.length ;j++) {
+						if (new_lid == this.links_data.folders[i].links_array[j].id) {
+							new_lid_position = j;
+						}
+						
+						if (old_lid == this.links_data.folders[i].links_array[j].id) {
+							old_lid_position = j;
+						}
+					}
 				}
 			}
 		}
+/*		
+		log( JSON.stringify( this.links_data.folders[trayIndex] ) );
+		let cache_new = this.links_data.folders[trayIndex].links_array[new_lid_position];
+		let cache_old = this.links_data.folders[trayIndex].links_array[old_lid_position];
+		this.links_data.folders[new_lid_position] = cache_old;
+		this.links_data.folders[old_lid_position] = cache_new;
+log('>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>')		
+		log( JSON.stringify( this.links_data.folders[trayIndex] ) );
+*/
+
+
+log( JSON.stringify( this.links_data.folders[trayIndex] ) );
+		var cache = this.links_data.folders[trayIndex].links_array[old_lid_position];
+		this.links_data.folders[trayIndex].links_array[old_lid_position] = this.links_data.folders[new_lid_position];
+		this.links_data.folders[trayIndex].links_array[new_lid_position] = cache;
+log( JSON.stringify( this.links_data.folders[trayIndex] ) );
+
+		
+//		this.save_db();
 	},
 	
 	remove_link_from_tray: function(id, lid) {

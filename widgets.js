@@ -670,17 +670,16 @@ const myLinkTrayMenu = new Lang.Class({
 	populate: function() {
 		for(let i = 0; i < this.linksStorage.links_data.folders.length ;i++) {
 			if (this.trayId == this.linksStorage.links_data.folders[i].collection_id) {
-				this.make_menu(this.linksStorage.links_data.folders[i].links_array,
-					this.linksStorage.links_data.folders[i].links_array.length);
+				this.make_menu(this.linksStorage.links_data.folders[i].links_array);
 			}
 		}
 	},
-	
-    make_menu: function(files, file_length) {
+
+    make_menu: function(files) {
 		this.removeAll();
 
 		let icols;
-		if (file_length > this.settings.get_int('applet-links-tray-to-grid'))
+		if (files.length > this.settings.get_int('applet-links-tray-to-grid'))
 			icols = 3
 		else
 			icols = 1;
@@ -697,7 +696,7 @@ const myLinkTrayMenu = new Lang.Class({
 		let i = 0;
 		for(let irow = 0 ; irow < irows ;irow++) {
 			for(let icol = 0 ; icol < icols ;icol++) {
-				let item = new myFileIcon(files[i].link, this.iconSize, this);									
+				let item = new myFileIcon(files[i].link, this.iconSize, this, files[i].id);
 				this._table.add(item.actor, { row: irow, col: icol, x_fill: false, y_fill: false, 
 					x_align: St.Align.MIDDLE, y_align: St.Align.START});
 
@@ -761,10 +760,11 @@ Signals.addSignalMethods(myLinkTrayMenu.prototype);
 const myFileIcon = new Lang.Class({
     Name: 'myFileIcon',
 
-    _init: function (filepath, size, menu) {
+    _init: function (filepath, size, menu, id) {
 		this.file = Gio.file_new_for_path(filepath);
 		this.iconSize = size;
 		this.menu = menu;
+		this.id = id;
 
         this.actor = new St.Button({ style_class: 'app-well-app',
                                      reactive: true,
@@ -1011,20 +1011,8 @@ log('dropped0 '+linkPos+'  numCH '+links.length);
     
     acceptDrop : function(source, actor, x, y, time) {
 
-				log('ACCEPT '+source.file.get_path() );
-				let links = this.menu._table.get_children();
-				for(let i = 0 ; i < links.length ;i++) {
-				if ( links[i] == actor)
-					log('yes');
+log('ACCEPT '+source.file.get_path() +'  this is '+this.file.get_path());
 
-				log('links '+i+'  '+links[i]+'  '+actor);
-				}
-
-
-
-				//let pickedActor = global.stage.get_actor_at_pos(Clutter.PickMode.REACTIVE, x, y);
-				//log('dropped1 '+this._table.get_children().length+'  '+pickedActor+' '+pickedActor.get_parent() );
-		
         let link;
 		if (source instanceof myFileIcon) {
 			link = source;		
@@ -1045,11 +1033,18 @@ log('dropped0 '+linkPos+'  numCH '+links.length);
 
 //actor.unparent();
 //this.menu._table.replace_child(this._dragPlaceholder, link.actor);
+//this.menu._table.replace_child(link.actor, actor);//old,new
 
-log('dropped2 '+this.menu._table.get_children().length+'  linkpos '+linkPos);	
+log('dropped2 '+this.menu._table.get_children().length+'  linkpos '+linkPos);
+
+
+log('dropped3 droppped '+ source.id +'  switched '+this.id)//A SIMPLE SPLICE ON THE PLACE...
+
+this.menu.linksStorage.move_link_in_tray(this.menu.trayId, source.id, this.id);
+this.menu.populate();
+
 
 //		return false;
-
 		return true;
     }       
     
