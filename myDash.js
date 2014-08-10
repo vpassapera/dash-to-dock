@@ -224,23 +224,40 @@ const myDash = new Lang.Class({
 
         this.showAppsButton = this._showAppsIcon.toggleButton;
 
-//-----------------ADDING WIDGETS HERE-----------------//
+//------ADDING WIDGETS HERE------------------------------------------------//
 		this._container.add_actor(this._showAppsIcon);
 		this._container.add_actor(this._appsContainer);
+//=========================================================================//
+//------THIS IS SUPPOSED TO BE A STACK-------------------------------------//
+/*
+		this._activeFolder = new Widgets.myActiveFolderIcon();
+		this._activeFolder.childScale = 1;
+		this._activeFolder.childOpacity = 255;
+		this._activeFolder.icon.setIconSize(this.iconSize);
+		this._hookUpLabel(this._activeFolder);
 
+		this._container.add_actor(this._activeFolder);	
+*/		
+//------------------------------------------------------------------------		
+/*
+		this._activeFolder = new Widgets.DashItemContainerNEW();
+		this._activeFolder.childScale = 1;
+		this._activeFolder.childOpacity = 255;
+		this._activeFolder.btnFolderIcon.setIconSize(this.iconSize);
+		this._hookUpLabel(this._activeFolder);
 
-//=====================================================//
-//THIS IS SUPPOSED TO BE A STACK
-this._showAppsIcon2 = new Widgets.ShowAppsIconNEW();
-this._showAppsIcon2.childScale = 1;
-this._showAppsIcon2.childOpacity = 255;
-this._showAppsIcon2.icon.setIconSize(this.iconSize);
-this._hookUpLabel(this._showAppsIcon2);
+		this._container.add_actor(this._activeFolder);
+*/
+//------------------------------------------------------------------------
+		this._activeFolder = new Widgets.myActiveFolderIcon(this.iconSize);
+		this._activeFolder.childScale = 1;
+		this._activeFolder.childOpacity = 255;
+		this._activeFolder.btnFolderIcon.set_icon_size(this.iconSize);
+//		this._hookUpLabel(this._activeFolder);
 
-this._container.add_actor(this._showAppsIcon2);
-//=====================================================//
-   
-//-----------------ADDING WIDGETS HERE-----------------//
+		this._container.add_actor(this._activeFolder);
+//=========================================================================//
+//------ADDING WIDGETS HERE------------------------------------------------//
 
         this.actor = new St.Bin({ child: this._container, y_align: St.Align.START });
          
@@ -995,10 +1012,8 @@ const myAppIcon = new Lang.Class({
 
     // settings are required inside.
     _init: function(settings, app, iconParams, onActivateOverride) {
-
         this._settings = settings;
-        this._maxN =4;
-
+        this._maxN = 4;
         this.parent(app, iconParams, onActivateOverride);
 
         // Monitor windows-changes instead of app state.
@@ -1033,7 +1048,7 @@ const myAppIcon = new Lang.Class({
 			if (!dock_horizontal) {
 				this._menu = new AppDisplay.AppIconMenu(this);
 			} else {				
-				this._menu = new myAppIconMenu(this);				
+				this._menu = new myAppIconMenu(this);
 			}
 
 

@@ -286,7 +286,7 @@ const dockedDash = new Lang.Class({
         // Create a new dash object
         this.dash = new MyDash.myDash(this._settings);
 
-        // connect app icon into the view selector
+        // Connect app icon into the view selector
         this.dash.showAppsButton.connect('notify::checked', Lang.bind(this, this._onShowAppsButtonToggled));
 
         // Create the main actor and the containers for sliding
@@ -1133,13 +1133,6 @@ const dockedDash = new Lang.Class({
 							}
 							break;
 					}
-					/*
-					let [dx, dy] = event.get_scroll_delta();
-					if (dy < 0) {
-						this.dash._onScrollBtnLeftOrTop();			
-					} else if(dy > 0) {
-						this.dash._onScrollBtnRightOrBottom();
-					}*/
 					
 					return true;
 				} else {					
