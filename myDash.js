@@ -541,8 +541,7 @@ const myDash = new Lang.Class({
         }
     },
 
-    _adjustIconSize: function() {
-/*		
+    _adjustIconSize: function() {	
         // For the icon size, we only consider children which are "proper"
         // icons (i.e. ignoring drag placeholders) and which are not
         // animating out (which means they will be destroyed at the end of
@@ -555,15 +554,18 @@ const myDash = new Lang.Class({
         });
 
         iconChildren.push(this._showAppsIcon);
-log('HOW MANY ICONS ARE THERE?  '+iconChildren.length);
-		if (!dock_horizontal) {
+
+		/*if (!dock_horizontal) {
 			if (this._maxHeight == -1)
 				return;
 		} else {
 			if (this._maxWidth == -1)
 				return;
-		}
-log('_adjustIconSize OTHER THAN -1  _maxWidth '+this._maxWidth);		
+		}*/
+
+        if(!this._container.get_stage())
+            return;
+	
         let themeNode = this._container.get_theme_node();
         let maxAllocation;
 		if (!dock_horizontal) {
@@ -578,8 +580,7 @@ log('_adjustIconSize OTHER THAN -1  _maxWidth '+this._maxWidth);
 		if (!dock_horizontal) {
 			availHeight = maxContent.y2 - maxContent.y1;
 		} else {
-			availWidth = maxContent.x2 - maxContent.x1;
-log('_adjustIconSize  availWidth  '+availWidth);			
+			availWidth = maxContent.x2 - maxContent.x1;		
 		}
         let spacing = themeNode.get_length('spacing');
 
@@ -588,8 +589,7 @@ log('_adjustIconSize  availWidth  '+availWidth);
 
         let minWidth, natWidth, minHeight, natHeight;
 
-        // Enforce the current icon size during the size request
-log('CURRENT SIZE '+this.iconSize);        
+        // Enforce the current icon size during the size request      
         firstIcon.setIconSize(this.iconSize);
         [minWidth, natWidth] = firstButton.get_preferred_width(-1);
 		[minHeight, natHeight] = firstButton.get_preferred_height(-1);
@@ -599,7 +599,6 @@ log('CURRENT SIZE '+this.iconSize);
             return s * scaleFactor;
         });
 		let availSize;
-log('CURRENT SIZES '+iconSizes);  		
 		if (!dock_horizontal) {
 			// Subtract icon padding and box spacing from the available height
 			availHeight -= iconChildren.length * (natHeight - this.iconSize * scaleFactor) +
@@ -615,17 +614,7 @@ log('CURRENT SIZES '+iconSizes);
 		}
 
         let iconSizes = this._avaiableIconSize;
-log('AVAILABLE SIZES '+iconSizes);
-//        let newIconSize = this._avaiableIconSize[0];
-//let newIconSize = this._avaiableIconSize[this._avaiableIconSize.length];
-let newIconSize = this._settings.get_int('dash-max-icon-size');
-
-log('newIconSize  '+newIconSize+'  availSize '+availSize);
-//        for (let i = 0; i < iconSizes.length; i++) {
-//            if (iconSizes[i] <= availSize) {
-//log('newIconSize forloop  '+newIconSize);				
-//                newIconSize = Dash.baseIconSizes[i];}//TODO: THIS TURNS ON THE SCROLL-WINDOW BUTTONS
-//        }
+		let newIconSize = this._settings.get_int('dash-max-icon-size');
 
         if (newIconSize == this.iconSize)
             return;
@@ -661,10 +650,8 @@ log('newIconSize  '+newIconSize+'  availSize '+availSize);
                                height: targetHeight,
                                time: DASH_ANIMATION_TIME,
                                transition: 'easeOutQuad',
-                             });
-log('RESIZED ICON');                             
-        }
-*/        
+                             });                          
+        }     
     },
 
     _redisplay: function () {
