@@ -244,9 +244,9 @@ const dockedDash = new Lang.Class({
 			this.actor = new St.Bin({ name: 'dashtodockContainer',reactive: false,
             y_align: St.Align.MIDDLE})
 		} else {
-			this.actor = new St.Bin({ name: 'dashtodockContainer',reactive: false});
+			this.actor = new St.Bin({ name: 'dashtodockContainer',reactive: false,
+			x_align: St.Align.MIDDLE})
 		}
-
 
         this.actor._delegate = this;
 
@@ -324,7 +324,7 @@ const dockedDash = new Lang.Class({
         // the allocation change of the parent container (slide in and slideout) doesn't trigger
         // anymore an update of the input regions. Force the update manually.
         this.actor.connect('notify::allocation',
-                                              Lang.bind(Main.layoutManager, Main.layoutManager._queueUpdateRegions));
+			Lang.bind(Main.layoutManager, Main.layoutManager._queueUpdateRegions));
 
         this.dash._container.connect('allocation-changed', Lang.bind(this, this._updateStaticBox));
 
@@ -484,13 +484,18 @@ const dockedDash = new Lang.Class({
 
     _hoverChanged: function() {
 
+//making a crash
+//global = null;// a defacto breakpoint
+
+//log('_hoverChanged '+this._canUsePressure+'   '+this._settings.get_boolean('require-pressure-to-show') +'   '+this._barrier+'  ');
+
         // Ignore hover if pressure barrier being used but pressureSensed not triggered
         if (this._canUsePressure && this._settings.get_boolean('require-pressure-to-show') && this._barrier) {
             if (this._pressureSensed == false) {
                 return;
             }
         }
-
+//log('_hoverChanged');
         // Skip if dock is not in autohide mode for instance because it is shown
         // by intellihide. Delay the hover changes check while switching
         // workspace: the workspaceSwitcherPopup steals the hover status and it
@@ -549,7 +554,8 @@ const dockedDash = new Lang.Class({
                     //if a show already started, let it finish; queue hide without removing the show.
                     // to obtain this I increase the delay to avoid the overlap and interference 
                     // between the animations
-                    delay = this._settings.get_double('hide-delay') + 1.2*this._settings.get_double('animation-time') + this._settings.get_double('show-delay');
+                    delay = this._settings.get_double('hide-delay') + 1.2*this._settings.get_double('animation-time') 
+						+ this._settings.get_double('show-delay');
 
                 } else {
                     this._removeAnimations();
@@ -632,8 +638,9 @@ const dockedDash = new Lang.Class({
     // handler for mouse pressure sensed
     _onPressureSensed: function() {
         this._pressureSensed = true;
+      
         // NOTE: We could have called this._hoverChanged() instead but hover processing not required.
-        if(this._settings.get_boolean('autohide') && this._autohideStatus){
+        if(this._settings.get_boolean('autohide') && this._autohideStatus){			
             this._show();
         }
     },
@@ -659,28 +666,44 @@ const dockedDash = new Lang.Class({
         // Manually reset pressure barrier
         // This is necessary because we remove the pressure barrier when it is triggered to show the dock
         if (this._pressureBarrier) {
+		
             this._pressureBarrier._reset();
             this._pressureBarrier._isTriggered = false;
         }
-
+        
         // Create new barrier
         // Note: dash in fixed position doesn't use pressure barrier
-        if (this._canUsePressure && this._settings.get_boolean('autohide') && this._settings.get_boolean('require-pressure-to-show') && !this._settings.get_boolean('dock-fixed')) {
-            let x, direction;
-            if (this._rtl) {
-                x = this._monitor.x + this._monitor.width;
-                direction = Meta.BarrierDirection.NEGATIVE_X;
-            } else {
-                x = this._monitor.x;
-                direction = Meta.BarrierDirection.POSITIVE_X;
-            }
-            this._barrier = new Meta.Barrier({display: global.display,
-                                x1: x, x2: x,
-                                y1: (this.staticBox.y1), y2: (this.staticBox.y2),
-                                directions: direction});
-            if (this._pressureBarrier) {
-                this._pressureBarrier.addBarrier(this._barrier);
-            }
+        if (this._canUsePressure && this._settings.get_boolean('autohide') 
+			&& this._settings.get_boolean('require-pressure-to-show') && !this._settings.get_boolean('dock-fixed')) {
+					
+            let x,y, direction;
+			if (!this._settings.get_boolean('dock-horizontal')) {
+				if (this._rtl) {
+					x = this._monitor.x + this._monitor.width;
+					direction = Meta.BarrierDirection.NEGATIVE_X;
+				} else {				
+					x = this._monitor.x;
+					direction = Meta.BarrierDirection.POSITIVE_X;
+				}
+				this._barrier = new Meta.Barrier({display: global.display,
+									x1: x, x2: x,
+									y1: (this.staticBox.y1), y2: (this.staticBox.y2),
+									directions: direction});
+				if (this._pressureBarrier) {
+					this._pressureBarrier.addBarrier(this._barrier);
+				}
+            } else {				
+				y = this._monitor.y;
+				direction = Meta.BarrierDirection.POSITIVE_Y;
+				this._barrier = new Meta.Barrier({display: global.display,
+									x1: (this.staticBox.x1), x2: (this.staticBox.x2),
+									y1: y, y2: y,
+									directions: direction});
+									
+				if (this._pressureBarrier) {
+					this._pressureBarrier.addBarrier(this._barrier);
+				}	
+			}
         }
 
         // Reset pressureSensed flag
