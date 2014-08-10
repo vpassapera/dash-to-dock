@@ -753,186 +753,7 @@ const myLinkTrayMenu = new Lang.Class({
             this._emptyDropTarget.animateOutAndDestroy();
             this._emptyDropTarget = null;
         }
-    },
-
-    handleDragOver : function(source, actor, x, y, time) {
-        let link;
-		if (source instanceof myFileIcon) {
-			link = source;
-		} else {
-			link = null;
-		}
-
-        // Don't allow favoriting of transient apps
-        if (link == null)
-            return DND.DragMotionResult.NO_DROP;
-
-        let links = this._table.get_children();
-        let numLinks = links.length;
-
-        let linkPos = links.indexOf(source.actor);
-
-
-/**/
-this._dragPlaceholder = new Dash.DragPlaceholderItem();
-this._dragPlaceholder.child.set_width (this.iconSize);
-this._dragPlaceholder.child.set_height (this.iconSize);
-//this._table.insert_child_at_index(this._dragPlaceholder, 0);//THIS COULD WORK if a redisplay ques up
-this._table.add(this._dragPlaceholder, { row: 5, col: 0, x_fill: false, y_fill: false, 
-					x_align: St.Align.MIDDLE, y_align: St.Align.START});
-this._dragPlaceholder.show(true);
-
-
-
-log('HOVERING '+source.file.get_path() );
-
-
-
-/*
-        let children = this._table.get_children();
-        let numChildren = children.length;
-
-		let pos, boxHeight, boxWidth
-		boxHeight = 0;
-		for (let i = 0; i < numChildren; i++) {
-			boxHeight += children[i].height;
-		}
-
-		// Keep the placeholder out of the index calculation; assuming that
-		// the remove target has the same size as "normal" items, we don't
-		// need to do the same adjustment there.
-		if (this._dragPlaceholder) {
-			boxHeight -= this._dragPlaceholder.height;
-			numChildren--;
-		}
-
-		if (!this._emptyDropTarget) {
-			pos = Math.floor(y * numChildren / boxHeight);
-			if (pos >  numChildren)
-				pos = numChildren;
-		} else
-			pos = 0; // always insert at the top when dash is empty
-
-log('PINGER '+(pos != this._dragPlaceholderPos && pos <= numLinks && this._animatingPlaceholdersCount == 0));
-
-        if (pos != this._dragPlaceholderPos && pos <= numLinks && this._animatingPlaceholdersCount == 0) {
-            this._dragPlaceholderPos = pos;
-
-            // Don't allow positioning before or after self
-            if (linkPos != -1 && (pos == linkPos || pos == linkPos + 1)) {
-                this._clearDragPlaceholder();
-                return DND.DragMotionResult.CONTINUE;
-            }
-
-            // If the placeholder already exists, we just move
-            // it, but if we are adding it, expand its size in
-            // an animation
-            let fadeIn;
-            if (this._dragPlaceholder) {
-                this._dragPlaceholder.destroy();
-                fadeIn = false;
-            } else {
-                fadeIn = true;
-            }
-
-            this._dragPlaceholder = new Dash.DragPlaceholderItem();
-			this._dragPlaceholder.child.set_width (this.iconSize);
-			this._dragPlaceholder.child.set_height (this.iconSize / 2);
-//            this._table.insert_child_at_index(this._dragPlaceholder,
-//                                            this._dragPlaceholderPos);
-
-
-this._table.add(this._dragPlaceholder, { row: 0, col: 0, x_fill: false, y_fill: false, 
-					x_align: St.Align.MIDDLE, y_align: St.Align.START});
-
-
-            this._dragPlaceholder.show(fadeIn);
-        }
-
-        // Remove the drag placeholder if we are not in the
-        // "link zone"        
-        if (pos > numLinks)
-            this._clearDragPlaceholder();
-
-        if (!this._dragPlaceholder)
-            return DND.DragMotionResult.NO_DROP;
-*/
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*
-let cc;
-for(let i = 0 ; i < links.length ;i++) {
-if ( links[i] == actor)
-	log('yes');
-
-log('links '+i+'  '+links[i]+'  '+actor);
-}
-
-log('dropped0 '+linkPos+'  numCH '+links.length);
-*/
-
-
-        if (linkPos != -1)
-            return DND.DragMotionResult.MOVE_DROP;
-
-        return DND.DragMotionResult.COPY_DROP;
-    },
-
-    acceptDrop : function(source, actor, x, y, time) {
-
-				log('ACCEPT '+source.file.get_path() );
-				let links = this._table.get_children();
-				for(let i = 0 ; i < links.length ;i++) {
-				if ( links[i] == actor)
-					log('yes');
-
-				log('links '+i+'  '+links[i]+'  '+actor);
-				}
-
-
-
-				//let pickedActor = global.stage.get_actor_at_pos(Clutter.PickMode.REACTIVE, x, y);
-				//log('dropped1 '+this._table.get_children().length+'  '+pickedActor+' '+pickedActor.get_parent() );
-		
-        let link;
-		if (source instanceof myFileIcon) {
-			link = source;		
-		} else {
-			link = null;
-			return false;
-		}
-
-		let links = this._table.get_children();
-
-        let linkPos = links.indexOf(link);
-
-//		link.actor.unparent();
-//		this._table.replace_child(this._dragPlaceholder, link.actor);//replace both of them
-//		this.linksStorage.move_link_in_tray(link.id, linkPos);
-//		this._clearDragPlaceholder();
-
-
-actor.unparent();
-this._table.replace_child(this._dragPlaceholder, link.actor);
-
-log('dropped2 '+this._table.get_children().length+'  linkpos '+linkPos);	
-
-//		return false;
-
-		return true;
-    }         
+    }
 });
 
 Signals.addSignalMethods(myLinkTrayMenu.prototype);
@@ -1060,7 +881,178 @@ this.icon.actor.get_child().get_last_child().set_style('max-width: 15px; text-al
 								icon_size: size,
 								style_class: 'show-apps-icon',
 								track_hover: true });
-    }
+    },
+    
+    
+    
+    
+    handleDragOver : function(source, actor, x, y, time) {
+        let link;
+		if (source instanceof myFileIcon) {
+			link = source;
+		} else {
+			link = null;
+		}
+
+        // Don't allow favoriting of transient apps
+        if (link == null)
+            return DND.DragMotionResult.NO_DROP;
+
+        let links = this.menu._table.get_children();
+        let numLinks = links.length;
+
+        let linkPos = links.indexOf(source.actor);
+
+
+/*
+this._dragPlaceholder = new Dash.DragPlaceholderItem();
+this._dragPlaceholder.child.set_width (this.iconSize);
+this._dragPlaceholder.child.set_height (this.iconSize);
+//this._table.insert_child_at_index(this._dragPlaceholder, 0);//THIS COULD WORK if a redisplay ques up
+this._table.add(this._dragPlaceholder, { row: 5, col: 0, x_fill: false, y_fill: false, 
+					x_align: St.Align.MIDDLE, y_align: St.Align.START});
+this._dragPlaceholder.show(true);
+*/
+
+
+log('HOVERING '+source.file.get_path() );
+
+
+
+/*
+        let children = this._table.get_children();
+        let numChildren = children.length;
+
+		let pos, boxHeight, boxWidth
+		boxHeight = 0;
+		for (let i = 0; i < numChildren; i++) {
+			boxHeight += children[i].height;
+		}
+
+		// Keep the placeholder out of the index calculation; assuming that
+		// the remove target has the same size as "normal" items, we don't
+		// need to do the same adjustment there.
+		if (this._dragPlaceholder) {
+			boxHeight -= this._dragPlaceholder.height;
+			numChildren--;
+		}
+
+		if (!this._emptyDropTarget) {
+			pos = Math.floor(y * numChildren / boxHeight);
+			if (pos >  numChildren)
+				pos = numChildren;
+		} else
+			pos = 0; // always insert at the top when dash is empty
+
+log('PINGER '+(pos != this._dragPlaceholderPos && pos <= numLinks && this._animatingPlaceholdersCount == 0));
+
+        if (pos != this._dragPlaceholderPos && pos <= numLinks && this._animatingPlaceholdersCount == 0) {
+            this._dragPlaceholderPos = pos;
+
+            // Don't allow positioning before or after self
+            if (linkPos != -1 && (pos == linkPos || pos == linkPos + 1)) {
+                this._clearDragPlaceholder();
+                return DND.DragMotionResult.CONTINUE;
+            }
+
+            // If the placeholder already exists, we just move
+            // it, but if we are adding it, expand its size in
+            // an animation
+            let fadeIn;
+            if (this._dragPlaceholder) {
+                this._dragPlaceholder.destroy();
+                fadeIn = false;
+            } else {
+                fadeIn = true;
+            }
+
+            this._dragPlaceholder = new Dash.DragPlaceholderItem();
+			this._dragPlaceholder.child.set_width (this.iconSize);
+			this._dragPlaceholder.child.set_height (this.iconSize / 2);
+//            this._table.insert_child_at_index(this._dragPlaceholder,
+//                                            this._dragPlaceholderPos);
+
+
+this._table.add(this._dragPlaceholder, { row: 0, col: 0, x_fill: false, y_fill: false, 
+					x_align: St.Align.MIDDLE, y_align: St.Align.START});
+
+
+            this._dragPlaceholder.show(fadeIn);
+        }
+
+        // Remove the drag placeholder if we are not in the
+        // "link zone"        
+        if (pos > numLinks)
+            this._clearDragPlaceholder();
+
+        if (!this._dragPlaceholder)
+            return DND.DragMotionResult.NO_DROP;
+*/    
+
+
+/*
+let cc;
+for(let i = 0 ; i < links.length ;i++) {
+if ( links[i] == actor)
+	log('yes');
+
+log('links '+i+'  '+links[i]+'  '+actor);
+}
+
+log('dropped0 '+linkPos+'  numCH '+links.length);
+*/
+
+
+        if (linkPos != -1)
+            return DND.DragMotionResult.MOVE_DROP;
+
+        return DND.DragMotionResult.COPY_DROP;
+    },    
+    
+    acceptDrop : function(source, actor, x, y, time) {
+
+				log('ACCEPT '+source.file.get_path() );
+				let links = this.menu._table.get_children();
+				for(let i = 0 ; i < links.length ;i++) {
+				if ( links[i] == actor)
+					log('yes');
+
+				log('links '+i+'  '+links[i]+'  '+actor);
+				}
+
+
+
+				//let pickedActor = global.stage.get_actor_at_pos(Clutter.PickMode.REACTIVE, x, y);
+				//log('dropped1 '+this._table.get_children().length+'  '+pickedActor+' '+pickedActor.get_parent() );
+		
+        let link;
+		if (source instanceof myFileIcon) {
+			link = source;		
+		} else {
+			link = null;
+			return false;
+		}
+
+		let links = this.menu._table.get_children();
+
+        let linkPos = links.indexOf(link);
+
+//		link.actor.unparent();
+//		this._table.replace_child(this._dragPlaceholder, link.actor);//replace both of them
+//		this.linksStorage.move_link_in_tray(link.id, linkPos);
+//		this._clearDragPlaceholder();
+
+
+//actor.unparent();
+//this.menu._table.replace_child(this._dragPlaceholder, link.actor);
+
+log('dropped2 '+this.menu._table.get_children().length+'  linkpos '+linkPos);	
+
+//		return false;
+
+		return true;
+    }       
+    
 });
 
 //this.box.set_style('background-color: yellow;');//Debugging
