@@ -11,7 +11,7 @@ const Mainloop = imports.mainloop;
 const Params = imports.misc.params;
 
 const Main = imports.ui.main;
-const Dash = imports.ui.dash;
+//const Dash = imports.ui.dash;
 const Overview = imports.ui.overview;
 const Tweener = imports.ui.tweener;
 const ViewSelector = imports.ui.viewSelector;

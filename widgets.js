@@ -27,18 +27,18 @@ const Workspace = imports.ui.workspace;
 const Me = imports.misc.extensionUtils.getCurrentExtension();
 const Convenience = Me.imports.convenience;
 const ExtensionUtils = imports.misc.extensionUtils;
+const MyDash = Me.imports.myDash;
 
-let DASH_ANIMATION_TIME = Dash.DASH_ANIMATION_TIME;
-let DASH_ITEM_LABEL_SHOW_TIME = Dash.DASH_ITEM_LABEL_SHOW_TIME;
-let DASH_ITEM_LABEL_HIDE_TIME = Dash.DASH_ITEM_LABEL_HIDE_TIME;
-let DASH_ITEM_HOVER_TIMEOUT = Dash.DASH_ITEM_HOVER_TIMEOUT;
+let DASH_ANIMATION_TIME = MyDash.DASH_ANIMATION_TIME;
+let DASH_ITEM_LABEL_SHOW_TIME = MyDash.DASH_ITEM_LABEL_SHOW_TIME;
+let DASH_ITEM_LABEL_HIDE_TIME = MyDash.DASH_ITEM_LABEL_HIDE_TIME;
+let DASH_ITEM_HOVER_TIMEOUT = MyDash.DASH_ITEM_HOVER_TIMEOUT;
 
 let dock_horizontal = true;
 let tracker = Shell.WindowTracker.get_default();
 
 /**
- * Extends AppIcon
- *
+ * Extends AppIcon:
  * - Pass settings to the constructor and bind settings changes
  * - Apply a css class based on the number of windows of each application (#N);
  *   a class of the form "running#N" is applied to the AppWellIcon actor.
@@ -434,8 +434,228 @@ const myAppIconMenu = new Lang.Class({
 
 Signals.addSignalMethods(myAppIconMenu.prototype);
 
+const myShowAppsIcon = new Lang.Class({
+	Name: 'myShowAppsIcon',
+                    
+    _init: function(iconSize, settings) {
+		this._labelText = _("Show Applications");
+		this.label = new St.Label({ style_class: 'dash-label'});
+		this.label.hide();
+		Main.layoutManager.addChrome(this.label);
+		this.label_actor = this.label;		
+		
+		this._settings = settings;
+		this.iconSize = iconSize;	
+        this.actor = new St.Button({ style_class: 'app-well-app',
+                                     reactive: true,
+                                     button_mask: St.ButtonMask.ONE | St.ButtonMask.TWO,
+                                     track_hover: true,
+                                     can_focus: true,
+                                     x_fill: true,
+                                     y_fill: true,
+                                     toggle_mode: true });
+        this.actor._delegate = this;
 
-/* This class is a extension of the upstream ShowAppsIcon class (ui.dash.js). */
+        this.icon = new IconGrid.BaseIcon(this._labelText, { setSizeManually: true, 
+			showLabel: false, createIcon: Lang.bind(this, this._createIcon) });
+		this.actor.set_child(this.icon.actor);
+	},
+
+    destroy: function() {
+        this.actor._delegate = null;
+
+        if (this.menu)
+            this.menu.destroy();
+            
+        this.actor.destroy();
+        this.emit('destroy');
+    },
+
+    _createIcon: function(size) {
+        return new St.Icon({ icon_name: 'view-grid-symbolic',
+								icon_size: size,
+								style_class: 'show-apps-icon',
+								track_hover: true });
+    },
+
+    _canRemoveApp: function(app) {
+        if (app == null)
+            return false;
+
+        let id = app.get_id();
+        let isFavorite = AppFavorites.getAppFavorites().isFavorite(id);
+        return isFavorite;
+    },
+
+    setDragApp: function(app) {
+        let canRemove = this._canRemoveApp(app);
+
+        this.actor.set_hover(canRemove);
+        if (this._iconActor)
+            this._iconActor.set_hover(canRemove);
+
+        if (canRemove) {
+			this._labelText = _("Remove from Favorites");
+			this.accessible_name = _("Remove from Favorites");
+        } else {
+            this._labelText = _("Show Applications");
+			this.accessible_name = _("Show Applications");
+		}
+    },
+
+    handleDragOver: function(source, actor, x, y, time) {
+        if (!this._canRemoveApp(MyDash.getAppFromSource(source)))
+            return DND.DragMotionResult.NO_DROP;
+
+        return DND.DragMotionResult.MOVE_DROP;
+    },
+
+    acceptDrop: function(source, actor, x, y, time) {
+        let app = MyDash.getAppFromSource(source);
+        if (!this._canRemoveApp(app))
+            return false;
+
+        let id = app.get_id();
+
+        Meta.later_add(Meta.LaterType.BEFORE_REDRAW, Lang.bind(this,
+            function () {
+                AppFavorites.getAppFavorites().removeFavorite(id);
+                return false;
+            }));
+
+        return true;
+    },    
+    
+	showLabel: function() {
+		if (!this._labelText) {
+			return;
+		}
+
+		this.label.set_text(this._labelText);
+		this.label.opacity = 0;
+		this.label.show();
+
+		let [stageX, stageY] = this.actor.get_transformed_position();
+
+		let labelHeight = this.label.get_height();
+		let labelWidth = this.label.get_width();
+
+		let node = this.label.get_theme_node();
+		let yOffset = node.get_length('-x-offset');
+		let y = stageY - labelHeight - yOffset;
+		
+		let itemWidth = this.actor.allocation.x2 - this.actor.allocation.x1;
+		let xOffset = Math.floor((itemWidth - labelWidth) / 2);
+		let x = stageX + xOffset;
+
+		this.label.set_position(x, y);
+
+		Tweener.addTween(this.label, {
+			opacity: 255,
+			time: DASH_ITEM_LABEL_SHOW_TIME,
+			transition: 'easeOutQuad',
+		});
+	},
+
+    hideLabel: function () {
+        Tweener.addTween(this.label,
+                         { opacity: 0,
+                           time: DASH_ITEM_LABEL_HIDE_TIME,
+                           transition: 'easeOutQuad',
+                           onComplete: Lang.bind(this, function() {
+                               this.label.hide();
+                           })
+		});
+    } 
+});
+
+/*
+const myShowAppsIcon = new Lang.Class({
+    Name: 'myShowAppsIcon',
+    Extends: MyDash.myDashItemContainer,
+
+    _init: function() {
+log('1111111111111111111');		
+        this.parent();
+log('2222222222222222222');
+        this.toggleButton = new St.Button({ style_class: 'show-apps',
+                                            track_hover: true,
+                                            can_focus: true,
+                                            toggle_mode: true });
+log('3333333333333333333');                                            
+        this._iconActor = null;
+log('4444444444444444444');        
+        this.icon = new IconGrid.BaseIcon(_("Show Applications"),
+                                           { setSizeManually: true,
+                                             showLabel: false,
+                                             createIcon: Lang.bind(this, this._createIcon) });
+log('5555555555555555555');
+        this.toggleButton.add_actor(this.icon.actor);
+log('6666666666666666666');        
+        this.toggleButton._delegate = this;
+log('7777777777777777777');
+//        this.setChild(this.toggleButton);
+log('8888888888888888888');        
+        this.setDragApp(null);
+log('9999999999999999999');
+    },
+
+    _createIcon: function(size) {
+        this._iconActor = new St.Icon({ icon_name: 'view-grid-symbolic',
+                                        icon_size: size,
+                                        style_class: 'show-apps-icon',
+                                        track_hover: true });
+        return this._iconActor;
+    },
+
+    _canRemoveApp: function(app) {
+        if (app == null)
+            return false;
+
+        let id = app.get_id();
+        let isFavorite = AppFavorites.getAppFavorites().isFavorite(id);
+        return isFavorite;
+    },
+
+    setDragApp: function(app) {
+        let canRemove = this._canRemoveApp(app);
+
+        this.toggleButton.set_hover(canRemove);
+        if (this._iconActor)
+            this._iconActor.set_hover(canRemove);
+
+        if (canRemove)
+            this.setLabelText(_("Remove from Favorites"));
+        else
+            this.setLabelText(_("Show Applications"));
+    },
+
+    handleDragOver: function(source, actor, x, y, time) {
+        if (!this._canRemoveApp(getAppFromSource(source)))
+            return DND.DragMotionResult.NO_DROP;
+
+        return DND.DragMotionResult.MOVE_DROP;
+    },
+
+    acceptDrop: function(source, actor, x, y, time) {
+        let app = getAppFromSource(source);
+        if (!this._canRemoveApp(app))
+            return false;
+
+        let id = app.get_id();
+
+        Meta.later_add(Meta.LaterType.BEFORE_REDRAW, Lang.bind(this,
+            function () {
+                AppFavorites.getAppFavorites().removeFavorite(id);
+                return false;
+            }));
+
+        return true;
+    }
+});
+*/
+
+/* This class is a extension of the upstream ShowAppsIcon class (ui.dash.js).
 const myShowAppsIcon = new Lang.Class({
     Name: 'myShowAppsIcon',
     Extends: Dash.ShowAppsIcon,
@@ -488,7 +708,7 @@ const myShowAppsIcon = new Lang.Class({
 		});
     }
 });
-
+*/
 const myLinkBox = new Lang.Class({
     Name: 'myLinkBox',
     Extends: St.BoxLayout,
@@ -689,7 +909,7 @@ const myLinkBox = new Lang.Class({
                 fadeIn = true;
             }
 
-            this._dragPlaceholder = new Dash.DragPlaceholderItem();
+            this._dragPlaceholder = new myDash.myDragPlaceholderItem();
 			if (!dock_horizontal) {
 				this._dragPlaceholder.child.set_width (this.iconSize);
 				this._dragPlaceholder.child.set_height (this.iconSize / 2);
@@ -1298,7 +1518,6 @@ const myShowDesktop = new Lang.Class({
 	Name: 'myShowDesktop',
                     
     _init: function(iconSize, settings) {
-		
 		this._labelText = _("Show Desktop");
 		this.label = new St.Label({ style_class: 'dash-label'});
 		this.label.hide();

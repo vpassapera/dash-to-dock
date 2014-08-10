@@ -457,14 +457,12 @@ const myDash = new Lang.Class({
 				let pos = parseInt(position[i]);
 				switch (pos) {
 					case 1:
-						if (this._settings.get_boolean('applet-show-apps-visible')) {					
-							this._showAppsIcon = new Widgets.myShowAppsIcon();
-							this._showAppsIcon.childScale = 1;
-							this._showAppsIcon.childOpacity = 255;
+						if (this._settings.get_boolean('applet-show-apps-visible')) {
+							this._showAppsIcon = new Widgets.myShowAppsIcon(this.iconSize, this._settings);
 							this._showAppsIcon.icon.setIconSize(this.iconSize);
-							this._hookUpLabel(this._showAppsIcon);
-							this.showAppsButton = this._showAppsIcon.toggleButton;						
-							this._container.add_actor(this._showAppsIcon);						
+							this._hookUpLabelForApplets(this._showAppsIcon);
+							this.showAppsButton = this._showAppsIcon.actor;						
+							this._container.add_actor(this._showAppsIcon.actor);
 						}
 						break;
 					case 2:
@@ -476,14 +474,12 @@ const myDash = new Lang.Class({
 							this._linksBox = new Widgets.myLinkBox(this.iconSize, 
 								this._settings, this);
 														
-							this._container.add_actor(this._linksBox);						
+							this._container.add_actor(this._linksBox);
 						}
 						break;
 					case 4:
 						if (this._settings.get_boolean('applet-show-desktop-visible')) {
 							this._showDesktop = new Widgets.myShowDesktop(this.iconSize, this._settings);
-							this._showDesktop.childScale = 1;
-							this._showDesktop.childOpacity = 255;
 							this._showDesktop.icon.setIconSize(this.iconSize);
 							this._hookUpLabelForApplets(this._showDesktop);					
 							this._container.add_actor(this._showDesktop.actor);
@@ -492,8 +488,6 @@ const myDash = new Lang.Class({
 					case 5:
 						if (this._settings.get_boolean('applet-recycling-bin-visible')) {
 							this._recyclingBin = new Widgets.myRecyclingBin(this.iconSize, this._settings);
-							this._recyclingBin.childScale = 1;
-							this._recyclingBin.childOpacity = 255;
 							this._recyclingBin.icon.setIconSize(this.iconSize);	
 							this._hookUpLabelForApplets(this._recyclingBin);
 							this._container.add_actor(this._recyclingBin.actor);
@@ -511,7 +505,7 @@ const myDash = new Lang.Class({
 	_onScrollEvent: function(actor, event) {
 		switch(event.get_scroll_direction()) {
 			case Clutter.ScrollDirection.UP:
-				this._onScrollBtnLeftOrTop(actor);				
+				this._onScrollBtnLeftOrTop(actor);
 				break;
 			case Clutter.ScrollDirection.DOWN:
 				this._onScrollBtnRightOrBottom(actor);
@@ -551,7 +545,7 @@ const myDash = new Lang.Class({
 		}
     },
         
-    _onDragBegin: function() {
+    _onDragBegin: function() {	
         this._dragCancelled = false;
         this._dragMonitor = {
             dragMotion: Lang.bind(this, this._onDragMotion)
@@ -570,14 +564,14 @@ const myDash = new Lang.Class({
         this._endDrag();
     },
 
-    _onDragEnd: function() {
+    _onDragEnd: function() {		
         if (this._dragCancelled)
             return;
 
         this._endDrag();
     },
 
-    _endDrag: function() {
+    _endDrag: function() {		
         this._clearDragPlaceholder();
         this._clearEmptyDropTarget();
         this._showAppsIcon.setDragApp(null);
@@ -585,19 +579,12 @@ const myDash = new Lang.Class({
     },
 
     _onDragMotion: function(dragEvent) {
-        let app = getAppFromSource(dragEvent.source);
+        let app = getAppFromSource(dragEvent.source);    
         if (app == null)
             return DND.DragMotionResult.CONTINUE;
 
-        let showAppsHovered = this._showAppsIcon.contains(dragEvent.targetActor);
-
-        if (!this._box.contains(dragEvent.targetActor) || showAppsHovered)
+        if (!this._box.contains(dragEvent.targetActor))
             this._clearDragPlaceholder();
-
-        if (showAppsHovered)
-            this._showAppsIcon.setDragApp(app);
-        else
-            this._showAppsIcon.setDragApp(null);
 
         return DND.DragMotionResult.CONTINUE;
     },
@@ -1059,7 +1046,7 @@ const myDash = new Lang.Class({
         }
     },
 
-    handleDragOver : function(source, actor, x, y, time) {
+    handleDragOver: function(source, actor, x, y, time) {
         // Don't allow to add favourites if they are not displayed
         if( !this._settings.get_boolean('show-favorites') )
             return DND.DragMotionResult.NO_DROP;
@@ -1162,8 +1149,7 @@ const myDash = new Lang.Class({
         return DND.DragMotionResult.COPY_DROP;
     },
 
-    // Draggable target interface
-    acceptDrop : function(source, actor, x, y, time) {
+    acceptDrop: function(source, actor, x, y, time) {
         // Don't allow to add favourites if they are not displayed
         if( !this._settings.get_boolean('show-favorites') )
             return true;
