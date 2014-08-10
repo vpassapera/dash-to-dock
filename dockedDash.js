@@ -408,7 +408,11 @@ const dockedDash = new Lang.Class({
         // Add aligning container without tracking it for input region (old affectsinputRegion: false that was removed).
         // The public method trackChrome requires the actor to be child of a tracked actor. Since I don't want the parent
         // to be tracked I use the private internal _trackActor instead.
-        Main.uiGroup.add_child(this.actor);
+        
+		//New way of raising above message tray and capturing fullscreen
+		//Main.uiGroup.add_child(this.actor);//ORIGINAL
+		global.window_group.add_actor(this.actor);
+
         Main.layoutManager._trackActor(this._slider, {trackFullscreen: true});
 
         if ( this._settings.get_boolean('dock-fixed') )
