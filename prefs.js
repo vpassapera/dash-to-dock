@@ -600,7 +600,10 @@ const WorkspaceSettingsWidget = new GObject.Class({// FIXME: Why call it this fu
 
 		/* LINKS TRAY APPLET */
 		
-		let LinksTrayApplet = new Gtk.Box({margin_left:10, margin_top:10, margin_bottom:5, margin_right:10});
+		let LinksTrayApplet = new Gtk.Box({orientation:Gtk.Orientation.VERTICAL, 
+			margin_left:10, margin_top:10, margin_bottom:5, margin_right:10});
+		
+		let LinksTrayAppletContainer = new Gtk.Box({orientation:Gtk.Orientation.HORIZONTAL, margin_bottom: 5});
 
 		let LinksTrayAppletLabel = new Gtk.Label({label: _("3. Links Tray"), hexpand: true, halign: Gtk.Align.START});	
 		let LinksTrayAppletSwitch = new Gtk.Switch({hexpand: true, halign: Gtk.Align.END});
@@ -609,8 +612,29 @@ const WorkspaceSettingsWidget = new GObject.Class({// FIXME: Why call it this fu
 					this.settings.set_boolean('applet-links-tray-visible', check.get_active());
 				}));
 
-		LinksTrayApplet.add(LinksTrayAppletLabel);
-		LinksTrayApplet.add(LinksTrayAppletSwitch);	
+		LinksTrayAppletContainer.add(LinksTrayAppletLabel);
+		LinksTrayAppletContainer.add(LinksTrayAppletSwitch);
+
+		let LinksTraySwitchToGridContainer = new Gtk.Box({orientation:Gtk.Orientation.HORIZONTAL, spacing:30, 
+			homogeneous:false, margin_bottom:5});
+		indentWidget(LinksTraySwitchToGridContainer);
+		
+		let LinksTraySwitchToGridLabel = new Gtk.Label({label: _("No. icons to show before switching to grid layout"),
+			use_markup: true, xalign: 0, hexpand:true});
+		let LinksTraySwitchToGrid = new Gtk.SpinButton({halign:Gtk.Align.END});
+			LinksTraySwitchToGrid.set_sensitive(true);
+			LinksTraySwitchToGrid.set_range(1, 15);
+			LinksTraySwitchToGrid.set_value(this.settings.get_int('applet-links-tray-to-grid'));
+			LinksTraySwitchToGrid.set_increments(1, 2);
+			LinksTraySwitchToGrid.connect('value-changed', Lang.bind(this, function(button){
+					let s = button.get_value_as_int();
+					this.settings.set_int('applet-links-tray-to-grid', s);
+				}));
+		LinksTraySwitchToGridContainer.add(LinksTraySwitchToGridLabel);
+		LinksTraySwitchToGridContainer.add(LinksTraySwitchToGrid);
+
+		LinksTrayApplet.add(LinksTrayAppletContainer);
+		LinksTrayApplet.add(LinksTraySwitchToGridContainer);
 
 		/* SHOW DESKTOP APPLET */
 		

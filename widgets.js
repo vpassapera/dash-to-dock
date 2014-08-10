@@ -385,7 +385,7 @@ const myLinkTray = new Lang.Class({
 				
 		this.menuManager = new PopupMenu.PopupMenuManager(this);		
 
-		this.menu = new myLinkTrayMenu(this.actor, this.iconSize, this.myLinkBoxInstance.linksStorage, this.id);
+		this.menu = new myLinkTrayMenu(this.actor, this.iconSize, this.myLinkBoxInstance.linksStorage, this.id, this.settings);
 		this.menu.actor.hide();
 		this.menu_secondary = new PopupMenu.PopupMenu(this.icon.actor, 0.5, St.Side.BOTTOM, 0);
 		this.menu_secondary.blockSourceEvents = true;		
@@ -640,16 +640,15 @@ const myLinkTrayMenu = new Lang.Class({
     Name: 'myLinkTrayMenu',
     Extends: AppDisplay.PopupMenu.PopupMenu,
 
-    _init: function(source, iconSize, linksStorage, trayId) {
+    _init: function(source, iconSize, linksStorage, trayId, settings) {
         this.parent(source, 0.5, St.Side.TOP);//Menu-Arrow-Side
         this.trayId = trayId;
 		this.iconSize = iconSize;
 		this.linksStorage = linksStorage;
+		this.settings = settings;
 		
         // We want to keep the item hovered while the menu is up
         this.blockSourceEvents = true;
-//TODO: possibly not needed        
-		this.actor.set_style(null);
         
         // Chain our visibility and lifecycle to that of the source
         source.connect('notify::mapped', Lang.bind(this, function () {
@@ -665,11 +664,14 @@ const myLinkTrayMenu = new Lang.Class({
 	populate: function() {
 		for(let i = 0; i < this.linksStorage.links_data.folders.length ;i++) {
 			if (this.trayId == this.linksStorage.links_data.folders[i].collection_id) {
-				if (this.linksStorage.links_data.folders[i].links_array.length > 0) {
+				if (this.linksStorage.links_data.folders[i].links_array.length > 
+					this.settings.get_int('applet-links-tray-to-grid')) {
+					this._gridview(this.linksStorage.links_data.folders[i].links_array);
+				} else {
 					for(let j = 0; j < this.linksStorage.links_data.folders[i].links_array.length ;j++) {
 						this._appendMenuItem(this.linksStorage.
 							links_data.folders[i].links_array[j].link.trim());
-					}
+					}				
 				}
 			}
 		}
@@ -680,15 +682,71 @@ const myLinkTrayMenu = new Lang.Class({
         this.removeAll();
         this.populate();  
     },*/
-    
-    _appendMenuItem: function(fileuri) {		
+
+
+    _gridview: function(files) {		
+log('gridview switch');		
+		this.removeAll();
+//---------------------------------------------------------------------------------------------------------------------
+		let item = new PopupMenu.PopupBaseMenuItem();
+		   
+		this._table = new St.Table({ homogeneous: true });
+
+		let appz = AppFavorites.getAppFavorites().getFavorites();
+		for(let i = 0 ; i < 4 ;i++) {
+			for(let j = 0 ; j < appz.length ;j++) {
+				let boxOfButton = new St.BoxLayout({vertical: true, pack_start: false});
+				let icon = new St.Icon({ icon_name: 'user-desktop',
+                                        icon_size: 48,
+                                        style_class: 'show-apps-icon',
+                                        track_hover: true });
+                                        				
+				let btn = new St.Button({ style_class: 'app-well-app',
+											reactive: true,
+											button_mask: St.ButtonMask.ONE | St.ButtonMask.TWO,
+											can_focus: true,
+											x_fill: true,
+											y_fill: true });
+log(00000000000);                                     
+				btn.add_actor(icon);
+				btn.connect('clicked', Lang.bind(this, function () { log('VVVVVVVVVVVVVVV> '); }));
+log(11111111111);				
+				//boxOfButton.add(icon);
+				boxOfButton.add(btn);
+				let label = new St.Label({text: appz[j].get_name()});
+				boxOfButton.add(label);
+log(22222222222);
+				this._table.add(boxOfButton, { row: j, col:i, x_fill: false, y_fill: false,x_align: St.Align.MIDDLE, y_align: St.Align.START});
+			}
+		}
+		
+//		item.actor.add_child(this._table);
+//		this.addMenuItem(item);//these work
+
+this.box.add(this._table);
+
+//---------------------------------------------------------------------------------------------------------------------       
+/*
 		let file = Gio.file_new_for_path(fileuri);
 		let item = new myPopupImageMenuItem(file, this.iconSize);
 		item.connect('activate', Lang.bind(this, function () {
 			let handler = file.query_default_handler (null);
 			let result = handler.launch ([file], null);
 		}));
-		this.addMenuItem(item, 0);//order?
+*/
+    },
+    
+    _appendMenuItem: function(fileuri) {
+
+log(':::|  '+this.box.get_children().length+'  '+this.box.height+'  ');		
+		
+		let file = Gio.file_new_for_path(fileuri);
+		let item = new myPopupImageMenuItem(file, this.iconSize);
+		item.connect('activate', Lang.bind(this, function () {
+			let handler = file.query_default_handler (null);
+			let result = handler.launch ([file], null);
+		}));
+		this.addMenuItem(item, 0);
 		return item;
     }          
 });

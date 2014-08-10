@@ -145,23 +145,27 @@
     </key>
     <key type="b" name="applet-show-apps-visible">
       <default>true</default>
-      <summary>Shows the Show Apps Button Applet </summary>
+      <summary>Shows the Show Apps Button Applet</summary>
     </key>
     <key type="b" name="applet-favourite-apps-visible">
       <default>true</default>
-      <summary>Shows the Favourite Apps Applet </summary>
+      <summary>Shows the Favourite Apps Applet</summary>
     </key>
     <key type="b" name="applet-links-tray-visible">
       <default>true</default>
-      <summary>Shows the Links Tray Button Applet </summary>
+      <summary>Shows the Links Tray Button Applet</summary>
+    </key>
+    <key type="i" name="applet-links-tray-to-grid">
+      <default>5</default>
+      <summary>More than this number of icons means switch to a grid</summary>
     </key>
     <key type="b" name="applet-show-desktop-visible">
       <default>false</default>
-      <summary>Shows the Show Desktop Button Applet </summary>
+      <summary>Shows the Show Desktop Button Applet</summary>
     </key>
     <key type="b" name="applet-recycling-bin-visible">
       <default>false</default>
-      <summary>Shows the Recycling Bin Button Applet </summary>
+      <summary>Shows the Recycling Bin Button Applet</summary>
     </key>
     <key type="s" name="applets-order">
       <default>"12345"</default>
