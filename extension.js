@@ -4,31 +4,36 @@ const Me = imports.misc.extensionUtils.getCurrentExtension();
 const Convenience = Me.imports.convenience;
 const Intellihide = Me.imports.intellihide;
 const DockedDash = Me.imports.dockedDash;
+const Lang = imports.lang;
 
 let settings;
 let intellihide;
 let dock;
 
-function init() {
-
-}
+function init() {}
 
 function show(){
-
     dock.disableAutoHide();
 }
 
 function hide(){
-
     dock.enableAutoHide();
 }
 
-function enable() {
-
-    settings = Convenience.getSettings('org.gnome.shell.extensions.dash-to-dock');
+function resetDockOrientation() {
+    intellihide.destroy();
+    dock.destroy();
+    dock=null;
+    intellihide=null;
     dock = new DockedDash.dockedDash(settings);
     intellihide = new Intellihide.intellihide(show, hide, dock, settings);
+}
 
+function enable() {
+    settings = Convenience.getSettings('org.gnome.shell.extensions.dash-to-dock');
+    settings.connect('changed::dock-horizontal', Lang.bind(this, this.resetDockOrientation));
+    dock = new DockedDash.dockedDash(settings);
+    intellihide = new Intellihide.intellihide(show, hide, dock, settings);
 }
 
 function disable() {

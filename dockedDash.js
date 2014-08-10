@@ -479,18 +479,13 @@ const dockedDash = new Lang.Class({
 
     _hoverChanged: function() {
 
-//making a crash
-//global = null;// a defacto breakpoint
-
-//log('_hoverChanged '+this._canUsePressure+'   '+this._settings.get_boolean('require-pressure-to-show') +'   '+this._barrier+'  ');
-
-        // Ignore hover if pressure barrier being used but pressureSensed not triggered
+		// Ignore hover if pressure barrier being used but pressureSensed not triggered
         if (this._canUsePressure && this._settings.get_boolean('require-pressure-to-show') && this._barrier) {
             if (this._pressureSensed == false) {
                 return;
             }
         }
-//log('_hoverChanged');
+
         // Skip if dock is not in autohide mode for instance because it is shown
         // by intellihide. Delay the hover changes check while switching
         // workspace: the workspaceSwitcherPopup steals the hover status and it
@@ -893,7 +888,7 @@ const dockedDash = new Lang.Class({
 
         this.emit('box-changed');
     },
-
+        
     // 'Hard' reset dock positon: called on start and when monitor changes
     _resetPosition: function() {
         this._monitor = this._getMonitor();
