@@ -99,7 +99,7 @@ const DashSlideContainer = new Lang.Class({
         let slideoutWidth = this._slideoutWidth;
 log('_____________________________________________________________________');          
 log('SlideDirection: '+this._direction);
-log('COORDS1: childBox [x1,y1 = '+childBox.x1+', '+childBox.y2+'] [x2,y2 =  '+childBox.x2+', '+childBox.y2+']');
+log('COORDS1: startbox [x1,y1 = '+box.x1+', '+box.y2+'] [x2,y2 =  '+box.x2+', '+box.y2+']');
 
 //almost works
 //childBox.x1 = (this._slidex -1)*(childWidth - 1);
@@ -136,10 +136,22 @@ log('COORDS1: childBox [x1,y1 = '+childBox.x1+', '+childBox.y2+'] [x2,y2 =  '+ch
 
 //this makes an animation = slide acordeon
 let contentBox = this.get_content_box(box);
-childBox.x1 = contentBox.x1;
-childBox.y1 = contentBox.y1;
-childBox.x2 = contentBox.x2;
-childBox.y2 = contentBox.y2;
+//childBox.x1 = contentBox.x1;
+//childBox.y1 = contentBox.y1;
+//childBox.x2 = contentBox.x2;
+//childBox.y2 = contentBox.y2;
+
+//SLIDEX IS THE HIDER!!!! 0 is hidden, default left slide
+//childBox.x1 = (this._slidex -1)*(childWidth - slideoutWidth);
+//childBox.x2 = slideoutWidth + this._slidex*(childWidth - slideoutWidth);
+//childBox.y1 = 0;
+//childBox.y2 = childBox.y1 + childHeight;
+
+childBox.x1 = 0;//(this._slidex -1)*(childWidth - slideoutWidth);
+childBox.x2 = childBox.x1 + childWidth;//slideoutWidth + this._slidex*(childWidth - slideoutWidth);
+childBox.y1 = (this._slidex -1)*(childHeight - slideoutWidth);//0;
+childBox.y2 = slideoutWidth + this._slidex*(childHeight - slideoutWidth);//childBox.y1 + childHeight;
+
 
 log('COORDS2: contnBox [x1,y1 = '+contentBox.x1+', '+contentBox.y2+'] [x2,y2 =  '+contentBox.x2+', '+contentBox.y2+']');
 
@@ -589,15 +601,12 @@ const dockedDash = new Lang.Class({
 
         }
     },
-    
+   
     _animateIn: function(time, delay) {
-/*		
+		
         this._animStatus.queue(true);
         Tweener.addTween(this._slider,{
             slidex: 1,
-//-----------------------------------------------------
-y: this._monitor.y + this._monitor.height - this._box.height,//simple-dock
-//-----------------------------------------------------
             time: time,
             delay: delay,
             transition: 'easeOutQuad',
@@ -616,38 +625,10 @@ y: this._monitor.y + this._monitor.height - this._box.height,//simple-dock
                   this._removeBarrierTimeoutId = Mainloop.timeout_add(100, Lang.bind(this, this._removeBarrier));
               })
         });
-*/
-//------------------------------------------------------------------------------------------------------------------------
-        this._animStatus.queue(true);
-        Tweener.addTween(this._slider, {
-            y: this._monitor.y + this._monitor.height - this._box.height,
-            time: time,
-            delay: delay,
-            transition: 'easeOutQuad',
-
-            onStart:  Lang.bind(this, function() {
-                this._animStatus.start();
-            }),
-
-            onOverwrite : Lang.bind(this, function() {
-                this._animStatus.clear();
-            }),
-
-            onComplete: Lang.bind(this, function() {
-                this._animStatus.end();
-                if (this._removeBarrierTimeoutId > 0) {
-                      Mainloop.source_remove(this._removeBarrierTimeoutId);
-                  }
-				this._removeBarrierTimeoutId = Mainloop.timeout_add(100, Lang.bind(this, this._removeBarrier));
-            })
-        });
-//------------------------------------------------------------------------------------------------------------------------
-
-
     },
 
     _animateOut: function(time, delay){
-/*
+
         this._animStatus.queue(false);
         Tweener.addTween(this._slider,{
             slidex: 0,
@@ -663,10 +644,34 @@ y: this._monitor.y + this._monitor.height - this._box.height,//simple-dock
                     this._updateBarrier();
             })
         });
-*/
-//------------------------------------------------------------------------------------------------------------------------
+    },
+
+/*//simple-dock
+   _animateIn: function(time, delay) {
+        this._animStatus.queue(true);
+        Tweener.addTween(this._slider,{
+            y: this._monitor.y + this._monitor.height - this._box.height,
+            time: time,
+            delay: delay,
+            transition: 'easeOutQuad',
+
+            onStart:  Lang.bind(this, function() {
+                this._animStatus.start();
+            }),
+
+            onOverwrite : Lang.bind(this, function() {
+                this._animStatus.clear();
+            }),
+
+            onComplete: Lang.bind(this, function() {
+                this._animStatus.end();
+            })
+        });
+    },
+
+    _animateOut: function(time, delay) {
         this._animStatus.queue(false);
-        Tweener.addTween(this.actor, {
+        Tweener.addTween(this._slider,{
             y: this._monitor.y + this._monitor.height - 1,
             time: time,
             delay: delay,
@@ -682,12 +687,10 @@ y: this._monitor.y + this._monitor.height - this._box.height,//simple-dock
 
             onComplete: Lang.bind(this, function() {
                 this._animStatus.end();
-                this._updateBarrier();
             })
         });
-//------------------------------------------------------------------------------------------------------------------------
     },
-
+*/
     _updatePressureBarrier: function() {
         this._canUsePressure = global.display.supports_extended_barriers();
         let pressureThreshold = this._settings.get_double('pressure-threshold');
