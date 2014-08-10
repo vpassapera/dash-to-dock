@@ -689,11 +689,13 @@ const myLinkTrayMenu = new Lang.Class({
 		this._table = new St.Table({ x_expand: true,  y_expand: true, homogeneous: true });
 		let appz = AppFavorites.getAppFavorites().getFavorites();
 		let mar = 5;
-		for(let i = 0 ; i < 3 ;i++) {
-			for(let j = 0 ; j < files.length ;j++) {
+		let irows = Math.round(files.length/3);	
+		let i = 0;
+		for(let irow = 0 ; irow < irows ;irow++) {
+			for(let icol = 0 ; icol < 3 ;icol++) {
 				let boxOfButton = new St.BoxLayout({ vertical: true, x_expand: false,
-					margin_top: mar, margin_right: mar, margin_bottom: mar, margin_left: mar });			
-                                                                               				
+					margin_top: mar, margin_right: mar, margin_bottom: mar, margin_left: mar });
+																												
 				let btn = new St.Button({ style_class: 'app-well-app',
 											reactive: true,
 											button_mask: St.ButtonMask.ONE | St.ButtonMask.TWO,
@@ -703,9 +705,9 @@ const myLinkTrayMenu = new Lang.Class({
 				btn.file = Gio.file_new_for_path(files[i].link);
 
 				let icon = new St.Icon({ icon_size: this.iconSize, track_hover: true });
-				
+					
 				let info = btn.file.query_info('standard::icon,thumbnail::path', 0, null);
-				
+					
 				if(info.get_file_type() == Gio.FileType.DIRECTORY) {
 					icon.icon_name = 'folder';
 				} else {
@@ -727,7 +729,7 @@ const myLinkTrayMenu = new Lang.Class({
 				}
 
 				btn.add_actor(icon);
-				
+					
 				btn.connect('clicked', Lang.bind(this, function () {
 					this.toggle();
 					let handler = btn.file.query_default_handler (null);
@@ -738,10 +740,14 @@ const myLinkTrayMenu = new Lang.Class({
 				let label = new St.Label({text: btn.file.get_basename(), x_align: St.Align.MIDDLE });
 				boxOfButton.add(label, { x_align: St.Align.MIDDLE });
 				
-//boxOfButton.add_style_class_name('show-apps');
+				//boxOfButton.add_style_class_name('show-apps');
 										
-				this._table.add(boxOfButton, { row: j, col:i, x_fill: false, y_fill: false, 
+				this._table.add(boxOfButton, { row: irow, col: icol, x_fill: false, y_fill: false, 
 					x_align: St.Align.MIDDLE, y_align: St.Align.START});
+					
+				i++;
+				if(i == files.length)
+					break;
 			}
 		}
 		
