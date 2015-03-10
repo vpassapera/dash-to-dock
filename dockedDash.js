@@ -440,6 +440,58 @@ const dockedDash = new Lang.Class({
         let index = Main.layoutManager._findActor(this._slider.actor);
         Main.layoutManager._trackedActors[index].isToplevel = true ;
 
+
+        let _onNotify = Main.messageTray._onNotify;
+        let _hideNotificationCompleted = Main.messageTray._hideNotificationCompleted;
+        this._injectionsHandler.add('insensitive-message-tray',
+            [
+                Main.messageTray,
+                '_onNotify',
+                Lang.bind(this, function(source, notification) {
+                    _onNotify.call(Main.messageTray, source, notification);
+                    global.log('HIDE');
+
+
+
+                    this._ignoreHover = true;
+                    this._intellihide.disable();
+                    this._removeAnimations();
+                    this._animateOut(this._settings.get_double('animation-time'), 0);
+
+                    notification.connect('destroy', Lang.bind(this, function(){
+
+                    if(Main.messageTray._notificationQueue.length==0) {
+                      global.log('CHECK');
+                      this._ignoreHover = false;
+                      this._intellihide.enable();
+                      this._updateDashVisibility();
+                    } else
+                      global.log('WAIT');
+
+                    }));
+                })
+            ],
+            [
+                Main.messageTray,
+                '_hideNotificationCompleted',
+                Lang.bind(this, function(){
+
+                    _hideNotificationCompleted.call(Main.messageTray);
+
+                    if(Main.messageTray._notificationQueue.length==0) {
+                      global.log('CHECK');
+                      this._ignoreHover = false;
+                      this._intellihide.enable();
+                      this._updateDashVisibility();
+                    } else
+                      global.log('WAIT');
+
+                    })
+            ]
+        );
+
+
+
         // Set initial position
         this._resetPosition();
 
