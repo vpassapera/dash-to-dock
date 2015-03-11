@@ -441,6 +441,11 @@ const dockedDash = new Lang.Class({
         Main.layoutManager._trackedActors[index].isToplevel = true ;
 
 
+        //MessageTray.SystemNotificationSource()
+        this._dashSpacer.connect('notify::height', Lang.bind(this, function(){
+            Main.overview._controls._indicator.actor.get_children()[0].y = -this._dashSpacer.height;
+        }));
+
         let _onNotify = Main.messageTray._onNotify;
         let _hideNotificationCompleted = Main.messageTray._hideNotificationCompleted;
         this._injectionsHandler.add('insensitive-message-tray',
@@ -548,6 +553,9 @@ const dockedDash = new Lang.Class({
 
         // Remove the dashSpacer
         this._dashSpacer.destroy();
+
+        // Reset messageIndicator position.
+        Main.overview._controls._indicator.actor.get_children()[0].y = 0;
 
         // Reshow normal dash previously hidden, restore panel position if changed.
         Main.overview._controls.dash.actor.show();
