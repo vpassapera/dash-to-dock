@@ -1378,8 +1378,15 @@ const myAppIcon = new Lang.Class({
 
         let rect = new Meta.Rectangle();
 
-        [rect.x, rect.y] = this.actor.get_transformed_position();
-        [rect.width, rect.height] = this.actor.get_transformed_size();
+        // Values have to be sanitized because sometimes I get random values (NaN and too large numbers)
+        // which cannot be converted to int when assigned to the rect
+        let [x, y] = this.actor.get_transformed_position();
+        let [width, height] = this.actor.get_transformed_size();
+
+        rect.x = (x && x < 1e6) || 0 ;
+        rect.y = (y && y < 1e6) || 0;
+        rect.width =  (width && width < 1e6) || 1;
+        rect.height = (height && height < 1e6) || 1;
 
         let windows = this.app.get_windows();
         windows.forEach(function(w) {
