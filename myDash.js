@@ -1376,6 +1376,9 @@ const myAppIcon = new Lang.Class({
     // Update taraget for minimization animation
     updateIconGeometry: function() {
 
+        if (this.actor.get_stage() == null)
+            return
+
         let rect = new Meta.Rectangle();
 
         [rect.x, rect.y] = this.actor.get_transformed_position();
