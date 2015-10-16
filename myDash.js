@@ -1306,7 +1306,7 @@ Signals.addSignalMethods(myDash.prototype);
  * Extend AppIcon
  *
  * - Pass settings to the constructor and bind settings changes
- * - Apply a css class based on the number of windows of each application (#N);
+ * - Draw a dot for each window of the application based on the default "dot" style which is hidden (#N);
  *   a class of the form "running#N" is applied to the AppWellIcon actor.
  *   like the original .running one.
  * - add a .focused style to the focused app
@@ -1337,7 +1337,7 @@ const myAppIcon = new Lang.Class({
     _init: function(settings, app, iconParams, onActivateOverride) {
 
         this._dtdSettings = settings;
-        this._maxN =4;
+        this._nWindows = 0;
 
         this.parent(app, iconParams, onActivateOverride);
 
@@ -1355,6 +1355,13 @@ const myAppIcon = new Lang.Class({
                                                 Lang.bind(this,
                                                           this._onFocusAppChanged));
 
+        this._dots = null;
+        this._dtdSettings.connect('changed::custom-theme-running-dots',
+                                   Lang.bind(this, this._toggleDots));
+
+        this._dtdSettings.connect('changed::apply-custom-theme',
+                                   Lang.bind(this, this._toggleDots));
+        this._toggleDots();
     },
 
     _onDestroy: function() {
@@ -1395,8 +1402,42 @@ const myAppIcon = new Lang.Class({
 
     },
 
-    _updateRunningStyle: function() {
+    _toggleDots: function() {
 
+        if ( this._dtdSettings.get_boolean('custom-theme-running-dots')
+             || this._dtdSettings.get_boolean('apply-custom-theme') )
+            this._showDots();
+        else
+            this._hideDots();
+    },
+
+    _showDots: function() {
+        // I use opacity to hide the default dot because the show/hide function
+        // are used by the parent class.
+        this._dot.opacity = 0;
+
+        // Do nothing if dots already exist
+        if (this._dots)
+            return
+
+        this._dots = new St.DrawingArea({x_expand: true, y_expand: true});
+        this._dots.connect('repaint', Lang.bind(this,
+            function() {
+                    this._drawCircles(this._dots, getPosition(this._dtdSettings));
+            }));
+        this._iconContainer.add_child(this._dots);
+        this._updateCounterClass();
+
+    },
+
+    _hideDots: function() {
+        this._dot.opacity=255;
+        if (this._dots)
+            this._dots.destroy()
+        this._dots = null;
+    },
+
+    _updateRunningStyle: function() {
         this.parent();
         this._updateCounterClass();
     },
@@ -1506,20 +1547,80 @@ const myAppIcon = new Lang.Class({
     },
 
     _updateCounterClass: function() {
+        if (!this._dots)
+            return
+        this._nWindows = getAppInterestingWindows(this.app).length;
+        this._dots.queue_repaint();
+    },
 
-        let n = getAppInterestingWindows(this.app).length;
+    _drawCircles: function(area, side) {
 
-        if(n>this._maxN)
-             n = this._maxN;
+        // Re-use the style - background color, and border width and color -
+        // of the default dot
+        let themeNode = this._dot.get_theme_node();
+        let borderColor = themeNode.get_border_color(side);
+        let borderWidth = themeNode.get_border_width(side);
+        let bodyColor = themeNode.get_background_color();
 
-        for(let i = 1; i<=this._maxN; i++){
-            let className = 'running'+i;
-            if(i!=n)
-                this.actor.remove_style_class_name(className);
-            else
-                this.actor.add_style_class_name(className);
+        let [width, height] = area.get_surface_size();
+        let cr = area.get_context();
+
+        // Draw the required numbers of dots. The separation between the dots
+        // is equal to the radius, the distance from the margin radius/4.
+
+        let radius = Math.round(width/22);
+        let padding = Math.ceil(radius/4);
+
+        const n_max = 4;
+        let n = this._nWindows;
+
+          if(n > n_max)
+               n = n_max;
+
+        cr.setLineWidth(borderWidth);
+        Clutter.cairo_set_source_color(cr, borderColor);
+
+        switch (side) {
+        case St.Side.TOP:
+            cr.translate((width - (3*n-1)*radius)/2, padding);
+            for (let i=0; i<n;i++) {
+                cr.newSubPath();
+                cr.arc(radius*(3*i+1), radius, radius, 0, 2*Math.PI);
+            }
+            break;
+
+        case St.Side.BOTTOM:
+            cr.translate((width - (3*n-1)*radius)/2, height- padding- 2*radius);
+            for (let i=0; i<n;i++) {
+                cr.newSubPath();
+                cr.arc(radius*(3*i+1), radius, radius, 0, 2*Math.PI);
+            }
+            break;
+
+        case St.Side.LEFT:
+            cr.translate(padding, (height - (3*n-1)*radius)/2);
+            for (let i=0; i<n;i++) {
+                cr.newSubPath();
+                cr.arc(radius, radius*(3*i+1), radius, 0, 2*Math.PI);
+            }
+            break;
+
+        case St.Side.RIGHT:
+            cr.translate(width - padding- 2*radius, (height - (3*n-1)*radius)/2);
+            for (let i=0; i<n;i++) {
+                cr.newSubPath();
+                cr.arc(radius, radius*(3*i+1), radius, 0, 2*Math.PI);
+            }
+            break;
         }
+
+        cr.strokePreserve();
+
+        Clutter.cairo_set_source_color(cr, bodyColor);
+        cr.fill();
+        cr.$dispose();
     }
+
 });
 
 function minimizeWindow(app, param){
