@@ -1565,12 +1565,10 @@ const myAppIcon = new Lang.Class({
         let [width, height] = area.get_surface_size();
         let cr = area.get_context();
 
-        // Draw the required numbers of dots. The separation between the dots
-        // is equal to the radius, the distance from the margin radius/4.
-
+        // Draw the required numbers of dots
         let radius = Math.round(width/22);
-        let padding = Math.ceil(radius/4);
-
+        let padding = Math.ceil(radius/4); // distance from the margin
+        let spacing = Math.ceil(radius + borderWidth); // separation between the dots
         const n_max = 4;
         let n = this._nWindows;
         if(n > n_max)
@@ -1581,34 +1579,34 @@ const myAppIcon = new Lang.Class({
 
         switch (side) {
         case St.Side.TOP:
-            cr.translate((width - (3*n-1)*radius)/2, padding);
+            cr.translate((width - (2*n)*radius - (n-1)*spacing)/2, padding);
             for (let i=0; i<n;i++) {
                 cr.newSubPath();
-                cr.arc(radius*(3*i+1), radius, radius, 0, 2*Math.PI);
+                cr.arc((2*i+1)*radius + i*spacing, radius, radius, 0, 2*Math.PI);
             }
             break;
 
         case St.Side.BOTTOM:
-            cr.translate((width - (3*n-1)*radius)/2, height- padding- 2*radius);
+            cr.translate((width - (2*n)*radius - (n-1)*spacing)/2, height- padding- 2*radius);
             for (let i=0; i<n;i++) {
                 cr.newSubPath();
-                cr.arc(radius*(3*i+1), radius, radius, 0, 2*Math.PI);
+                cr.arc((2*i+1)*radius + i*spacing, radius, radius, 0, 2*Math.PI);
             }
             break;
 
         case St.Side.LEFT:
-            cr.translate(padding, (height - (3*n-1)*radius)/2);
+            cr.translate(padding, (height - (2*n)*radius - (n-1)*spacing)/2);
             for (let i=0; i<n;i++) {
                 cr.newSubPath();
-                cr.arc(radius, radius*(3*i+1), radius, 0, 2*Math.PI);
+                cr.arc(radius, (2*i+1)*radius + i*spacing, radius, 0, 2*Math.PI);
             }
             break;
 
         case St.Side.RIGHT:
-            cr.translate(width - padding- 2*radius, (height - (3*n-1)*radius)/2);
+            cr.translate(width - padding- 2*radius, (height - (2*n)*radius - (n-1)*spacing)/2);
             for (let i=0; i<n;i++) {
                 cr.newSubPath();
-                cr.arc(radius, radius*(3*i+1), radius, 0, 2*Math.PI);
+                cr.arc(radius, (2*i+1)*radius + i*spacing, radius, 0, 2*Math.PI);
             }
             break;
         }
