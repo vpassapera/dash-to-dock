@@ -1573,9 +1573,8 @@ const myAppIcon = new Lang.Class({
 
         const n_max = 4;
         let n = this._nWindows;
-
-          if(n > n_max)
-               n = n_max;
+        if(n > n_max)
+            n = n_max;
 
         cr.setLineWidth(borderWidth);
         Clutter.cairo_set_source_color(cr, borderColor);
