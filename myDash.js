@@ -1587,9 +1587,10 @@ const myAppIcon = new Lang.Class({
         let cr = area.get_context();
 
         // Draw the required numbers of dots
-        let radius = Math.round(width/22);
+        let radius = width/22 - borderWidth/2;
+        radius = Math.max(radius, borderWidth/4+1);
         let padding = 0; // distance from the margin
-        let spacing = Math.ceil(radius + borderWidth); // separation between the dots
+        let spacing = radius + borderWidth; // separation between the dots
         const n_max = 4;
         let n = this._nWindows;
         if(n > n_max)
@@ -1603,7 +1604,7 @@ const myAppIcon = new Lang.Class({
             cr.translate((width - (2*n)*radius - (n-1)*spacing)/2, padding);
             for (let i=0; i<n;i++) {
                 cr.newSubPath();
-                cr.arc((2*i+1)*radius + i*spacing, radius + borderWidth, radius, 0, 2*Math.PI);
+                cr.arc((2*i+1)*radius + i*spacing, radius + borderWidth/2, radius, 0, 2*Math.PI);
             }
             break;
 
@@ -1611,7 +1612,7 @@ const myAppIcon = new Lang.Class({
             cr.translate((width - (2*n)*radius - (n-1)*spacing)/2, height- padding- 2*radius);
             for (let i=0; i<n;i++) {
                 cr.newSubPath();
-                cr.arc((2*i+1)*radius + i*spacing, radius + borderWidth, radius, 0, 2*Math.PI);
+                cr.arc((2*i+1)*radius + i*spacing, radius + borderWidth/2, radius, 0, 2*Math.PI);
             }
             break;
 
@@ -1619,7 +1620,7 @@ const myAppIcon = new Lang.Class({
             cr.translate(padding, (height - (2*n)*radius - (n-1)*spacing)/2);
             for (let i=0; i<n;i++) {
                 cr.newSubPath();
-                cr.arc(radius + borderWidth, (2*i+1)*radius + i*spacing, radius, 0, 2*Math.PI);
+                cr.arc(radius + borderWidth/2, (2*i+1)*radius + i*spacing, radius, 0, 2*Math.PI);
             }
             break;
 
@@ -1627,7 +1628,7 @@ const myAppIcon = new Lang.Class({
             cr.translate(width - padding- 2*radius, (height - (2*n)*radius - (n-1)*spacing)/2);
             for (let i=0; i<n;i++) {
                 cr.newSubPath();
-                cr.arc(radius + borderWidth, (2*i+1)*radius + i*spacing, radius, 0, 2*Math.PI);
+                cr.arc(radius + borderWidth/2, (2*i+1)*radius + i*spacing, radius, 0, 2*Math.PI);
             }
             break;
         }
