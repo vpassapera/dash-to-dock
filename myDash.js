@@ -57,6 +57,7 @@ const myAppIconMenu = new Lang.Class({
 
     _init: function(source, settings) {
 
+        this._dtdSettings = settings;
         let side = getPosition(settings);
 
         // Damm it, there has to be a proper way of doing this...
@@ -81,7 +82,7 @@ const myAppIconMenu = new Lang.Class({
 
         // quit menu
         let app = this._source.app;
-        let count = getAppInterestingWindows(app).length;
+        let count = getAppInterestingWindows(app, this._dtdSettings).length;
         if ( count > 0) {
             this._appendSeparator();
             let quitFromDashMenuText = "";
@@ -1551,14 +1552,14 @@ const myAppIcon = new Lang.Class({
 
             } else if (this._dtdSettings.get_boolean('minimize-shift') && modifiers & Clutter.ModifierType.SHIFT_MASK){
                 // On double click, minimize all windows in the current workspace
-                minimizeWindow(this.app, event.get_click_count() > 1);
+                minimizeWindow(this.app, event.get_click_count() > 1, this._dtdSettings);
 
             } else if(this.app == focusedApp && !Main.overview._shown){
 
                 if(this._dtdSettings.get_enum('click-action') == clickAction.CYCLE_WINDOWS)
-                    cycleThroughWindows(this.app);
+                    cycleThroughWindows(this.app, this._dtdSettings);
                 else if(this._dtdSettings.get_enum('click-action') == clickAction.MINIMIZE)
-                    minimizeWindow(this.app, true);
+                    minimizeWindow(this.app, true, this._dtdSettings);
                 else if(this._dtdSettings.get_enum('click-action') == clickAction.LAUNCH)
                     this.app.open_new_window(-1);
 
@@ -1566,7 +1567,7 @@ const myAppIcon = new Lang.Class({
                 // Activate all window of the app or only le last used
                 if (this._dtdSettings.get_enum('click-action') == clickAction.CYCLE_WINDOWS && !Main.overview._shown){
                     // If click cycles through windows I can activate one windows at a time
-                    let windows = getAppInterestingWindows(this.app);
+                    let windows = getAppInterestingWindows(this.app,  this._dtdSettings);
                     if (windows.length == 0)
                         this.app.open_new_window(-1);
                     else {
@@ -1577,7 +1578,7 @@ const myAppIcon = new Lang.Class({
                     this.app.open_new_window(-1);
                 else if(this._dtdSettings.get_enum('click-action') == clickAction.MINIMIZE){
                     // If click minimizes all, then one expects all windows to be reshown
-                    activateAllWindows(this.app);
+                    activateAllWindows(this.app, this._dtdSettings);
                 } else
                     this.app.activate();
             }
@@ -1595,7 +1596,7 @@ const myAppIcon = new Lang.Class({
     _updateCounterClass: function() {
 
         let maxN = 4;
-        this._nWindows = Math.min(getAppInterestingWindows(this.app).length, maxN);
+        this._nWindows = Math.min(getAppInterestingWindows(this.app, this._dtdSettings).length, maxN);
 
         for(let i = 1; i<=maxN; i++){
             let className = 'running'+i;
@@ -1684,9 +1685,9 @@ const myAppIcon = new Lang.Class({
 
 });
 
-function minimizeWindow(app, param){
+function minimizeWindow(app, param, settings){
     // Param true make all app windows minimize
-    let windows = getAppInterestingWindows(app);
+    let windows = getAppInterestingWindows(app, settings);
     let current_workspace = global.screen.get_active_workspace();
     for (let i = 0; i < windows.length; i++) {
         let w = windows[i];
@@ -1704,13 +1705,13 @@ function minimizeWindow(app, param){
  * By default only non minimized windows are activated.
  * This activates all windows in the current workspace.
  */
-function activateAllWindows(app){
+function activateAllWindows(app, settings){
 
     // First activate first window so workspace is switched if needed.
     app.activate();
 
     // then activate all other app windows in the current workspace
-    let windows = getAppInterestingWindows(app);
+    let windows = getAppInterestingWindows(app, settings);
     let activeWorkspace = global.screen.get_active_workspace_index();
 
     if( windows.length<=0)
@@ -1726,13 +1727,13 @@ function activateAllWindows(app){
     }
 }
 
-function cycleThroughWindows(app) {
+function cycleThroughWindows(app, settings) {
 
     // Store for a little amount of time last clicked app and its windows
     // since the order changes upon window interaction
     let MEMORY_TIME=3000;
 
-    let app_windows = getAppInterestingWindows(app);
+    let app_windows = getAppInterestingWindows(app, settings);
 
     if(recentlyClickedAppLoopId>0)
         Mainloop.source_remove(recentlyClickedAppLoopId);
@@ -1769,13 +1770,18 @@ function resetRecentlyClickedApp() {
     return false;
 }
 
-function getAppInterestingWindows(app) {
+function getAppInterestingWindows(app, settings) {
     // Filter out unnecessary windows, for instance
     // nautilus desktop window.
-    let windows = app.get_windows().filter(function(w) {
-        return !w.skip_taskbar;
-    });
-
+    let windows;
+    if (settings.get_boolean('isolate-workspaces'))
+        windows = app.get_windows().filter(function(w) {
+            return !w.skip_taskbar && w.get_workspace().index() == global.screen.get_active_workspace_index();
+        });
+    else
+        windows = app.get_windows().filter(function(w) {
+            return !w.skip_taskbar;
+        });
     return windows;
 }
 
