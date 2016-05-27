@@ -950,7 +950,20 @@ const myDash = new Lang.Class({
     _redisplay: function () {
         let favorites = AppFavorites.getAppFavorites().getFavoriteMap();
 
-        let running = this._appSystem.get_running();
+        let running;
+        if (this._dtdSettings.get_boolean('isolate-workspaces')) {
+            running = this._appSystem.get_running().filter(function(_app) {
+                let windows = _app.get_windows().filter(function(w) {
+                    return w.get_workspace().index() == global.screen.get_active_workspace_index();
+                });
+                if (windows.length == 1)
+                    if (windows[0].skip_taskbar)
+                        return false;
+                return _app.is_on_workspace(global.screen.get_active_workspace());
+            });
+        }
+        else
+            running = this._appSystem.get_running();
 
         let children = this._box.get_children().filter(function(actor) {
                 return actor.child &&
@@ -1462,7 +1475,13 @@ const myAppIcon = new Lang.Class({
 
     _updateRunningStyle: function() {
         this.parent();
+        if (this._dtdSettings.get_boolean('isolate-workspaces')) {
+            if (!this.app.is_on_workspace(global.screen.get_active_workspace())) {
+                this._dot.hide();
+            }
+        }
         this._updateCounterClass();
+        Shell.AppSystem.get_default().emit('installed-changed');
     },
 
     popupMenu: function() {
@@ -1548,8 +1567,12 @@ const myAppIcon = new Lang.Class({
                 if (this._dtdSettings.get_enum('click-action') == clickAction.CYCLE_WINDOWS && !Main.overview._shown){
                     // If click cycles through windows I can activate one windows at a time
                     let windows = getAppInterestingWindows(this.app);
-                    let w = windows[0];
-                    Main.activateWindow(w);
+                    if (windows.length == 0)
+                        this.app.open_new_window(-1);
+                    else {
+                        let w = windows[0];
+                        Main.activateWindow(w);
+                    }
                 } else if(this._dtdSettings.get_enum('click-action') == clickAction.LAUNCH)
                     this.app.open_new_window(-1);
                 else if(this._dtdSettings.get_enum('click-action') == clickAction.MINIMIZE){
