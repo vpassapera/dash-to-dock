@@ -31,7 +31,6 @@ const IntellihideMode = {
 // enum order).
 const handledWindowTypes = [
   Meta.WindowType.NORMAL,
-  Meta.WindowType.DOCK,
   Meta.WindowType.DIALOG,
   Meta.WindowType.MODAL_DIALOG,
   Meta.WindowType.TOOLBAR,
@@ -64,16 +63,58 @@ const intellihide = new Lang.Class({
         this.status = OverlapStatus.UNDEFINED;
         this._targetBox = null;
 
-        this._checkOverlapTimeoutContinue = false;
-        this._checkOverlapTimeoutId = 0;
+        // Main id of the timeout controlling timeout for updateDockVisibility function 
+        // when windows are dragged around (move and resize)
+        this._windowChangedTimeout = 0;
+        this._filterkeybindingId = 0;
 
         // Connect global signals
         this._signalsHandler.add (
-            // Add signals on windows created from now on
+            // Add timeout when window grab-operation begins and remove it when it ends.
             [
                 global.display,
-                'window-created',
-                Lang.bind(this, this._windowCreated)
+                'grab-op-begin',
+                Lang.bind(this, this._grabOpBegin)
+            ],
+            [
+                global.display,
+                'grab-op-end',
+                Lang.bind(this, this._grabOpEnd)
+            ],
+            // This intercept keybindings and let them execute (return false)
+            // The is a workaround to force an overlap check for those window
+            // position and size change which are not included in the other shell signals
+            // because triggered directly by this keybindings. Known examples are:
+            // 'move-to-corner-**', 'move-to-monitor-**'. The check is delayed to
+            // let the action be executed.
+            [
+                global.window_manager,
+                'filter-keybinding',
+                Lang.bind(this, function(){
+                    // There's no need when not in normal mode (for instance in overview mode)
+                    if (Main.actionMode != Shell.ActionMode.NORMAL)
+                        return false;
+
+                    this._filterkeybindingId = Mainloop.timeout_add(INTELLIHIDE_CHECK_INTERVAL,
+                        Lang.bind(this, function(){
+                            this._filterkeybindingId = 0;
+                            this._checkOverlap();
+                            return GLib.SOURCE_REMOVE;
+                    }));
+
+                    return false;
+                  })
+            ],
+            // direct maximize/unmazimize are not included in grab-operations
+            [
+                global.window_manager,
+                'maximize', 
+                Lang.bind(this, this._checkOverlap )
+            ],
+            [
+                global.window_manager,
+                'unmaximize',
+                Lang.bind(this, this._checkOverlap )
             ],
             // triggered for instance when the window list order changes,
             // included when the workspace is switched
@@ -100,61 +141,31 @@ const intellihide = new Lang.Class({
     },
 
     destroy: function() {
+
         // Disconnect global signals
         this._signalsHandler.destroy();
 
-        // Remove  residual windows signals
-        this.disable();
+        if(this._windowChangedTimeout>0)
+            Mainloop.source_remove(this._windowChangedTimeout); // Just to be sure
+        this._windowChangedTimeout=0;
+
+        if(this._filterkeybindingId>0)
+            Mainloop.source_remove(this._filterkeybindingId);
+        this._filterkeybindingId = 0;
     },
 
     enable: function() {
+
       this._isEnabled = true;
       this._status = OverlapStatus.UNDEFINED;
-      global.get_window_actors().forEach(function(win){
-                this._addWindowSignals(win.get_meta_window())
-            }, this);
-      this._doCheckOverlap();
+      this._checkOverlap();
     },
 
     disable: function() {
         this._isEnabled = false;
-        global.get_window_actors().forEach(function(win){
-                this._removeWindowSignals(win.get_meta_window())
-            }, this);
-
-        if(this._checkOverlapTimeoutId>0) {
-            Mainloop.source_remove(this._checkOverlapTimeoutId);
-            this._checkOverlapTimeoutId = 0;
-        }
-    },
-
-    _windowCreated: function(display, meta_win) {
-        this._addWindowSignals(meta_win);
-    },
-
-    _addWindowSignals: function(meta_win) {
-            if(!meta_win || !this._handledWindow(meta_win))
-                return;
-
-            meta_win.dtd_onPositionChanged = meta_win.connect(
-                'position-changed', Lang.bind(this, this._checkOverlap, meta_win)
-            );
-
-            meta_win.dtd_onSizeChanged = meta_win.connect(
-                'size-changed', Lang.bind(this, this._checkOverlap, meta_win)
-            );
-    },
-
-    _removeWindowSignals: function(meta_win) {
-        if( meta_win && meta_win.dtd_onSizeChanged ) {
-               meta_win.disconnect(meta_win.dtd_onSizeChanged);
-               delete meta_win.dtd_onSizeChanged;
-        }
-
-        if( meta_win && meta_win.dtd_onPositionChanged ) {
-               meta_win.disconnect(meta_win.dtd_onPositionChanged);
-               delete meta_win.dtd_onPositionChanged;
-        }
+        if(this._windowChangedTimeout>0)
+            Mainloop.source_remove(this._windowChangedTimeout);
+        this._windowChangedTimeout = 0;
     },
 
     updateTargetBox: function(box) {
@@ -164,7 +175,7 @@ const intellihide = new Lang.Class({
 
     forceUpdate: function() {
         this._status = OverlapStatus.UNDEFINED;
-        this._doCheckOverlap();
+        this._checkOverlap();
     },
 
     getOverlapStatus: function(){
@@ -174,35 +185,30 @@ const intellihide = new Lang.Class({
             return false;
     },
 
-    _checkOverlap: function() {
+    _grabOpBegin: function() {
+        if(this._isEnabled){
+            if(this._windowChangedTimeout>0)
+                Mainloop.source_remove(this._windowChangedTimeout); // Just to be sure
 
-        if( !this._isEnabled || this._targetBox == null)
-            return;
-
-        /* Limit the number of calls to the doCheckOverlap function */
-        if(this._checkOverlapTimeoutId){
-            this._checkOverlapTimeoutContinue = true;
-            return
+            this._windowChangedTimeout = Mainloop.timeout_add(INTELLIHIDE_CHECK_INTERVAL,
+                Lang.bind(this, function(){
+                    this._checkOverlap();
+                    return true; // to make the loop continue
+                })
+            );
         }
-
-        this._doCheckOverlap();
-
-        this._checkOverlapTimeoutId =
-                    Mainloop.timeout_add(INTELLIHIDE_CHECK_INTERVAL,
-                        Lang.bind(this, function() {
-                            this._doCheckOverlap();
-                            if (this._checkOverlapTimeoutContinue){
-                                this._checkOverlapTimeoutContinue = false;
-                                return GLib.SOURCE_CONTINUE;
-                            } else {
-                                this._checkOverlapTimeoutId = 0;
-                                return GLib.SOURCE_REMOVE;
-                            }
-                        }
-            ));
     },
 
-    _doCheckOverlap: function() {
+    _grabOpEnd: function() {
+
+            if(this._windowChangedTimeout>0)
+                Mainloop.source_remove(this._windowChangedTimeout);
+
+            this._windowChangedTimeout=0;
+            this._checkOverlap();
+    },
+
+    _checkOverlap: function() {
 
         if( !this._isEnabled || this._targetBox == null)
             return;
@@ -275,14 +281,18 @@ const intellihide = new Lang.Class({
     // Optionally skip windows of other applications
     _intellihideFilterInteresting: function(wa){
 
-        let meta_win = wa.get_meta_window();
-        if (!meta_win || !this._handledWindow(meta_win)) {
+        var currentWorkspace = global.screen.get_active_workspace_index();
+
+        var meta_win = wa.get_meta_window();
+        if (!meta_win) {
             return false;
         }
 
-        let currentWorkspace = global.screen.get_active_workspace_index();
-        let wksp = meta_win.get_workspace();
-        let wksp_index = wksp.index();
+        if ( !this._handledWindow(meta_win) )
+            return false;
+
+        var wksp = meta_win.get_workspace();
+        var wksp_index = wksp.index();
 
         // Depending on the intellihide mode, exclude non-relevent windows
         switch (this._settings.get_enum('intellihide-mode')) {
@@ -322,19 +332,7 @@ const intellihide = new Lang.Class({
                 break;
         }
 
-        /* Finally checking fot the window visibility.
-
-           Checking for the mapped state when not in the overview (in overview
-           the real windows actor are always not mapped) allows to skip
-           spurious window position when first created: the window might be put
-           at the top left corner of the workarea, before being positioned
-           according to the mutter windows system. Although the window is never
-           shown in such position, the intellihide retrieve such position and
-           start hiding the dock, which is readily reshown as soon as the window
-           position is updated.
-        */
-        if ( wksp_index == currentWorkspace && meta_win.showing_on_its_workspace()
-            && (Main.overview.visible || wa.mapped)) {
+        if ( wksp_index == currentWorkspace && meta_win.showing_on_its_workspace() ) {
             return true;
         } else {
             return false;

@@ -434,13 +434,13 @@ const dockedDash = new Lang.Class({
         // The public method trackChrome requires the actor to be child of a tracked actor. Since I don't want the parent
         // to be tracked I use the private internal _trackActor instead.
         Main.uiGroup.add_child(this.actor);
-        Main.layoutManager._trackActor(this._slider.actor);
+        Main.layoutManager._trackActor(this._slider.actor, {trackFullscreen: true});
 
         // Keep the dash below the modalDialogGroup
         Main.layoutManager.uiGroup.set_child_below_sibling(this.actor,Main.layoutManager.modalDialogGroup);
 
         if ( this._settings.get_boolean('dock-fixed') )
-          Main.layoutManager._trackActor(this._box, {affectsStruts: true, trackFullscreen: true});
+          Main.layoutManager._trackActor(this.dash.actor, {affectsStruts: true});
 
         // pretend this._slider is isToplevel child so that fullscreen is actually tracked
         let index = Main.layoutManager._findActor(this._slider.actor);
@@ -469,13 +469,6 @@ const dockedDash = new Lang.Class({
                 Main.overview.viewSelector._activePage = Main.overview.viewSelector._workspacesPage;
 
         this._updateVisibilityMode();
-
-        // In case we are already inside the overview when the extension is loaded,
-        // for instance on unlocking the screen if it was locked with the overview open.
-        if (Main.overview.visibleTarget){
-            this._onOverviewShowing();
-            this._pageChanged();
-        }
 
         // Setup pressure barrier (GS38+ only)
         this._updatePressureBarrier();
@@ -565,9 +558,9 @@ const dockedDash = new Lang.Class({
         this._settings.connect('changed::dock-fixed', Lang.bind(this, function(){
 
             if(this._settings.get_boolean('dock-fixed')) {
-                Main.layoutManager._trackActor(this._box, {affectsStruts: true, trackFullscreen: true});
+                Main.layoutManager._trackActor(this.dash.actor, {affectsStruts: true});
             } else {
-                Main.layoutManager._untrackActor(this._box);
+                Main.layoutManager._untrackActor(this.dash.actor);
             }
 
             this._resetPosition();
@@ -838,7 +831,7 @@ const dockedDash = new Lang.Class({
     _dockDwellTimeout: function() {
         this._dockDwellTimeoutId = 0;
 
-        if (!this._settings.get_boolean('autohide-in-fullscreen') && this._monitor.inFullscreen)
+        if (this._monitor.inFullscreen)
             return GLib.SOURCE_REMOVE;
 
         // We don't want to open the tray when a modal dialog
@@ -869,17 +862,12 @@ const dockedDash = new Lang.Class({
             this._pressureBarrier = null;
         }
 
-        if (this._barrier){
-            this._barrier.destroy();
-            this._barrier = null;
-        }
-
         // Create new pressure barrier based on pressure threshold setting
         if (this._canUsePressure) {
             this._pressureBarrier = new Layout.PressureBarrier(pressureThreshold, this._settings.get_double('show-delay')*1000,
                                 Shell.ActionMode.NORMAL | Shell.ActionMode.OVERVIEW);
             this._pressureBarrier.connect('trigger', Lang.bind(this, function(barrier){
-                if (!this._settings.get_boolean('autohide-in-fullscreen') && this._monitor.inFullscreen)
+                if (this._monitor.inFullscreen)
                     return;
                 this._onPressureSensed();
             }));
@@ -1449,7 +1437,6 @@ const dockedDash = new Lang.Class({
             delete Shell.App.prototype._oldOverviewActivate;
         }
     }
-
 });
 Signals.addSignalMethods(dockedDash.prototype);
 
