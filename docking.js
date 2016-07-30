@@ -384,15 +384,9 @@ const DockedDash = new Lang.Class({
             this._box.sync_hover();
         }));
 
-        // Restore dash accessibility
-        Main.ctrlAltTabManager.addGroup(
-            this.dash.actor, _('Dash'), 'user-bookmarks-symbolic',
-                {focusCallback: Lang.bind(this, this._onAccessibilityFocus)});
-
-        // Load optional features
+        // Load optional features that need to be activated once per dock
         this._optionalScrollWorkspaceSwitch();
         this._optionalWorkspaceIsolation();
-        this._optionalHotKeys();
         this._optionalNumberOverlay();
 
          // Delay operations that require the shell to be fully loaded and with
@@ -1347,7 +1341,16 @@ const DockedDash = new Lang.Class({
             this.dash.showAppsButton.checked = status;
     },
 
-    // Optional features enable/disable
+    // Optional features to be enabled only for the main Dock
+    _enableExtraFeatures: function() {
+        // Restore dash accessibility
+        Main.ctrlAltTabManager.addGroup(
+            this.dash.actor, _('Dash'), 'user-bookmarks-symbolic',
+                {focusCallback: Lang.bind(this, this._onAccessibilityFocus)});
+
+        this._optionalIsolatedOverview();
+        this._optionalHotKeys();
+    },
 
     /**
      * Switch workspace by scrolling over the dock
@@ -1505,14 +1508,6 @@ const DockedDash = new Lang.Class({
             Lang.bind(this, enable)();
 
         function enable() {
-            this._injectionsHandler.removeWithLabel(label);
-
-            this._injectionsHandler.addWithLabel(label, [
-                Shell.App.prototype,
-                'activate',
-                IsolatedOverview
-            ]);
-
             this._signalsHandler.removeWithLabel(label);
 
             this._signalsHandler.addWithLabel(label, [
@@ -1528,8 +1523,41 @@ const DockedDash = new Lang.Class({
         }
 
         function disable() {
-            this._injectionsHandler.removeWithLabel(label);
             this._signalsHandler.removeWithLabel(label);
+        }
+
+    },
+
+    _optionalIsolatedOverview: function() {
+
+        let label = 'optionalIsolatedOverview';
+
+        this._signalsHandler.add([
+            this._settings,
+            'changed::isolate-workspaces',
+            Lang.bind(this, function() {
+                    if (this._settings.get_boolean('isolate-workspaces'))
+                        Lang.bind(this, enable)();
+                    else
+                        Lang.bind(this, disable)();
+            })
+        ]);
+
+        if (this._settings.get_boolean('isolate-workspaces'))
+            Lang.bind(this, enable)();
+
+        function enable() {
+            this._injectionsHandler.removeWithLabel(label);
+
+            this._injectionsHandler.addWithLabel(label, [
+                Shell.App.prototype,
+                'activate',
+                IsolatedOverview
+            ]);
+        }
+
+        function disable() {
+            this._injectionsHandler.removeWithLabel(label);
         }
 
         function IsolatedOverview() {
@@ -1792,6 +1820,7 @@ const DockManager = new Lang.Class({
 
         // First we create the main Dock, to get the extra features to bind to this one
         let dock = new DockedDash(this._settings, preferredMonitor);
+        dock._enableExtraFeatures();
         this.allDocks.push(dock);
 
         // Make the necessary changes to Main.overview._dash
@@ -1806,7 +1835,6 @@ const DockManager = new Lang.Class({
                 this.allDocks.push(dock);
             }
         }
-
     },
 
     _prepareMainDash: function() {
