@@ -1,7 +1,7 @@
 /* Shrink the dash by reducing padding and border radius */
 #dashtodockContainer.shrink #dash,
 #dashtodockContainer.dashtodock #dash {
-    border:1px;
+    border:0px;
     padding:0px;
 }
 
@@ -81,11 +81,10 @@
 #dashtodockContainer.running-dots .app-well-app.focused > .overview-icon,
 #dashtodockContainer.dashtodock .app-well-app.focused > .overview-icon {
     transition-duration: 250;
-    background-gradient-start: rgba(255, 255, 255, .05);
-    background-gradient-end: rgba(255, 255, 255, .15);
+    background-gradient-start: rgba(255, 255, 255, .25);
+    background-gradient-end: rgba(255, 255, 255, .25);
     background-gradient-direction: vertical;
     border-radius: 4px;
-    box-shadow: inset 0px 1px 2px 0px rgba(0, 0, 0, 1);
 }
 
 #dashtodockContainer.running-dots.left .running1,

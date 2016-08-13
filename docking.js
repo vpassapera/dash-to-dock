@@ -1406,11 +1406,6 @@ const DockedDash = new Lang.Class({
                 direction = Meta.MotionDirection.DOWN;
                 break;
             case Clutter.ScrollDirection.SMOOTH:
-                let [dx, dy] = event.get_scroll_delta();
-                if (dy < 0)
-                    direction = Meta.MotionDirection.UP;
-                else if (dy > 0)
-                    direction = Meta.MotionDirection.DOWN;
                 break;
             }
 
