@@ -38,6 +38,11 @@ const State = {
     HIDING:  3
 };
 
+/* status variable: true when the overview is shown through the dash
+ * applications button.
+ */
+let forcedOverview = false;
+
 /**
  * A simple St.Widget with one child whose allocation takes into account the
  * slide out of its child via the _slidex parameter ([0:1]).
@@ -214,11 +219,6 @@ const DockedDash = new Lang.Class({
 
         // initialize dock state
         this._dockState = State.HIDDEN;
-
-        /* status variable: true when the overview is shown through the dash
-         * applications button.
-         */
-        this.forcedOverview = false;
 
         // Put dock on the primary monitor
         this._monitor = Main.layoutManager.primaryMonitor;
@@ -1208,7 +1208,7 @@ const DockedDash = new Lang.Class({
                 // force spring animation triggering.By default the animation only
                 // runs if we are already inside the overview.
                 if (!Main.overview._shown) {
-                    this.forcedOverview = true;
+                    forcedOverview = true;
                     if (animate) {
                         let view = Main.overview.viewSelector.appDisplay._views[visibleView].view;
                         let grid = view._grid;
@@ -1243,7 +1243,7 @@ const DockedDash = new Lang.Class({
                 Main.overview.show();
             }
             else {
-                if (this.forcedOverview) {
+                if (forcedOverview) {
                     // force exiting overview if needed
 
                     if (animate) {
@@ -1256,17 +1256,17 @@ const DockedDash = new Lang.Class({
                             Main.overview.viewSelector._appsPage.hide();
                             Main.overview.hide();
                             selector._showAppsButton.checked = false;
-                            this.forcedOverview = false;
+                            forcedOverview = false;
                         }));
                     }
                     else {
                         Main.overview.hide();
-                        this.forcedOverview = false;
+                        forcedOverview = false;
                     }
                 }
                 else {
                     selector._showAppsButton.checked = false;
-                    this.forcedOverview = false;
+                    forcedOverview = false;
                 }
             }
         }
@@ -1274,7 +1274,7 @@ const DockedDash = new Lang.Class({
         // whenever the button is unactivated even if not by the user still reset the
         // forcedOverview flag
         if (this.dash.showAppsButton.checked == false)
-            this.forcedOverview = false;
+            forcedOverview = false;
     },
 
     /**
