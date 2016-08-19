@@ -1696,6 +1696,10 @@ const DockManager = new Lang.Class({
             this._settings,
             'changed::preferred-monitor',
             Lang.bind(this, this._toggle)
+        ], [
+            this._settings,
+            'changed::dock-position',
+            Lang.bind(this, this._toggle)
         ]);
     },
 
