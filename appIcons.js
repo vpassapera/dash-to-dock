@@ -62,6 +62,7 @@ const MyAppIcon = new Lang.Class({
     _init: function(settings, app, iconParams, onActivateOverride) {
         // a prefix is required to avoid conflicting with the parent class variable
         this._dtdSettings = settings;
+        this._signalsHandler = new Convenience.GlobalSignalsHandler();
         this._nWindows = 0;
 
         this.parent(app, iconParams, onActivateOverride);
@@ -97,6 +98,8 @@ const MyAppIcon = new Lang.Class({
         // stateChangedId is already handled by parent)
         if (this._focusAppId > 0)
             tracker.disconnect(this._focusAppId);
+
+        this._signalsHandler.destroy();
     },
 
     onWindowsChanged: function() {
