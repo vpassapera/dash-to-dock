@@ -115,6 +115,10 @@ const Settings = new Lang.Class({
         }
 
         this._builder.get_object('dock_monitor_combo').set_active(this._monitors.indexOf(monitor));
+        this._settings.bind('multi-monitor',
+                            this._builder.get_object('multi_monitor_button'),
+                            'active',
+                            Gio.SettingsBindFlags.DEFAULT);
 
         // Position option
         let position = this._settings.get_enum('dock-position');
