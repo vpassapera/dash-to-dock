@@ -210,7 +210,7 @@ const DockedDash = new Lang.Class({
         this._fixedIsEnabled = null;
 
         // Create intellihide object to monitor windows overlapping
-        this._intellihide = new Intellihide.Intellihide(this._settings);
+        this._intellihide = new Intellihide.Intellihide(this._settings, this._monitorNumber);
 
         // initialize dock state
         this._dockState = State.HIDDEN;
@@ -240,7 +240,7 @@ const DockedDash = new Lang.Class({
         this._dockDwellTimeoutId = 0
 
         // Create a new dash object
-        this.dash = new MyDash.MyDash(this._settings);
+        this.dash = new MyDash.MyDash(this._settings, this._monitorNumber);
 
         // connect app icon into the view selector
         this.dash.showAppsButton.connect('notify::checked', Lang.bind(this, this._onShowAppsButtonToggled));
