@@ -174,6 +174,11 @@
       <summary>Monitor on which putting the dock</summary>
       <description>Set on which monitor to put the dock, use -1 for the primary one</description>
     </key>
+    <key type="b" name="multi-monitor">
+      <default>false</default>
+      <summary>Provide workspace isolation</summary>
+      <description>Dash shows only windows from the currentworkspace</description>
+    </key>
     <key type="b" name="customize-click">
       <default>true</default>
       <summary>Customize click behaviour</summary>
