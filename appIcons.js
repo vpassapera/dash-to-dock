@@ -61,9 +61,11 @@ const MyAppIcon = new Lang.Class({
     Extends: AppDisplay.AppIcon,
 
     // settings are required inside.
-    _init: function(settings, app, iconParams, onActivateOverride) {
+    _init: function(settings, app, monitorNumber, iconParams, onActivateOverride) {
         // a prefix is required to avoid conflicting with the parent class variable
         this._dtdSettings = settings;
+        this._monitorNumber = monitorNumber;
+        this._signalsHandler = new Convenience.GlobalSignalsHandler();
         this._nWindows = 0;
 
         this.parent(app, iconParams, onActivateOverride);
@@ -92,7 +94,11 @@ const MyAppIcon = new Lang.Class({
                    'custom-theme-running-dots-border-width'];
 
         keys.forEach(function(key) {
-            this._dtdSettings.connect('changed::' + key, Lang.bind(this, this._toggleDots));
+            this._signalsHandler.add([
+                this._dtdSettings,
+                'changed::' + key,
+                Lang.bind(this, this._toggleDots)
+            ]);
         }, this);
 
         this._toggleDots();
@@ -113,6 +119,8 @@ const MyAppIcon = new Lang.Class({
         // stateChangedId is already handled by parent)
         if (this._focusAppId > 0)
             tracker.disconnect(this._focusAppId);
+
+        this._signalsHandler.destroy();
     },
 
     onWindowsChanged: function() {
@@ -141,6 +149,12 @@ const MyAppIcon = new Lang.Class({
         [rect.width, rect.height] = this.actor.get_transformed_size();
 
         let windows = this.app.get_windows();
+        if (this._dtdSettings.get_boolean('multi-monitor')){
+            let monitorNumber = this._monitorNumber;
+            windows = windows.filter(function(w) {
+                return w.get_monitor() == monitorNumber;
+            });
+        }
         windows.forEach(function(w) {
             w.set_icon_geometry(rect);
         });
