@@ -211,7 +211,7 @@ const MyAppIcon = new Lang.Class({
                     // scrollable so the minimum height is smaller than the natural height.
                     let monitor_index = Main.layoutManager.findIndexForActor(this.actor);
                     let workArea = Main.layoutManager.getWorkAreaForMonitor(monitor_index);
-                    let position = getPosition(this._dtdSettings);
+                    let position = Convenience.getPosition(this._dtdSettings);
                     this._isHorizontal = ( position == St.Side.TOP ||
                                            position == St.Side.BOTTOM);
                     // If horizontal also remove the height of the dash
