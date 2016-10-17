@@ -725,6 +725,18 @@ const MyDash = new Lang.Class({
                 newApps.push(favorites[id]);
         }
 
+        let running_reordered = [];
+        for (let i = 0; i < oldApps.length; i++) {
+            if (running.indexOf(oldApps[i]) > -1)
+                running_reordered.push(oldApps[i]);
+        }
+
+        for (let i = 0; i < running.length; i++) {
+            if (oldApps.indexOf(running[i]) == -1)
+                running_reordered.push(running[i]);
+        }
+        running = running_reordered;
+
         if (this._dtdSettings.get_boolean('show-running')) {
             for (let i = 0; i < running.length; i++) {
                 let app = running[i];
