@@ -725,12 +725,16 @@ const MyDash = new Lang.Class({
                 newApps.push(favorites[id]);
         }
 
+        // We reorder the running apps so that they don't change position on the
+        // dash with every redisplay() call
+        // First: add the apps from the oldApps list that are still running
         let running_reordered = [];
         for (let i = 0; i < oldApps.length; i++) {
             if (running.indexOf(oldApps[i]) > -1)
                 running_reordered.push(oldApps[i]);
         }
 
+        // Second: add the new apps
         for (let i = 0; i < running.length; i++) {
             if (oldApps.indexOf(running[i]) == -1)
                 running_reordered.push(running[i]);
