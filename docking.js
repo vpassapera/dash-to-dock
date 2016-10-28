@@ -3,6 +3,7 @@
 const Clutter = imports.gi.Clutter;
 const GLib = imports.gi.GLib;
 const Gtk = imports.gi.Gtk;
+const Gdk = imports.gi.Gdk
 const Lang = imports.lang;
 const Meta = imports.gi.Meta;
 const Shell = imports.gi.Shell;
@@ -31,6 +32,7 @@ const Theming = Me.imports.theming;
 const MyDash = Me.imports.dash;
 
 const DOCK_DWELL_CHECK_INTERVAL = 100;
+const NUMBER_OVERLAY_INTERVAL = 400;
 
 const State = {
     HIDDEN:  0,
@@ -395,6 +397,7 @@ const DockedDash = new Lang.Class({
         this._optionalScrollWorkspaceSwitch();
         this._optionalWorkspaceIsolation();
         this._optionalHotKeys();
+        this._optionalNumberOverlay();
 
          // Delay operations that require the shell to be fully loaded and with
          // user theme applied.
@@ -542,6 +545,7 @@ const DockedDash = new Lang.Class({
 
         // Remove keybindings
         this._disableHotKeys();
+        this._disableNumberOverlay();
     },
 
     _bindSettingsChanges: function() {
@@ -1590,6 +1594,60 @@ const DockedDash = new Lang.Class({
         }, this);
 
         this._hotKeysEnabled = false;
+    },
+
+    _optionalNumberOverlay: function() {
+        if (this._settings.get_boolean('hot-keys'))
+            this._enableNumberOverlay();
+
+        this._signalsHandler.add([
+            this._settings,
+            'changed::hot-keys',
+            Lang.bind(this, function() {
+                    if (this._settings.get_boolean('hot-keys'))
+                        this._enableNumberOverlay();
+                    else
+                        this._disableNumberOverlay();
+            })
+        ]);
+    },
+
+    _enableNumberOverlay: function() {
+        this.keymap = Gdk.Keymap.get_default();
+
+        this._signalsHandler.removeWithLabel('number-overlay');
+        this._signalsHandler.addWithLabel('number-overlay', [
+            this.keymap,
+            'state_changed',
+            Lang.bind(this, function() {
+                    let state = this.keymap.get_modifier_state();
+                    let SUPER_KEY = 6;
+                    if (state & 1<<SUPER_KEY)
+                        this._onKeyPress();
+                    else
+                        this._onKeyRelease();
+            })
+        ]);
+    },
+
+    _disableNumberOverlay: function() {
+        this._signalsHandler.removeWithLabel('number-overlay');
+    },
+
+    _onKeyPress: function() {
+        this._numberOverlayTimeoutId = Mainloop.timeout_add(NUMBER_OVERLAY_INTERVAL, Lang.bind(this, function() {
+            this.dash.toggleNumberOverlay(true);
+            this._numberOverlayTimeoutId = 0;
+        }));
+    },
+
+    _onKeyRelease: function() {
+        if (this._numberOverlayTimeoutId > 0) {
+            Mainloop.source_remove(this._numberOverlayTimeoutId);
+            this._numberOverlayTimeoutId = 0;
+        }
+        else
+            this.dash.toggleNumberOverlay(false);
     }
 
 });
