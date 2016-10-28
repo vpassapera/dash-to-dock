@@ -333,8 +333,7 @@ const MyAppIcon = new Lang.Class({
         this._numberOverlayBin.hide();
 
         // iconBox is a Shell.GenericContainer from IconGrid.BaseIcon
-        this.iconBox = new Shell.GenericContainer();
-        this._iconContainer.add_child(this.iconBox);
+        this.iconBox = this.actor.get_child().get_child();
         // We have to add allocation of counterBin.
         this.iconBox.connect('allocate', Lang.bind(this, this._allocateIconBox));
 
@@ -347,12 +346,12 @@ const MyAppIcon = new Lang.Class({
         let childBox = new Clutter.ActorBox();
         let naturalHeight = this.icon.iconSize;
         // Partial size for the overlay:
-        naturalHeight *= 0.6;
+        let partialHeight = 0.6;
 
-        childBox.x1 = box.x2 - naturalHeight/2;
-        childBox.x2 = box.x2 + naturalHeight/2;
-        childBox.y1 = box.y2 - naturalHeight/2;
-        childBox.y2 = box.y2 + naturalHeight/2;
+        childBox.x1 = box.x2 - naturalHeight * (1+partialHeight)/2;
+        childBox.x2 = box.x2 - naturalHeight * (1-partialHeight)/2;
+        childBox.y1 = box.y2 - naturalHeight * (1+partialHeight)/2;
+        childBox.y2 = box.y2 - naturalHeight * (1-partialHeight)/2;
 
         this._numberOverlayBin.allocate(childBox, flags);
     },
