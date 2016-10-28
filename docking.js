@@ -1558,6 +1558,9 @@ const DockedDash = new Lang.Class({
 
     _onKeyPress: function() {
         this._numberOverlayTimeoutId = Mainloop.timeout_add(NUMBER_OVERLAY_INTERVAL, Lang.bind(this, function() {
+            if ( (this._dockState == State.HIDDEN || this._dockState == State.HIDING)
+              && (this._intellihideIsEnabled || this._autohideIsEnabled))
+                this._animateIn(this._settings.get_double('animation-time'), 0);
             this.dash.toggleNumberOverlay(true);
             this._numberOverlayTimeoutId = 0;
         }));
@@ -1568,8 +1571,12 @@ const DockedDash = new Lang.Class({
             Mainloop.source_remove(this._numberOverlayTimeoutId);
             this._numberOverlayTimeoutId = 0;
         }
-        else
+        else {
             this.dash.toggleNumberOverlay(false);
+            if ( (this._dockState == State.SHOWN || this._dockState == State.SHOWING)
+              && (this._intellihideIsEnabled || this._autohideIsEnabled))
+                this._animateOut(this._settings.get_double('animation-time'), 0);
+        }
     }
 
 });
