@@ -32,6 +32,7 @@ const MyDash = Me.imports.dash;
 
 const DOCK_DWELL_CHECK_INTERVAL = 100;
 const NUMBER_OVERLAY_INTERVAL = 400;
+const SUPER_KEY_ID = 64;
 
 const State = {
     HIDDEN:  0,
@@ -1549,17 +1550,50 @@ const DockedDash = new Lang.Class({
                     if (this.keymap.get_num_lock_state())
                         state -= 16;
 
-                    let SUPER_KEY = 64;
-                    if (state == SUPER_KEY)
+                    if (state == SUPER_KEY_ID)
                         this._onKeyPress();
                     else
                         this._onKeyRelease();
             })
         ]);
+
+        // This signal is to prevent the dock from showing when autohide is
+        // enabled and we move windows with <Sup>+Click
+        this._signalsHandler.addWithLabel('number-overlay', [
+            // Add signals on windows created from now on
+            global.display,
+            'window-created',
+            Lang.bind(this, this._windowCreated)
+        ]);
+
+        global.get_window_actors().forEach(function(win) {
+            this._addWindowSignals(win.get_meta_window());
+        }, this);
+    },
+
+    _windowCreated: function(display, meta_win) {
+        this._addWindowSignals(meta_win);
+    },
+
+    _addWindowSignals: function(meta_win) {
+        meta_win.dtd_numberOverlay = meta_win.connect('position-changed', Lang.bind(this, function() {
+                this._onKeyRelease();
+                this._updateDashVisibility();
+        }, meta_win));
+    },
+
+    _removeWindowSignals: function(meta_win) {
+        if (meta_win && meta_win.dtd_numberOverlay) {
+           meta_win.disconnect(meta_win.dtd_numberOverlay);
+           delete meta_win.dtd_numberOverlay;
+        }
     },
 
     _disableNumberOverlay: function() {
         this._signalsHandler.removeWithLabel('number-overlay');
+        global.get_window_actors().forEach(function(win) {
+            this._removeWindowSignals(win.get_meta_window());
+        }, this);
     },
 
     _onKeyPress: function() {
