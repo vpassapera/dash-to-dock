@@ -207,7 +207,7 @@ const DockedDash = new Lang.Class({
         this._autohideIsEnabled = null;
         this._intellihideIsEnabled = null;
         this._fixedIsEnabled = null;
-        this._forceDontHide = false;
+        this._forceShow = false;
 
         // Create intellihide object to monitor windows overlapping
         this._intellihide = new Intellihide.Intellihide(this._settings);
@@ -633,7 +633,7 @@ const DockedDash = new Lang.Class({
      * overview visibility
      */
     _updateDashVisibility: function() {
-        if (Main.overview.visibleTarget || this._forceDontHide)
+        if (Main.overview.visibleTarget || this._forceShow)
             return;
 
         if (this._fixedIsEnabled) {
@@ -682,7 +682,7 @@ const DockedDash = new Lang.Class({
     },
 
     _hoverChanged: function() {
-        if (!this._ignoreHover && !this._forceDontHide) {
+        if (!this._ignoreHover && !this._forceShow) {
             // Skip if dock is not in autohide mode for instance because it is shown
             // by intellihide.
             if (this._autohideIsEnabled) {
@@ -1544,12 +1544,15 @@ const DockedDash = new Lang.Class({
             this.keymap,
             'state_changed',
             Lang.bind(this, function() {
+                    // The modifier state is additive. We hence need to subtract
+                    // the contribution from CapsLock and NumLock.
                     let state = this.keymap.get_modifier_state();
                     if (this.keymap.get_caps_lock_state())
                         state -= 2;
                     if (this.keymap.get_num_lock_state())
                         state -= 16;
 
+                    // If Ctrl, Shift or Alt are used, this condition fails.
                     if (state == SUPER_KEY_ID)
                         this._onKeyPress();
                     else
@@ -1571,6 +1574,7 @@ const DockedDash = new Lang.Class({
         }, this);
     },
 
+    // _windowCreated, _addWindowSignals and _removeWindowSignals: all taken from intellihide.js
     _windowCreated: function(display, meta_win) {
         this._addWindowSignals(meta_win);
     },
@@ -1598,7 +1602,7 @@ const DockedDash = new Lang.Class({
 
     _onKeyPress: function() {
         if (this._settings.get_boolean('hotkeys-show-dock'))
-            this._forceDontHide = true;
+            this._forceShow = true;
         this._numberOverlayTimeoutId = Mainloop.timeout_add(NUMBER_OVERLAY_INTERVAL, Lang.bind(this, function() {
             let showDock = this._settings.get_boolean('hotkeys-show-dock') &&
                           (this._intellihideIsEnabled || this._autohideIsEnabled) &&
@@ -1611,7 +1615,7 @@ const DockedDash = new Lang.Class({
     },
 
     _onKeyRelease: function() {
-        this._forceDontHide = false;
+        this._forceShow = false;
         if (this._numberOverlayTimeoutId > 0) {
             Mainloop.source_remove(this._numberOverlayTimeoutId);
             this._numberOverlayTimeoutId = 0;
