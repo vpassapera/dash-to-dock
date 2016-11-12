@@ -3,6 +3,7 @@
 const Clutter = imports.gi.Clutter;
 const GLib = imports.gi.GLib;
 const Gtk = imports.gi.Gtk;
+const Gdk = imports.gi.Gdk
 const Lang = imports.lang;
 const Meta = imports.gi.Meta;
 const Shell = imports.gi.Shell;
@@ -30,6 +31,8 @@ const Theming = Me.imports.theming;
 const MyDash = Me.imports.dash;
 
 const DOCK_DWELL_CHECK_INTERVAL = 100;
+const NUMBER_OVERLAY_INTERVAL = 400;
+const SUPER_KEY_ID = 64;
 
 const State = {
     HIDDEN:  0,
@@ -204,6 +207,7 @@ const DockedDash = new Lang.Class({
         this._autohideIsEnabled = null;
         this._intellihideIsEnabled = null;
         this._fixedIsEnabled = null;
+        this._forceShow = false;
 
         // Create intellihide object to monitor windows overlapping
         this._intellihide = new Intellihide.Intellihide(this._settings);
@@ -380,6 +384,7 @@ const DockedDash = new Lang.Class({
         this._optionalScrollWorkspaceSwitch();
         this._optionalWorkspaceIsolation();
         this._optionalHotKeys();
+        this._optionalNumberOverlay();
 
          // Delay operations that require the shell to be fully loaded and with
          // user theme applied.
@@ -514,6 +519,7 @@ const DockedDash = new Lang.Class({
 
         // Remove keybindings
         this._disableHotKeys();
+        this._disableNumberOverlay();
     },
 
     _bindSettingsChanges: function() {
@@ -627,7 +633,7 @@ const DockedDash = new Lang.Class({
      * overview visibility
      */
     _updateDashVisibility: function() {
-        if (Main.overview.visibleTarget)
+        if (Main.overview.visibleTarget || this._forceShow)
             return;
 
         if (this._fixedIsEnabled) {
@@ -676,7 +682,7 @@ const DockedDash = new Lang.Class({
     },
 
     _hoverChanged: function() {
-        if (!this._ignoreHover) {
+        if (!this._ignoreHover && !this._forceShow) {
             // Skip if dock is not in autohide mode for instance because it is shown
             // by intellihide.
             if (this._autohideIsEnabled) {
@@ -1512,6 +1518,116 @@ const DockedDash = new Lang.Class({
         }, this);
 
         this._hotKeysEnabled = false;
+    },
+
+    _optionalNumberOverlay: function() {
+        if (this._settings.get_boolean('hot-keys'))
+            this._enableNumberOverlay();
+
+        this._signalsHandler.add([
+            this._settings,
+            'changed::hot-keys',
+            Lang.bind(this, function() {
+                    if (this._settings.get_boolean('hot-keys'))
+                        this._enableNumberOverlay();
+                    else
+                        this._disableNumberOverlay();
+            })
+        ]);
+    },
+
+    _enableNumberOverlay: function() {
+        this.keymap = Gdk.Keymap.get_default();
+
+        this._signalsHandler.removeWithLabel('number-overlay');
+        this._signalsHandler.addWithLabel('number-overlay', [
+            this.keymap,
+            'state_changed',
+            Lang.bind(this, function() {
+                    // The modifier state is additive. We hence need to subtract
+                    // the contribution from CapsLock and NumLock.
+                    let state = this.keymap.get_modifier_state();
+                    if (this.keymap.get_caps_lock_state())
+                        state -= 2;
+                    if (this.keymap.get_num_lock_state())
+                        state -= 16;
+
+                    // If Ctrl, Shift or Alt are used, this condition fails.
+                    if (state == SUPER_KEY_ID)
+                        this._onKeyPress();
+                    else
+                        this._onKeyRelease();
+            })
+        ]);
+
+        // This signal is to prevent the dock from showing when autohide is
+        // enabled and we move windows with <Sup>+Click
+        this._signalsHandler.addWithLabel('number-overlay', [
+            // Add signals on windows created from now on
+            global.display,
+            'window-created',
+            Lang.bind(this, this._windowCreated)
+        ]);
+
+        global.get_window_actors().forEach(function(win) {
+            this._addWindowSignals(win.get_meta_window());
+        }, this);
+    },
+
+    // _windowCreated, _addWindowSignals and _removeWindowSignals: all taken from intellihide.js
+    _windowCreated: function(display, meta_win) {
+        this._addWindowSignals(meta_win);
+    },
+
+    _addWindowSignals: function(meta_win) {
+        meta_win.dtd_numberOverlay = meta_win.connect('position-changed', Lang.bind(this, function() {
+                this._onKeyRelease();
+                this._updateDashVisibility();
+        }, meta_win));
+    },
+
+    _removeWindowSignals: function(meta_win) {
+        if (meta_win && meta_win.dtd_numberOverlay) {
+           meta_win.disconnect(meta_win.dtd_numberOverlay);
+           delete meta_win.dtd_numberOverlay;
+        }
+    },
+
+    _disableNumberOverlay: function() {
+        this._signalsHandler.removeWithLabel('number-overlay');
+        global.get_window_actors().forEach(function(win) {
+            this._removeWindowSignals(win.get_meta_window());
+        }, this);
+    },
+
+    _onKeyPress: function() {
+        if (this._settings.get_boolean('hotkeys-show-dock'))
+            this._forceShow = true;
+        this._numberOverlayTimeoutId = Mainloop.timeout_add(NUMBER_OVERLAY_INTERVAL, Lang.bind(this, function() {
+            let showDock = this._settings.get_boolean('hotkeys-show-dock') &&
+                          (this._intellihideIsEnabled || this._autohideIsEnabled) &&
+                          (this._dockState == State.HIDDEN || this._dockState == State.HIDING);
+            if (showDock)
+                this._show();
+            this.dash.toggleNumberOverlay(true);
+            this._numberOverlayTimeoutId = 0;
+        }));
+    },
+
+    _onKeyRelease: function() {
+        this._forceShow = false;
+        if (this._numberOverlayTimeoutId > 0) {
+            Mainloop.source_remove(this._numberOverlayTimeoutId);
+            this._numberOverlayTimeoutId = 0;
+        }
+        else {
+            this.dash.toggleNumberOverlay(false);
+            let hideDock = this._settings.get_boolean('hotkeys-show-dock') &&
+                          (this._intellihideIsEnabled || this._autohideIsEnabled) &&
+                          (this._dockState == State.SHOWN || this._dockState == State.SHOWING);
+            if (hideDock && this._autohideIsEnabled)
+                this._updateDashVisibility();
+        }
     }
 
 });
