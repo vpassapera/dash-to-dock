@@ -1622,8 +1622,13 @@ const DockedDash = new Lang.Class({
             'state_changed',
             Lang.bind(this, function() {
                     let state = this.keymap.get_modifier_state();
-                    let SUPER_KEY = 6;
-                    if (state & 1<<SUPER_KEY)
+                    if (this.keymap.get_caps_lock_state())
+                        state -= 2;
+                    if (this.keymap.get_num_lock_state())
+                        state -= 16;
+
+                    let SUPER_KEY = 64;
+                    if (state == SUPER_KEY)
                         this._onKeyPress();
                     else
                         this._onKeyRelease();
