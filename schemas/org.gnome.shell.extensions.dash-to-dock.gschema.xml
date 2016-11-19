@@ -242,6 +242,13 @@
       <summary>Show the dock when using the hotkeys</summary>
       <description>The dock will be quickly shown so that the number-overlay is visible and app activation is easier</description>
     </key>
+    <key name="number-overlay-key" type="as">
+      <default><![CDATA[['<Super>z']]]></default>
+      <summary>Keybinding to launch 1st dash app</summary>
+      <description>
+        Keybinding to launch 1st app.
+      </description>
+    </key>
     <key name="app-ctrl-hotkey-1" type="as">
       <default><![CDATA[['<Ctrl><Super>1']]]></default>
       <summary>Keybinding to launch 1st dash app</summary>
